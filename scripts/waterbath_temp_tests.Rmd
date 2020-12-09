@@ -1,0 +1,13 @@
+---
+title: "Waterbath Temp Tests"
+author: "Nick Framsted"
+date: "12/8/2020"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+library(ggplot2)
+library(tidyverse)
+
+dat <- read_csv("data/waterbath_temptests_main.csv", skip = 1)
+```
