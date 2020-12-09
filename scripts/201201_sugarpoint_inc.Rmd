@@ -6,25 +6,25 @@ output: pdf_document
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+library(ggplot2)
+library(tidyverse)
+library(lubridate)
+library(ggpubr)
+# changing working directory from /scripts to /tahoe_lab_inc_analysis
+knitr::opts_knit$set(root.dir = '..')
 ```
 
-## R Markdown
+# importing and cleaning up data
+```{r}
+dat <- read_csv("data/201201_sugarpt_lab_inc_R.csv", skip = 1)
+str(dat)
+View(dat)
 
-This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+# filtering out rows with error codes, and adding in chamber numbers based on sensor column
+dat_2 <- dat %>%
+  filter(is.na(error)) %>%
+  mutate(chamber = ifelse(sensor == "Batch 3 (PSt3)", 1, ifelse(sensor == "Batch 3_1 (PSt3)", 2, ifelse(sensor == "Batch 3_2 (PSt3)", 3, 4))))
+View(dat_2)
 
-When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
-
-```{r cars}
-summary(cars)
 ```
 
-## Including Plots
-
-You can also embed plots, for example:
-
-```{r pressure, echo=FALSE}
-plot(pressure)
-```
-
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
