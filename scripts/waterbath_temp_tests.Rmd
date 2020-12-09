@@ -8,6 +8,14 @@ output: pdf_document
 ```{r setup, include=FALSE}
 library(ggplot2)
 library(tidyverse)
+library(lubridate)
 
 dat <- read_csv("data/waterbath_temptests_main.csv", skip = 1)
 ```
+
+# converting date-times in data
+```{r}
+str(dat)
+dat$
+```
+
