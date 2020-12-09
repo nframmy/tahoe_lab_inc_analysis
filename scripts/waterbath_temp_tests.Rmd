@@ -86,5 +86,57 @@ dat_23 %>%
   geom_smooth(method = "lm") +
   stat_regline_equation() +
   theme_bw()
+
+
 ```
 
+# tanks 1 & 3 only
+```{r}
+# only doing tanks 1 & 3 to analyze light effects on heating
+dat_23 <- dat %>%
+  filter(date_time_PST > "2020-11-23 14:00:00" & date_time_PST < "2020-11-23 16:30:00") %>%
+  filter(tank == 1 | tank == 3)
+dat_23 %>%
+  ggplot(aes(x = date_time_PST, y = temp_C, color = container)) +
+  facet_wrap(~tank) +
+  geom_point() +
+  geom_smooth(method = "lm") +
+  stat_regline_equation() +
+  theme_bw()
+```
+
+
+Looks like the tanks heated rapidly (~2C in 30mins) and then the heater/chiller shut off. The tank was then heated slowly by ambient temps
+
+# tanks 2 & 4 only
+```{r}
+# only doing tanks 2 & 4 to analyze chamber effects on cooling
+dat_23 <- dat %>%
+  filter(date_time_PST > "2020-11-23 15:05:00" & date_time_PST < "2020-11-23 16:30:00") %>%
+  filter(tank == 2 | tank == 4)
+dat_23 %>%
+  ggplot(aes(x = date_time_PST, y = temp_C, color = container)) +
+  facet_wrap(~tank) +
+  geom_point() +
+  geom_smooth(method = "lm") +
+  stat_regline_equation() +
+  theme_bw()
+```
+
+Water in chambers cools at almost half the rate of the water bath, this could matter when making drastic changes to temperature.
+
+# 24 Nov experiment
+```{r}
+# filtering by date time to only include measurements taken during nov 24th and trimming data
+dat_24 <- dat %>%
+  filter(date_time_PST > "2020-11-24 12:50:00")
+dat_24 %>%
+  ggplot(aes(x = date_time_PST, y = temp_C, color = container)) +
+  facet_wrap(~tank) +
+  geom_point() +
+  geom_smooth(method = "lm") +
+  stat_regline_equation() +
+  theme_bw()
+```
+
+This tank cooled much slower than expected, it was operating near it's minimum operating temperature and may have been less efficient, but the water bath never reached the 8.5C setpoint.
