@@ -4,7 +4,11 @@ author: "Nick Framsted"
 date: "12/8/2020"
 output: pdf_document
 ---
+# Summary: 
+This script contains analysis of temperature tests of newly fabricated temperature-controlled waterbaths from Oceans Design to be used for incubations of periphyton for the Lahontan Regional Water Quality Board. Below are graphs of tests ran on 3 separate dates testing the effects of overhead lighting on heating/cooling capacity and the speed at which the waterbaths (and the water-filled incubation chambers they contain) heat and cool under different conditions. 
 
+#Quick conclusions:
+chambers tend to heat/cool at nearly half the rate of the water baths(nov 23 exp.), which can mean for longer equilibration times but also means greater temperature stability at a given temperature set point. Overhead lightling did not have a large effect on temperature stability (nov 19 & 23 exps.), tanks were able to maintain temp well, however tank heating/chilling efficiency was very low when operating at low temps (Nov 24th exp.).
 ```{r setup, include=FALSE}
 library(ggplot2)
 library(tidyverse)
