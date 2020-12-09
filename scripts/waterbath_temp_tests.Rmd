@@ -9,14 +9,22 @@ output: pdf_document
 library(ggplot2)
 library(tidyverse)
 library(lubridate)
-knitr::opts_knit$set(root.dir = 'C:/Users/ntframst/Documents/tahoe_inc_analyses/tahoe_lab_inc_analysis')
+# changing working directory from /scripts to /tahoe_lab_inc_analysis
+knitr::opts_knit$set(root.dir = '..')
+```
+
+
+```{r, include=FALSE}
 getwd()
 dat <- read_csv("data/waterbath_temptests_main.csv", skip = 1)
 ```
 
+
 # converting date-times in data
 ```{r}
 str(dat)
-dat$
+head(dat)
+dat$date_time_PST <- mdy_hms(dat$date_time_GMT_0800, tz = "America/Los_Angeles")
+head(dat)
 ```
 
