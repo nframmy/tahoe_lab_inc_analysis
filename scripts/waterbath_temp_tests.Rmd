@@ -9,7 +9,7 @@ output: pdf_document
 library(ggplot2)
 library(tidyverse)
 library(lubridate)
-
+getwd()
 dat <- read_csv("data/waterbath_temptests_main.csv", skip = 1)
 ```
 
