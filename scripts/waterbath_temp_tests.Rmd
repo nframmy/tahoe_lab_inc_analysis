@@ -9,6 +9,7 @@ output: pdf_document
 library(ggplot2)
 library(tidyverse)
 library(lubridate)
+knitr::opts_knit$set(root.dir = 'C:/Users/ntframst/Documents/tahoe_inc_analyses/tahoe_lab_inc_analysis')
 getwd()
 dat <- read_csv("data/waterbath_temptests_main.csv", skip = 1)
 ```
