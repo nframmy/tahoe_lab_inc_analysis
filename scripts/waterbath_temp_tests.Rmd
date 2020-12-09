@@ -8,7 +8,8 @@ output: pdf_document
 This script contains analysis of temperature tests of newly fabricated temperature-controlled waterbaths from Oceans Design to be used for incubations of periphyton for the Lahontan Regional Water Quality Board. Below are graphs of tests ran on 3 separate dates testing the effects of overhead lighting on heating/cooling capacity and the speed at which the waterbaths (and the water-filled incubation chambers they contain) heat and cool under different conditions. 
 
 #Quick conclusions:
-chambers tend to heat/cool at nearly half the rate of the water baths(nov 23 exp.), which can mean for longer equilibration times but also means greater temperature stability at a given temperature set point. Overhead lightling did not have a large effect on temperature stability (nov 19 & 23 exps.), tanks were able to maintain temp well, however tank heating/chilling efficiency was very low when operating at low temps (Nov 24th exp.).
+Waterbaths cool ~2.7-3.3C/hr, regardless of lights on or off (nov 19 & 23 exps.). Chambers tend to heat/cool at nearly half the rate of the water baths ~1.35C/hr (nov 23 exp.), which can mean for longer equilibration times but also means greater temperature stability at a given temperature set point. Waterbaths heat ~0.5C/hr just with lights on, thus overhead lightling did not have a large effect on temperature stability (nov 19 & 23 exps.). However tank heating/chilling efficiency was very low when operating at low temps (Nov 24th exp.).
+
 ```{r setup, include=FALSE}
 library(ggplot2)
 library(tidyverse)
@@ -81,6 +82,7 @@ There is no real difference in cooling when you have lights on or when they are 
 # Nov 23 experiment
 ```{r}
 # filtering by date time to only include measurements taken during nov 23th and trimming data, only doing tanks 1 & 3 to analyze light effects on heating.
+# tank 1 = lights on, tank 3 = lights off
 dat_23 <- dat %>%
   filter(date_time_PST > "2020-11-23 14:00:00" & date_time_PST < "2020-11-23 16:30:00")
 dat_23 %>%
