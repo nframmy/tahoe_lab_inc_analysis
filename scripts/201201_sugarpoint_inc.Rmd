@@ -49,7 +49,7 @@ dat_subset %>%
 dat_1 <- dat %>%
   mutate(chamber = ifelse(sensor == "Batch 3 (PSt3)", "Chamber 1", ifelse(sensor == "Batch 3_1 (PSt3)", "Chamber 2", ifelse(sensor == "Batch 3_2 (PSt3)", "Chamber 3", "Chamber 4")))) %>%
   filter(oxygen < 10.5 & oxygen > 0) #filtering out outlier datapoints
-View(dat_1)
+
 o2_plot <- dat_1 %>%
   ggplot(aes(x = delta_T_min, y = oxygen, color = error)) +
   geom_point() +
