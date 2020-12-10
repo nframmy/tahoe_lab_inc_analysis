@@ -49,12 +49,17 @@ dat_subset %>%
 dat_1 <- dat %>%
   mutate(chamber = ifelse(sensor == "Batch 3 (PSt3)", "Chamber 1", ifelse(sensor == "Batch 3_1 (PSt3)", "Chamber 2", ifelse(sensor == "Batch 3_2 (PSt3)", "Chamber 3", "Chamber 4")))) %>%
   filter(oxygen < 10.5 & oxygen > 0) #filtering out outlier datapoints
-
+View(dat_1)
 o2_plot <- dat_1 %>%
-  ggplot(aes(x = delta_T_min, y = oxygen)) +
-  geom_point(aes(color = error)) +
-  facet_wrap(~chamber)
+  ggplot(aes(x = delta_T_min, y = oxygen, color = error)) +
+  geom_point() +
+  scale_color_viridis_d(na.value = "grey") +
+  facet_wrap(~chamber) +
+  theme_bw(base_size = 20) +
+  theme(legend.position = "right", legend.title = element_text(size = 12), legend.text = element_text(size = 10))
 o2_plot
+
+ggsave("plots/201201_sugarpt_inc/error_plot.png", plot = o2_plot, width = 10, height = 7)
 # lots of crazy data points in the data with errors included
 ```
 
