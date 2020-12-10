@@ -36,3 +36,27 @@ head(dat_subset)
 
 ```
 
+# plotting O2 signals
+```{r}
+# plotting only data points with no error code
+dat_subset %>%
+  ggplot(aes(x = delta_T_min, y = oxygen)) +
+  geom_point() +
+  facet_wrap(~chamber)
+
+# plot of all data points (including rows with errors)
+#first need to add chamber column to dat dataframe
+dat %>%
+  mutate(chamber = ifelse(sensor == "Batch 3 (PSt3)", 1, ifelse(sensor == "Batch 3_1 (PSt3)", 2, ifelse(sensor == "Batch 3_2 (PSt3)", 3, 4)))) %>%
+  filter(oxygen < 10.5 & oxygen > 0) %>% #filtering out outlier datapoints
+  ggplot(aes(x = delta_T_min, y = oxygen)) +
+  geom_point(aes(color = error)) +
+  facet_wrap(~chamber)
+
+# lots of crazy data points in the data with errors included
+```
+# calculating metabolic reate 
+```{r}
+
+```
+
