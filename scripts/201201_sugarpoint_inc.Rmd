@@ -109,7 +109,7 @@ ggsave("plots/201201_sugarpt_inc/metab_trendline.png", plot = plot_metab_trendli
 
 ```
 
-# plotting PAR data
+# plotting field PAR data
 ```{r}
 # reading in PAR data from tahoe in-situ incubations
 # field light level data
@@ -117,7 +117,7 @@ PAR_field <- read_csv("data/R_concat_2020_07_20_180000Z.txt", skip = 2)
 head(PAR_field)
 
 # converting time into posixct
-PAR_field$date_time_PST <- as_datetime(PAR_field$Time_sec)
+PAR_field$date_time_PST <- as_datetime(PAR_field$Time_sec, tz = "America/Los_Angeles")
 head(PAR_field)
 
 # comparing light levels in the field to replicated levels in the lab to verify if they are simiar
@@ -126,5 +126,42 @@ PAR_field %>%
   ggplot(aes(x = date_time_PST, y = PAR_umol_s_m_2)) +
   geom_line()
 
+# viewing only pineland data
+PAR_field %>%
+  filter(date_time_PST < "2020-07-20 11:03:00") %>%
+  ggplot(aes(x = date_time_PST, y = PAR_umol_s_m_2)) +
+  geom_line()
+
+# viewing only sugarpine st park data
+PAR_field %>%
+  filter(date_time_PST > "2020-07-20 16:00:00") %>%
+  ggplot(aes(x = date_time_PST, y = PAR_umol_s_m_2)) +
+  geom_line()
+
+```
+
+According to the field PAR data, light levels at pineland ~11AM were ~1800umol m^-2 s^-1, and at sugarpine state park around ~4:20PM they ranged from 600-800. 
+
+Average light levels in Stan Loeb's thesis on periphyton range 1457 umol m^-2 s^-1, this was a rough back-of-the-envelope conversion from W m^-2 to umol m^-2 s^-1.
+
+# plotting lab PAR data
+```{r}
+# reading in lab PAR data
+PAR_lab <- read_csv("data/R_2020-12-02_PARdat.txt", skip = 2)
+
+# converting date times to posixct
+PAR_lab$date_time_PST <- as_datetime(PAR_lab$Time_sec, tz = "America/Los_Angeles")
+head(PAR_lab)
+
+# plotting lab data
+PAR_lab %>%
+  ggplot(aes(x = date_time_PST, y = PAR_umol_s_m_2)) +
+  geom_line()
+
+# filtering out unnecessary data
+PAR_lab %>%
+  filter(date_time_PST < "2020-12-01 17:07:00") %>%
+  ggplot(aes(x = date_time_PST, y = PAR_umol_s_m_2)) +
+  geom_line()
 ```
 
