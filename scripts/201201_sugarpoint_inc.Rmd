@@ -109,3 +109,22 @@ ggsave("plots/201201_sugarpt_inc/metab_trendline.png", plot = plot_metab_trendli
 
 ```
 
+# plotting PAR data
+```{r}
+# reading in PAR data from tahoe in-situ incubations
+# field light level data
+PAR_field <- read_csv("data/R_concat_2020_07_20_180000Z.txt", skip = 2)
+head(PAR_field)
+
+# converting time into posixct
+PAR_field$date_time_PST <- as_datetime(PAR_field$Time_sec)
+head(PAR_field)
+
+# comparing light levels in the field to replicated levels in the lab to verify if they are simiar
+
+PAR_field %>%
+  ggplot(aes(x = date_time_PST, y = PAR_umol_s_m_2)) +
+  geom_line()
+
+```
+
