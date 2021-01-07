@@ -54,3 +54,4 @@ seasonal_T <- daily_T %>%
 seasonal_T
 ```
 
+Looks like daily flucuations of temperature are on the order of 6.5C in a day, thus temperature treatments should be created accordingly.
