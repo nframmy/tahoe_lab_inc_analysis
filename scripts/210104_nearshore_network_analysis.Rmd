@@ -16,7 +16,7 @@ knitr::opts_knit$set(root.dir = '..')
 
 ```{r}
 # importing dataset for tahoe city (closest site to the pineland site)
-dat_TC <- read_csv("data/Tahoe_nearshore_network_data/TC.txt")
+dat_TC <- read_csv("C:/Users/ntframst/Documents/Tahoe_nearshore_network_data/TC.txt")
 str(dat_TC)
 ```
 
@@ -28,18 +28,29 @@ dat_TC %>%
   ggplot(aes(x = TimeLocal, y = ProbeT)) +
   geom_line()
 
+# violin plot of daily temperatures
+dat_TC %>%
+  mutate(day = date(TimeLocal)) %>%
+  filter(!is.na(ProbeT)) %>%
+  ggplot(aes(x = day, y = ProbeT, group = day)) +
+  geom_violin() +
+  theme_bw(base_size = 20)
+
 # looking at daily scales of temp variability
 daily_T <- dat_TC %>%
   mutate(day = date(TimeLocal)) %>%
   group_by(day) %>%
-  summarize(avg_T = mean(ProbeT), sd_T = sd(ProbeT))
+  summarize(avg_T = mean(ProbeT), min_T = min(ProbeT), max_T = max(ProbeT)) %>%
+  mutate(range_T = max_T - min_T)
 daily_T
 
-# plot of average daily temps with error bars
-daily_T %>%
-  filter(day < "2020-10-01") %>%
-  ggplot(aes(x = day, y = avg_T)) +
-  geom_point() +
-  geom_errorbar(aes(ymin = avg_T - sd_T, ymax = avg_T + sd_T))
+
+# adding in season column to data, grouping rows by season to calculate seasonal average temp standard deviation
+seasonal_T <- daily_T %>%
+  mutate(season = ifelse(day >= "2019-12-31" & day < "2020-03-01", "W", ifelse(day >= "2020-03-01" & day < "2020-06-01", "Spr", ifelse(day >= "2020-06-01" & day < "2020-09-01", "Sum", "F")))) %>%
+  filter(!is.na(range_T)) %>%
+  group_by(season) %>%
+  summarize(avg_daily_range = mean(range_T), max_daily_range = max(range_T))
+seasonal_T
 ```
 
