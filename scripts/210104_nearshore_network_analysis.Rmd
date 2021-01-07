@@ -1,0 +1,45 @@
+---
+title: "Nearshore Network Analysis"
+author: "Nick Framsted"
+date: "1/5/2021"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+library(ggplot2)
+library(tidyverse)
+library(lubridate)
+library(ggpubr)
+# changing working directory from /scripts to /tahoe_lab_inc_analysis
+knitr::opts_knit$set(root.dir = '..')
+```
+
+```{r}
+# importing dataset for tahoe city (closest site to the pineland site)
+dat_TC <- read_csv("data/Tahoe_nearshore_network_data/TC.txt")
+str(dat_TC)
+```
+
+### plotting temperature (probeT) for TC site
+```{r}
+# filtering out period of NAs in ProbeT column
+dat_TC %>%
+  filter(TimeLocal < "2020-10-01 00:00:00") %>%
+  ggplot(aes(x = TimeLocal, y = ProbeT)) +
+  geom_line()
+
+# looking at daily scales of temp variability
+daily_T <- dat_TC %>%
+  mutate(day = date(TimeLocal)) %>%
+  group_by(day) %>%
+  summarize(avg_T = mean(ProbeT), sd_T = sd(ProbeT))
+daily_T
+
+# plot of average daily temps with error bars
+daily_T %>%
+  filter(day < "2020-10-01") %>%
+  ggplot(aes(x = day, y = avg_T)) +
+  geom_point() +
+  geom_errorbar(aes(ymin = avg_T - sd_T, ymax = avg_T + sd_T))
+```
+

@@ -2,3 +2,9 @@
 .Rhistory
 .RData
 .Ruserdata
+
+# ignore all text files in tahoe nearshore network subfolder of data folder
+data/Tahoe_nearshore_network_data/*.txt
+
+#ignore pdf files in same folder
+data/Tahoe_nearshore_network_data/*.pdf
