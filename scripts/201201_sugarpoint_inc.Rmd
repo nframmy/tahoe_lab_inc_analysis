@@ -4,6 +4,8 @@ author: "Nick Framsted"
 date: "12/8/2020"
 output: pdf_document
 ---
+# Summary:
+This script contains analysis of data generated from a preliminary incubation of rocks collected from sugarpoint state park on 11/29/20 as well as a comparison of PAR data from the field on 07/20/20 and PAR data collected from this lab incubation.
 
 ```{r setup, include=FALSE}
 library(ggplot2)
