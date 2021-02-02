@@ -1,0 +1,35 @@
+---
+title: "PAR & O2 tests"
+author: "Nick Framsted"
+date: "2/2/2021"
+output: pdf_document
+---
+# Summary:
+This script contains analysis of data generated from a dry run of incubation chambers using the presens 4-channel SMA units from John Durand's lab and the 10-channel unit. This also contains analysis of PAR data to look at how light levels vary spatially within the waterbaths.
+
+```{r setup, include=FALSE}
+library(ggplot2)
+library(tidyverse)
+library(lubridate)
+library(ggpubr)
+# changing working directory from /scripts to /tahoe_lab_inc_analysis
+knitr::opts_knit$set(root.dir = '..')
+
+```
+
+# plotting data from test of spatial distn of PAR in waterbaths
+```{r}
+#loading in data
+dat <- read_csv("data/210201_PAR_O2_tests/R_Cat.txt", skip = 5)
+dat$PST <- as_datetime(dat$Unix_Timestamp_Sec, tz = "America/Los_Angeles")
+str(dat)
+head(dat)
+tail(dat)
+#View(dat)
+
+dat %>%
+  filter(PST > "2021-02-01 15:25:05") %>%
+  ggplot(aes(x = PST, y = PAR_umol_m2_s)) +
+  geom_line()
+```
+
