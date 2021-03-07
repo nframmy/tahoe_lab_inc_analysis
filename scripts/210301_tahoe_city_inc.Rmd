@@ -6,25 +6,33 @@ output: pdf_document
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+library(ggplot2)
+library(tidyverse)
+library(lubridate)
+library(ggpubr)
+# changing working directory from /scripts to /tahoe_lab_inc_analysis
+knitr::opts_knit$set(root.dir = '..')
 ```
 
-## R Markdown
+# importing and cleaning up data
+```{r}
+dat <- read_csv("data/210302_DO_tahoecity_ambient_R.csv", skip = 1)
+str(dat)
+#View(dat)
 
-This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+# formatting date times column to posixct
+dat$date_time_PST <- dmy_hms(dat$date, tz = "America/Los_Angeles")
+head(dat)
 
-When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+# filtering out rows with error codes, and adding in chamber numbers based the tank and channel number cross referenced against incubation notes
+dat_2 <- dat %>%
+  filter(is.na(error)) %>%
+  mutate(chamber = ifelse(tank_channel == "1_1", "Chamber 2", ifelse(tank_channel == "1_2", "Chamber 10", ifelse(tank_channel == "1_3", "Chamber 4", ifelse(tank_channel == "1_4", "Chamber 17", ifelse(tank_channel == "2_1", "Chamber 20", ifelse(tank_channel == "2_2", "Chamber 9", ifelse(tank_channel == "2_3", "Chamber 15", ifelse(tank_channel == "2_4", "Chamber 19", ifelse(tank_channel == "3_1", "Chamber 1", ifelse(tank_channel == "3_2", "Chamber 14", ifelse(tank_channel == "3_3", "Chamber 3", ifelse(tank_channel == "3_4", "Chamber 6", ifelse(tank_channel == "4_1", "Chamber 8", ifelse(tank_channel == "4_2", "Chamber 5", ifelse(tank_channel == "4_2", "Chamber 18", "Chamber 7"))))))))))) )))))
+head(dat_2)
+# double checking this worked
+View(dat_2)
+# selecting only columns I need
+dat_subset <- dat_2 %>%
+  select(date, delta_T_min, oxygen, temp, chamber, date_time_PST)
 
-```{r cars}
-summary(cars)
 ```
-
-## Including Plots
-
-You can also embed plots, for example:
-
-```{r pressure, echo=FALSE}
-plot(pressure)
-```
-
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
