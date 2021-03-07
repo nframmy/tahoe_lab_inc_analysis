@@ -27,12 +27,45 @@ head(dat)
 # filtering out rows with error codes, and adding in chamber numbers based the tank and channel number cross referenced against incubation notes
 dat_2 <- dat %>%
   filter(is.na(error)) %>%
-  mutate(chamber = ifelse(tank_channel == "1_1", "Chamber 2", ifelse(tank_channel == "1_2", "Chamber 10", ifelse(tank_channel == "1_3", "Chamber 4", ifelse(tank_channel == "1_4", "Chamber 17", ifelse(tank_channel == "2_1", "Chamber 20", ifelse(tank_channel == "2_2", "Chamber 9", ifelse(tank_channel == "2_3", "Chamber 15", ifelse(tank_channel == "2_4", "Chamber 19", ifelse(tank_channel == "3_1", "Chamber 1", ifelse(tank_channel == "3_2", "Chamber 14", ifelse(tank_channel == "3_3", "Chamber 3", ifelse(tank_channel == "3_4", "Chamber 6", ifelse(tank_channel == "4_1", "Chamber 8", ifelse(tank_channel == "4_2", "Chamber 5", ifelse(tank_channel == "4_2", "Chamber 18", "Chamber 7"))))))))))) )))))
+  mutate(chamber = ifelse(tank_channel == "1_1", "Chamber 2", ifelse(tank_channel == "1_2", "Chamber 10", ifelse(tank_channel == "1_3", "Chamber 4", ifelse(tank_channel == "1_4", "Chamber 17", ifelse(tank_channel == "2_1", "Chamber 20", ifelse(tank_channel == "2_2", "Chamber 9", ifelse(tank_channel == "2_3", "Chamber 15", ifelse(tank_channel == "2_4", "Chamber 19", ifelse(tank_channel == "3_1", "Chamber 1", ifelse(tank_channel == "3_2", "Chamber 14", ifelse(tank_channel == "3_3", "Chamber 3", ifelse(tank_channel == "3_4", "Chamber 6", ifelse(tank_channel == "4_1", "Chamber 8", ifelse(tank_channel == "4_2", "Chamber 5", ifelse(tank_channel == "4_3", "Chamber 18", "Chamber 7"))))))))))) ))))) %>%
+  mutate(treatment = ifelse(temp > 6 & temp < 9, "7C", ifelse(temp > 8 & temp < 12, "10C", ifelse(temp > 12 & temp < 15, "13C", "16C"))))
+
 head(dat_2)
+
 # double checking this worked
 View(dat_2)
+
+
 # selecting only columns I need
 dat_subset <- dat_2 %>%
-  select(date, delta_T_min, oxygen, temp, chamber, date_time_PST)
+  select(date, delta_T_min, oxygen, temp, chamber, date_time_PST, treatment)
+
 
 ```
+
+# plotting DO in chambers
+```{r}
+# plotting only data points with no error code
+dat_subset %>%
+  ggplot(aes(x = delta_T_min, y = oxygen, color = treatment)) +
+  geom_point() +
+  facet_wrap(~chamber)
+
+# plot of all data points (including rows with errors)
+#first need to add chamber column to dat dataframe
+#dat_1 <- dat %>%
+#  mutate(chamber = ifelse(sensor == "Batch 3 (PSt3)", "Chamber 1", ifelse(sensor == "Batch 3_1 (PSt3)", "Chamber 2", ifelse(sensor == "Batch 3_2 (PSt3)", "Chamber 3", "Chamber 4")))) %>%
+  #filter(oxygen < 10.5 & oxygen > 0) #filtering out outlier datapoints
+
+#o2_plot <- dat_1 %>%
+  ggplot(aes(x = delta_T_min, y = oxygen, color = error)) +
+  geom_point() +
+  scale_color_viridis_d(na.value = "grey") +
+  facet_wrap(~chamber) +
+  theme_bw(base_size = 20) +
+  theme(legend.position = "right", legend.title = element_text(size = 12), legend.text = element_text(size = 10))
+o2_plot
+
+#ggsave("plots/201201_sugarpt_inc/error_plot.png", plot = o2_plot, width = 10, height = 7)
+```
+
