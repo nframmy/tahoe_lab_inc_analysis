@@ -45,11 +45,17 @@ dat_subset <- dat_2 %>%
 
 # plotting DO in chambers
 ```{r}
-# plotting only data points with no error code
+# plotting Do values in each chamber
 dat_subset %>%
   ggplot(aes(x = delta_T_min, y = oxygen, color = treatment)) +
   geom_point() +
-  facet_wrap(~chamber)
+  facet_wrap(~treatment)
+
+# plotting temperature for each chamber
+dat_subset %>%
+  ggplot(aes(x = delta_T_min, y = temp, color = treatment)) +
+  geom_point() +
+  facet_wrap(~treatment)
 
 # plot of all data points (including rows with errors)
 #first need to add chamber column to dat dataframe
