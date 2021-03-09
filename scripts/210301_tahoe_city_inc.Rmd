@@ -45,33 +45,39 @@ dat_subset <- dat_2 %>%
 
 # plotting DO in chambers
 ```{r}
+# making treatment a factor variable and re-ordering it for plots
+dat_subset$treatment <- factor(dat_subset$treatment, levels = c("7C", "10C", "13C", "16C"))
+
 # plotting Do values in each chamber
-dat_subset %>%
-  ggplot(aes(x = delta_T_min, y = oxygen, color = treatment)) +
-  geom_point() +
-  facet_wrap(~treatment)
+DO_plot <- dat_subset %>%
+  ggplot(aes(x = delta_T_min, y = oxygen, color = chamber)) +
+  geom_line(size = 1.5) +
+  scale_color_viridis_d() +
+  facet_wrap(~treatment) +
+  labs(y = expression(Oxygen~Concentration~(mg~L^{-1})), x = "Elapsed Time (min)", title = "Tahoe City Incubation DO") +
+  theme_bw(base_size = 20) +
+  theme(legend.position = "none")
+
+ggsave("plots/210301_tahoecity_ambient/210301_tahoecity_DO_plot.png", plot = DO_plot, width = 10, height = 7)
 
 # plotting temperature for each chamber
-dat_subset %>%
-  ggplot(aes(x = delta_T_min, y = temp, color = treatment)) +
-  geom_point() +
-  facet_wrap(~treatment)
-
-# plot of all data points (including rows with errors)
-#first need to add chamber column to dat dataframe
-#dat_1 <- dat %>%
-#  mutate(chamber = ifelse(sensor == "Batch 3 (PSt3)", "Chamber 1", ifelse(sensor == "Batch 3_1 (PSt3)", "Chamber 2", ifelse(sensor == "Batch 3_2 (PSt3)", "Chamber 3", "Chamber 4")))) %>%
-  #filter(oxygen < 10.5 & oxygen > 0) #filtering out outlier datapoints
-
-#o2_plot <- dat_1 %>%
-  ggplot(aes(x = delta_T_min, y = oxygen, color = error)) +
-  geom_point() +
-  scale_color_viridis_d(na.value = "grey") +
-  facet_wrap(~chamber) +
+temp_plot <- dat_subset %>%
+  ggplot(aes(x = delta_T_min, y = temp, color = chamber)) +
+  geom_line(size = 1.5) +
+  scale_color_viridis_d() +
+  facet_wrap(~treatment) +
+  labs(y = expression('Temperature (\u00B0C)'), x = "Elapsed Time (min)", title = "Tahoe City Incubation Temperature") +
   theme_bw(base_size = 20) +
-  theme(legend.position = "right", legend.title = element_text(size = 12), legend.text = element_text(size = 10))
-o2_plot
+  theme(legend.position = "none")
 
-#ggsave("plots/201201_sugarpt_inc/error_plot.png", plot = o2_plot, width = 10, height = 7)
+ggsave("plots/210301_tahoecity_ambient/210301_tahoecity_temp_plot.png", plot = temp_plot, width = 10, height = 7)
+
 ```
 
+The weird changes in temperature that cause shifts in DO during the respiration period of the incubation are due to artificial changes in temperature measured in the waterbaths, but this does not reflect the temperatures on the inside of the chambers. This is because the oxygen concentrations measured in the chambers are incongruous with the temperature measurements in the waterbaths. The chambers tend to heat/cool at half the rate as the waterbaths, so temperatures are much more stable in them compared to the outside water bath. This fact led to errors in our oxygen measurements.
+
+Possible remedies: 1) Drill holes in 4 unused chambers (1 for each tank), fill with water at same temperature as tahoe water, and place temp sensor from presens instrument in each one.
+
+2) Place a Hobo logger in 4 unused chambers and post-process DO data from instrument using Hobo temperature data. This involves intercalibrating all temp sensors and adjusting DO data using the Hobo temp Data.
+
+3) Splice together segements of respiration signals and remove areas of weird data caused by spurious temperature measurements.
