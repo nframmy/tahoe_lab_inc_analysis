@@ -40,6 +40,9 @@ dat_2 <- dat_2 %>%
   rename(oxygen = Value, delta_T_min = delta_t, time = Time, date = Date, temp = Temp)
 head(dat_2)
 
+# converting oxygen concentration (mg/L) to oxygen mass (mg) by multipying by water volumes in chambers
+
+
 # selecting only columns I need
 dat_subset <- dat_2 %>%
   select(date, time, delta_T_min, oxygen, temp, chamber, treatment)
@@ -59,8 +62,7 @@ DO_plot <- dat_subset %>%
   scale_color_viridis_d() +
   facet_wrap(~treatment) +
   labs(y = expression(Oxygen~Concentration~(mg~L^{-1})), x = "Elapsed Time (min)", title = "Tahoe City Incubation DO") +
-  theme_bw(base_size = 20) +
-  theme(legend.position = "none")
+  theme_bw(base_size = 20)
 
 DO_plot
 
