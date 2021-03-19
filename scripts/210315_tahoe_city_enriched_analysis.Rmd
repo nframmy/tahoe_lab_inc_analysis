@@ -99,7 +99,8 @@ DO_mass_plot <- dat_full %>%
   scale_color_viridis_d() +
   facet_wrap(~treatment) +
   labs(y = expression(Oxygen~Mass~(mg)), x = "Elapsed Time (min)", title = "Tahoe City Incubation DO Mass") +
-  theme_bw(base_size = 20)
+  theme_bw(base_size = 20) +
+  theme(legend.position = "none")
 
   DO_mass_plot
   
