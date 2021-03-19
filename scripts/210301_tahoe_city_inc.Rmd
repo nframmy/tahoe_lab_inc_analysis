@@ -17,7 +17,7 @@ knitr::opts_knit$set(root.dir = '..')
 
 ```{r include = FALSE}
 # importing and cleaning up data
-dat <- read_csv("data/210302_DO_tahoecity_ambient_R.csv", skip = 1)
+dat <- read_csv("data/210301_tahoecity_ambient_inc/210302_DO_tahoecity_ambient_R.csv", skip = 1)
 str(dat)
 #View(dat)
 
@@ -34,23 +34,33 @@ dat_2 <- dat %>%
 head(dat_2)
 
 # double checking this worked
-View(dat_2)
+#View(dat_2)
 
 
 # selecting only columns I need
 dat_subset <- dat_2 %>%
   select(date, delta_T_min, oxygen, temp, chamber, date_time_PST, treatment)
 
+# loading in chamber water weight data
+dat_chambers <- read_csv("data/210301_tahoecity_ambient_inc/chamber_wts_ambient.csv", skip = 1)
+
+# joining DO dataframe and chamber water weight data
+dat_full <- full_join(dat_subset, dat_chambers, by = "chamber")
+#View(dat_full)
+
+# calculating oxygen mass balance from DO concentration data
+dat_full <- dat_full %>%
+  mutate(oxygen_mass_mg = oxygen * water_volume_L)
 
 ```
 
 # Plotting DO and temp in chambers
 ```{r echo = FALSE}
 # making treatment a factor variable and re-ordering it for plots
-dat_subset$treatment <- factor(dat_subset$treatment, levels = c("7C", "10C", "13C", "16C"))
+dat_full$treatment <- factor(dat_subset$treatment, levels = c("7C", "10C", "13C", "16C"))
 
-# plotting Do values in each chamber
-DO_plot <- dat_subset %>%
+# plotting Do concentration values in each chamber
+DO_conc_plot <- dat_full %>%
   ggplot(aes(x = delta_T_min, y = oxygen, color = chamber)) +
   geom_line(size = 1.5) +
   scale_color_viridis_d() +
@@ -59,9 +69,9 @@ DO_plot <- dat_subset %>%
   theme_bw(base_size = 20) +
   theme(legend.position = "none")
 
-DO_plot
+DO_conc_plot
 
-ggsave("plots/210301_tahoecity_ambient/210301_tahoecity_DO_plot.png", plot = DO_plot, width = 10, height = 7)
+ggsave("plots/210301_tahoecity_ambient/210301_tahoecity_DO_conc_plot.png", plot = DO_conc_plot, width = 10, height = 7)
 
 # plotting temperature for each chamber
 temp_plot <- dat_subset %>%
@@ -76,6 +86,20 @@ temp_plot <- dat_subset %>%
 temp_plot
 
 ggsave("plots/210301_tahoecity_ambient/210301_tahoecity_temp_plot.png", plot = temp_plot, width = 10, height = 7)
+
+# plotting DO mass values (mg) for each chamber
+DO_mass_plot <- dat_full %>%
+  ggplot(aes(x = delta_T_min, y = oxygen_mass_mg, color = chamber)) +
+  geom_line(size = 1.5) +
+  scale_color_viridis_d() +
+  facet_wrap(~treatment) +
+  labs(y = expression(Oxygen~Mass~(mg)), x = "Elapsed Time (min)", title = "Tahoe City Incubation DO") +
+  theme_bw(base_size = 20) +
+  theme(legend.position = "none")
+
+DO_mass_plot
+
+ggsave("plots/210301_tahoecity_ambient/210301_tahoecity_DO_mass_plot.png", plot = DO_mass_plot, width = 10, height = 7)
 
 ```
 
