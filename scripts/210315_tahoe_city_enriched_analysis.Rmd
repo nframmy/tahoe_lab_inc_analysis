@@ -76,7 +76,7 @@ DO_conc_plot <- dat_full %>%
 
 DO_conc_plot
 
-#ggsave("plots/210301_tahoecity_ambient/210301_tahoecity_DO_plot.png", plot = DO_plot, width = 10, height = 7)
+ggsave("plots/210315_tahoecity_enriched/210315_tahoecity_DO_conc_plot.png", plot = DO_conc_plot, width = 10, height = 7)
 
 # plotting temperature for each chamber
 temp_plot <- dat_full %>%
@@ -90,7 +90,7 @@ temp_plot <- dat_full %>%
 
 temp_plot
 
-#ggsave("plots/210301_tahoecity_ambient/210301_tahoecity_temp_plot.png", plot = temp_plot, width = 10, height = 7)
+ggsave("plots/210315_tahoecity_enriched/210315_tahoecity_temp_plot.png", plot = temp_plot, width = 10, height = 7)
 
 # plotting DO mass (mg) for each chamber
 DO_mass_plot <- dat_full %>%
@@ -102,6 +102,8 @@ DO_mass_plot <- dat_full %>%
   theme_bw(base_size = 20)
 
   DO_mass_plot
+  
+ggsave("plots/210315_tahoecity_enriched/210315_tahoecity_DO_mass_plot.png", plot = DO_mass_plot, width = 10, height = 7)
 ```
 
 
