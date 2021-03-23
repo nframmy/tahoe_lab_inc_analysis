@@ -10,6 +10,7 @@ library(ggplot2)
 library(tidyverse)
 library(lubridate)
 library(ggpubr)
+library(plotly)
 # changing working directory from /scripts to /tahoe_lab_inc_analysis
 knitr::opts_knit$set(root.dir = '..')
 ```
@@ -52,7 +53,7 @@ str(dat_chambers)
 
 # joining DO data and chamber data by "chamber" column
 dat_full <- full_join(dat_subset, dat_chambers, by = "chamber")
-View(dat_full)
+#View(dat_full)
 # converting oxygen concentration (mg/L) to oxygen mass (mg) by multipying by water volumes in chambers
 dat_full <- dat_full %>%
   mutate(oxygen_mass_mg = oxygen * water_volume_L)
@@ -60,7 +61,7 @@ dat_full <- dat_full %>%
 
 
 
-# Plotting DO and temp in chambers
+## Plotting DO and temp in chambers
 ```{r echo = FALSE}
 # making treatment a factor variable and re-ordering it for plots
 dat_full$treatment <- factor(dat_subset$treatment, levels = c("7C", "10C", "13C", "16C"))
@@ -96,6 +97,7 @@ ggsave("plots/210315_tahoecity_enriched/210315_tahoecity_temp_plot.png", plot = 
 DO_mass_plot <- dat_full %>%
   ggplot(aes(x = delta_T_min, y = oxygen_mass_mg, color = chamber)) +
   geom_line(size = 1.5) +
+  xlim(70, 285) +
   scale_color_viridis_d() +
   facet_wrap(~treatment) +
   labs(y = expression(Oxygen~Mass~(mg)), x = "Elapsed Time (min)", title = "Tahoe City Incubation DO Mass") +
@@ -105,6 +107,95 @@ DO_mass_plot <- dat_full %>%
   DO_mass_plot
   
 ggsave("plots/210315_tahoecity_enriched/210315_tahoecity_DO_mass_plot.png", plot = DO_mass_plot, width = 10, height = 7)
+
+# making interactive plot with plotly to help identity data points for rate calculations below
+p<- plotly::ggplotly(DO_mass_plot)
+p
+# exporting interactive plot to html
+htmlwidgets::saveWidget(as_widget(p), "plots/210315_tahoecity_enriched/210315_tc_DO_mass_plot.html")
+
 ```
 
+## Metabolic Rate Calculations
+### Tank 1
+#### Chamber 9
+```{r}
+# NEP rate calculations
+
+## the linear portion of the NEP curve is roughly from minute 95 to minute 170 ##
+tc_e_9 <- dat_full %>%
+  filter(chamber == "Chamber 9" & delta_T_min >= 95 & delta_T_min <= 170)
+
+tc_e_9_NEP_mod <- lm(oxygen_mass_mg~delta_T_min, tc_e_9)
+summary(tc_e_9_NEP_mod)
+tc_e_9_NEP_mod$coefficients[2]
+tc_e_9_NEP_slope <- unname(tc_e_9_NEP_mod$coefficients[2])
+
+# oxygen mass (mg) = 0.01659 * time(minutes) + 0.2537
+
+## Now converting this rate from mg O2 per minute to per day by multiplying this rate by 1440 minutes per day. ##
+tc_e_9_NEP <- tc_e_9_NEP_slope * 1440
+tc_e_9_NEP
+
+# ER rate calculations
+## linear portion of the ER curve is roughly from minute 225 to the end of the incubation.
+# This is due to a weird oxygen spike caused by temperature measurements associated with DO calculations reflecting water bath temperatures and not temperatures inside chambers, thus DO msmnts were inflated for this brief period.
+# I took slopes of ER curves before and after the erroneous DO spike and averaged the two slopes to get the average ER rate
+tc_e_9 <- dat_full %>%
+  filter(chamber =="Chamber 9" & delta_T_min >= 225)
+
+tc_e_9_ER_mod <- lm(oxygen_mass_mg~delta_T_min, tc_e_9)
+summary(tc_e_9_ER_mod)
+tc_e_9_ER_mod$coefficients[2]
+tc_e_9_ER_slope <- unname(tc_e_9_ER_mod$coefficients[2])
+
+# oxygen mass (mg) =* time(minutes) + 
+
+## Now converting this rate from mg O2 per minute to per day by multiplying this rate by 1440 minutes per day. ##
+tc_e_9_ER <- tc_e_9_ER_slope * 1440
+tc_e_9_ER
+
+## checking slope of other section of ER curve to make sure they're the same before and after the anomalous DO spike
+tc_e_9 <- dat_full %>%
+  filter(chamber =="Chamber 9" & delta_T_min >= 175 & delta_T_min <= 215)
+tc_e_9_ER_mod2 <- lm(oxygen_mass_mg~delta_T_min, tc_e_9)
+summary(tc_e_9_ER_mod2)
+```
+
+#### Chamber 1
+```{r}
+# NEP rate calculations
+
+## the linear portion of the NEP curve is roughly from minute 95 to minute 170 ##
+tc_e_9 <- dat_full %>%
+  filter(chamber == "Chamber 9" & delta_T_min >= 95 & delta_T_min <= 170)
+
+tc_e_9_NEP_mod <- lm(oxygen_mass_mg~delta_T_min, tc_e_9)
+summary(tc_e_9_NEP_mod)
+tc_e_9_NEP_mod$coefficients[2]
+tc_e_9_NEP_slope <- unname(tc_e_9_NEP_mod$coefficients[2])
+
+# oxygen mass (mg) = 0.01659 * time(minutes) + 0.2537
+
+## Now converting this rate from mg O2 per minute to per day by multiplying this rate by 1440 minutes per day. ##
+tc_e_9_NEP <- tc_e_9_NEP_slope * 1440
+tc_e_9_NEP
+
+# ER rate calculations
+## linear portion of the ER curve is roughly from minute 225 to the end of the incubation.
+# This is due to a weird oxygen spike caused by temperature measurements associated with DO calculations reflecting water bath temperatures and not temperatures inside chambers, thus DO msmnts were inflated for this brief period.
+tc_e_9 <- dat_full %>%
+  filter(chamber =="Chamber 9" & delta_T_min >= 225)
+
+tc_e_9_ER_mod <- lm(oxygen_mass_mg~delta_T_min, tc_e_9)
+summary(tc_e_9_ER_mod)
+tc_e_9_ER_mod$coefficients[2]
+tc_e_9_ER_slope <- unname(tc_e_9_ER_mod$coefficients[2])
+
+# oxygen mass (mg) =* time(minutes) + 
+
+## Now converting this rate from mg O2 per minute to per day by multiplying this rate by 1440 minutes per day. ##
+tc_e_9_ER <- tc_e_9_ER_slope * 1440
+tc_e_9_ER
+```
 
