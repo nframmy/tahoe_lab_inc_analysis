@@ -884,11 +884,24 @@ head(tc_e_rates)
 ```{r}
 dat_final <- full_join(dat_chambers, tc_e_rates, by = "chamber")
 #View(dat_final)
+
+# adding temperature treatment column based off of tank column already in data
+dat_final <- dat_final %>%
+  mutate(treatment = ifelse(tank == "1", "10C", ifelse(tank == "2", "7C", ifelse(tank == "3", "13C", "16C"))))
 ```
 
 # Normalizing metabolic rates to biomass metrics
 ```{r}
 dat_final <- dat_final %>%
   mutate(GPP_mgO2_d_gAFDW = GPP_mg_d/total_AFDW_g, NEP_mgO2_d_gAFDW = NEP_mg_d/total_AFDW_g, ER_mgO2_d_gAFDW = ER_mg_d/total_AFDW_g)
+View(dat_final)
+
+# melting data from wide to long format in order to graph multiple y-variables at once
+melt_dat <- melt(dat_final, id.vars = c("Location", "Sample_Date", "Sample_Depth_cm",  "Month", "Year", "Depth_m" ), variable.name = "nutrient_variable", value.name = "phosphorus_concentration")
+#View(melt_sedwater)
+
+# plotting various rates normalized to AFDW for each temperature treatment
+dat_final %>%
+  ggplot(aes(treatment, fill = ))
 ```
 
