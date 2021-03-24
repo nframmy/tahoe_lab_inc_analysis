@@ -15,7 +15,7 @@ library(plotly)
 knitr::opts_knit$set(root.dir = '..')
 ```
 
-
+# Importing and Processing data
 ```{r, include = FALSE}
 # importing and cleaning up DO data
 dat <- read_csv("data/210315_tahoecity_enriched_inc/210316_DO_tahoecity_inc_enriched_R.csv", skip = 1)
@@ -861,8 +861,28 @@ tc_e_14_GPP <- tc_e_14_NEP - tc_e_14_ER
 ```
 
 
-### Creating dataframe with metab rates
+## Creating dataframe with metab rates
 ```{r}
+# creating dataframe of anoxic flux rates to make barplot
+tc_e_rates <- data.frame(
+  "NEP_mg_d" = c(tc_e_1_NEP, tc_e_2_NEP, tc_e_3_NEP, tc_e_4_NEP, tc_e_5_NEP, tc_e_6_NEP, tc_e_7_NEP, tc_e_8_NEP, tc_e_9_NEP, tc_e_10_NEP, tc_e_11_NEP, tc_e_12_NEP, tc_e_13_NEP, tc_e_14_NEP, "NA", tc_e_16_NEP),
+  "ER_mg_d" = c(tc_e_1_ER, tc_e_2_ER, tc_e_3_ER, tc_e_4_ER, tc_e_5_ER, tc_e_6_ER, tc_e_7_ER, tc_e_8_ER, tc_e_9_ER, tc_e_10_ER, tc_e_11_ER, tc_e_12_ER, tc_e_13_ER, tc_e_14_ER, "NA",  tc_e_16_ER),
+  "chamber" = c("Chamber 1", "Chamber 2", "Chamber 3", "Chamber 4", "Chamber 5", "Chamber 6", "Chamber 7", "Chamber 8", "Chamber 9", "Chamber 10", "Chamber 11", "Chamber 12", "Chamber 13", "Chamber 14", "Chamber 15", "Chamber 16"))
+head(tc_e_rates)
+str(tc_e_rates)
 
+# formatting data types of columns
+tc_e_rates$NEP_mg_d <- as.numeric(tc_e_rates$NEP_mg_d)
+tc_e_rates$ER_mg_d <- as.numeric(tc_e_rates$ER_mg_d)
+
+tc_e_rates <- tc_e_rates %>%
+  mutate(GPP_mg_d = NEP_mg_d - ER_mg_d)
+head(tc_e_rates)
+```
+
+## Joining metab rates dataframe with chamber dataframe
+```{r}
+dat_final <- full_join(dat_chambers, tc_e_rates, by = "chamber")
+View(dat_final)
 ```
 
