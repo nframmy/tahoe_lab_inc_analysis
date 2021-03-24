@@ -883,6 +883,12 @@ head(tc_e_rates)
 ## Joining metab rates dataframe with chamber dataframe
 ```{r}
 dat_final <- full_join(dat_chambers, tc_e_rates, by = "chamber")
-View(dat_final)
+#View(dat_final)
+```
+
+# Normalizing metabolic rates to biomass metrics
+```{r}
+dat_final <- dat_final %>%
+  mutate(GPP_mgO2_d_gAFDW = GPP_mg_d/total_AFDW_g, NEP_mgO2_d_gAFDW = NEP_mg_d/total_AFDW_g, ER_mgO2_d_gAFDW = ER_mg_d/total_AFDW_g)
 ```
 
