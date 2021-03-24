@@ -11,6 +11,7 @@ library(tidyverse)
 library(lubridate)
 library(ggpubr)
 library(plotly)
+library(reshape2)
 # changing working directory from /scripts to /tahoe_lab_inc_analysis
 knitr::opts_knit$set(root.dir = '..')
 ```
@@ -896,12 +897,27 @@ dat_final <- dat_final %>%
   mutate(GPP_mgO2_d_gAFDW = GPP_mg_d/total_AFDW_g, NEP_mgO2_d_gAFDW = NEP_mg_d/total_AFDW_g, ER_mgO2_d_gAFDW = ER_mg_d/total_AFDW_g)
 View(dat_final)
 
+# subsetting only the columns I need
+metab_subset <- dat_final %>%
+  select(chamber, treatment, GPP_mgO2_d_gAFDW, NEP_mgO2_d_gAFDW, ER_mgO2_d_gAFDW)
+
+# averaging and taking std of metabolic rates by temperature treatment (I multiplied ER by -1 to make it positive)
+metab_avg <- metab_subset %>%
+  filter(!is.na(ER_mgO2_d_gAFDW)) %>%
+  group_by(treatment) %>%
+  summarise(avg_GPP = mean(GPP_mgO2_d_gAFDW), sd_GPP = sd(GPP_mgO2_d_gAFDW), avg_NEP = mean(NEP_mgO2_d_gAFDW), sd_NEP = sd(NEP_mgO2_d_gAFDW), avg_ER = -1 * mean(ER_mgO2_d_gAFDW), sd_ER = sd(ER_mgO2_d_gAFDW))
+View(metab_avg)
+
 # melting data from wide to long format in order to graph multiple y-variables at once
-melt_dat <- melt(dat_final, id.vars = c("Location", "Sample_Date", "Sample_Depth_cm",  "Month", "Year", "Depth_m" ), variable.name = "nutrient_variable", value.name = "phosphorus_concentration")
-#View(melt_sedwater)
+melt_metab <- melt(metab_avg, id.vars = c("treatment", "sd_GPP", "sd_NEP", "sd_ER"), variable.name = "rate_variable", value.name = "metabolic_rate_mgO2_d_gAFDW")
+View(melt_metab)
+
+# making treatment a factor variable and re-ordering it for plots
+melt_metab$treatment <- factor(melt_metab$treatment, levels = c("7C", "10C", "13C", "16C"))
 
 # plotting various rates normalized to AFDW for each temperature treatment
-dat_final %>%
-  ggplot(aes(treatment, fill = ))
+melt_metab %>%
+  ggplot(aes(treatment, metabolic_rate_mgO2_d_gAFDW, fill = rate_variable)) +
+  geom_bar(stat = "identity", position = "dodge")
 ```
 
