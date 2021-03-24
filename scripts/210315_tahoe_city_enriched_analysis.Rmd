@@ -120,7 +120,7 @@ htmlwidgets::saveWidget(as_widget(p), "plots/210315_tahoecity_enriched/210315_tc
 ### Tank 1
 #### Chamber 9
 ```{r}
-# NEP rate calculations
+######################## NEP rate calculations
 
 ## the linear portion of the NEP curve is roughly from minute 95 to minute 170 ##
 tc_e_9 <- dat_full %>%
@@ -137,7 +137,8 @@ tc_e_9_NEP_slope <- unname(tc_e_9_NEP_mod$coefficients[2])
 tc_e_9_NEP <- tc_e_9_NEP_slope * 1440
 tc_e_9_NEP
 
-# ER rate calculations
+######################## ER rate calculations
+
 ## linear portion of the ER curve is roughly from minute 225 to the end of the incubation.
 # This is due to a weird oxygen spike caused by temperature measurements associated with DO calculations reflecting water bath temperatures and not temperatures inside chambers, thus DO msmnts were inflated for this brief period.
 # I took slopes of ER curves before and after the erroneous DO spike and averaged the two slopes to get the average ER rate
@@ -149,53 +150,350 @@ summary(tc_e_9_ER_mod)
 tc_e_9_ER_mod$coefficients[2]
 tc_e_9_ER_slope <- unname(tc_e_9_ER_mod$coefficients[2])
 
-# oxygen mass (mg) =* time(minutes) + 
+# oxygen mass (mg) = -0.01045 * time(minutes) + 30.49
 
-## Now converting this rate from mg O2 per minute to per day by multiplying this rate by 1440 minutes per day. ##
-tc_e_9_ER <- tc_e_9_ER_slope * 1440
-tc_e_9_ER
 
 ## checking slope of other section of ER curve to make sure they're the same before and after the anomalous DO spike
 tc_e_9 <- dat_full %>%
   filter(chamber =="Chamber 9" & delta_T_min >= 175 & delta_T_min <= 215)
+
 tc_e_9_ER_mod2 <- lm(oxygen_mass_mg~delta_T_min, tc_e_9)
 summary(tc_e_9_ER_mod2)
+tc_e_9_ER_mod2$coefficients[2]
+tc_e_9_ER_slope2 <- unname(tc_e_9_ER_mod2$coefficients[2])
+
+# oxygen mass (mg) = -0.00697 * time(minutes) + 29.41
+
+# calculate average of the two ER slopes
+tc_e_9_ER_slope_avg <- (tc_e_9_ER_slope + tc_e_9_ER_slope2)/2
+
+
+## Now converting this rate from mg O2 per minute to per day by multiplying this rate by 1440 minutes per day. ##
+tc_e_9_ER <- tc_e_9_ER_slope_avg * 1440
+tc_e_9_ER
+
 ```
 
 #### Chamber 1
 ```{r}
-# NEP rate calculations
+######################## NEP rate calculations
 
 ## the linear portion of the NEP curve is roughly from minute 95 to minute 170 ##
-tc_e_9 <- dat_full %>%
-  filter(chamber == "Chamber 9" & delta_T_min >= 95 & delta_T_min <= 170)
+tc_e_1 <- dat_full %>%
+  filter(chamber == "Chamber 1" & delta_T_min >= 95 & delta_T_min <= 170)
 
-tc_e_9_NEP_mod <- lm(oxygen_mass_mg~delta_T_min, tc_e_9)
-summary(tc_e_9_NEP_mod)
-tc_e_9_NEP_mod$coefficients[2]
-tc_e_9_NEP_slope <- unname(tc_e_9_NEP_mod$coefficients[2])
+tc_e_1_NEP_mod <- lm(oxygen_mass_mg~delta_T_min, tc_e_1)
+summary(tc_e_1_NEP_mod)
+tc_e_1_NEP_mod$coefficients[2]
+tc_e_1_NEP_slope <- unname(tc_e_1_NEP_mod$coefficients[2])
 
-# oxygen mass (mg) = 0.01659 * time(minutes) + 0.2537
 
 ## Now converting this rate from mg O2 per minute to per day by multiplying this rate by 1440 minutes per day. ##
-tc_e_9_NEP <- tc_e_9_NEP_slope * 1440
-tc_e_9_NEP
+tc_e_1_NEP <- tc_e_1_NEP_slope * 1440
+tc_e_1_NEP
 
-# ER rate calculations
+######################## ER rate calculations
+
 ## linear portion of the ER curve is roughly from minute 225 to the end of the incubation.
 # This is due to a weird oxygen spike caused by temperature measurements associated with DO calculations reflecting water bath temperatures and not temperatures inside chambers, thus DO msmnts were inflated for this brief period.
-tc_e_9 <- dat_full %>%
-  filter(chamber =="Chamber 9" & delta_T_min >= 225)
+# I took slopes of ER curves before and after the erroneous DO spike and averaged the two slopes to get the average ER rate
+tc_e_1 <- dat_full %>%
+  filter(chamber =="Chamber 1" & delta_T_min >= 225)
 
-tc_e_9_ER_mod <- lm(oxygen_mass_mg~delta_T_min, tc_e_9)
-summary(tc_e_9_ER_mod)
-tc_e_9_ER_mod$coefficients[2]
-tc_e_9_ER_slope <- unname(tc_e_9_ER_mod$coefficients[2])
+tc_e_1_ER_mod <- lm(oxygen_mass_mg~delta_T_min, tc_e_1)
+summary(tc_e_1_ER_mod)
+tc_e_1_ER_mod$coefficients[2]
+tc_e_1_ER_slope <- unname(tc_e_1_ER_mod$coefficients[2])
 
-# oxygen mass (mg) =* time(minutes) + 
+
+
+## checking slope of other section of ER curve to make sure they're the same before and after the anomalous DO spike
+tc_e_1 <- dat_full %>%
+  filter(chamber =="Chamber 1" & delta_T_min >= 175 & delta_T_min <= 215)
+
+tc_e_1_ER_mod2 <- lm(oxygen_mass_mg~delta_T_min, tc_e_1)
+summary(tc_e_1_ER_mod2)
+tc_e_1_ER_mod2$coefficients[2]
+tc_e_1_ER_slope2 <- unname(tc_e_1_ER_mod2$coefficients[2])
+
+
+# calculate average of the two ER slopes
+tc_e_1_ER_slope_avg <- (tc_e_1_ER_slope + tc_e_1_ER_slope2)/2
+
 
 ## Now converting this rate from mg O2 per minute to per day by multiplying this rate by 1440 minutes per day. ##
-tc_e_9_ER <- tc_e_9_ER_slope * 1440
-tc_e_9_ER
+tc_e_1_ER <- tc_e_1_ER_slope_avg * 1440
+tc_e_1_ER
+```
+
+#### Chamber 8
+```{r}
+######################## NEP rate calculations
+
+## the linear portion of the NEP curve is roughly from minute 95 to minute 170 ##
+tc_e_8 <- dat_full %>%
+  filter(chamber == "Chamber 8" & delta_T_min >= 95 & delta_T_min <= 170)
+
+tc_e_8_NEP_mod <- lm(oxygen_mass_mg~delta_T_min, tc_e_8)
+summary(tc_e_8_NEP_mod)
+tc_e_8_NEP_mod$coefficients[2]
+tc_e_8_NEP_slope <- unname(tc_e_8_NEP_mod$coefficients[2])
+
+
+## Now converting this rate from mg O2 per minute to per day by multiplying this rate by 1440 minutes per day. ##
+tc_e_8_NEP <- tc_e_8_NEP_slope * 1440
+tc_e_8_NEP
+
+######################## ER rate calculations
+
+## linear portion of the ER curve is roughly from minute 225 to the end of the incubation.
+# This is due to a weird oxygen spike caused by temperature measurements associated with DO calculations reflecting water bath temperatures and not temperatures inside chambers, thus DO msmnts were inflated for this brief period.
+# I took slopes of ER curves before and after the erroneous DO spike and averaged the two slopes to get the average ER rate
+tc_e_8 <- dat_full %>%
+  filter(chamber =="Chamber 8" & delta_T_min >= 225)
+
+tc_e_8_ER_mod <- lm(oxygen_mass_mg~delta_T_min, tc_e_8)
+summary(tc_e_8_ER_mod)
+tc_e_8_ER_mod$coefficients[2]
+tc_e_8_ER_slope <- unname(tc_e_8_ER_mod$coefficients[2])
+
+
+
+## checking slope of other section of ER curve to make sure they're the same before and after the anomalous DO spike
+tc_e_8 <- dat_full %>%
+  filter(chamber =="Chamber 8" & delta_T_min >= 175 & delta_T_min <= 215)
+
+tc_e_8_ER_mod2 <- lm(oxygen_mass_mg~delta_T_min, tc_e_8)
+summary(tc_e_8_ER_mod2)
+tc_e_8_ER_mod2$coefficients[2]
+tc_e_8_ER_slope2 <- unname(tc_e_8_ER_mod2$coefficients[2])
+
+
+# calculate average of the two ER slopes
+tc_e_8_ER_slope_avg <- (tc_e_8_ER_slope + tc_e_8_ER_slope2)/2
+
+
+## Now converting this rate from mg O2 per minute to per day by multiplying this rate by 1440 minutes per day. ##
+tc_e_8_ER <- tc_e_8_ER_slope_avg * 1440
+tc_e_8_ER
+```
+
+#### Chamber 12
+```{r}
+######################## NEP rate calculations
+
+## the linear portion of the NEP curve is roughly from minute 95 to minute 170 ##
+tc_e_12 <- dat_full %>%
+  filter(chamber == "Chamber 12" & delta_T_min >= 95 & delta_T_min <= 170)
+
+tc_e_12_NEP_mod <- lm(oxygen_mass_mg~delta_T_min, tc_e_12)
+summary(tc_e_12_NEP_mod)
+tc_e_12_NEP_mod$coefficients[2]
+tc_e_12_NEP_slope <- unname(tc_e_12_NEP_mod$coefficients[2])
+
+
+## Now converting this rate from mg O2 per minute to per day by multiplying this rate by 1440 minutes per day. ##
+tc_e_12_NEP <- tc_e_12_NEP_slope * 1440
+tc_e_12_NEP
+
+######################## ER rate calculations
+
+## linear portion of the ER curve is roughly from minute 225 to the end of the incubation.
+# This is due to a weird oxygen spike caused by temperature measurements associated with DO calculations reflecting water bath temperatures and not temperatures inside chambers, thus DO msmnts were inflated for this brief period.
+# I took slopes of ER curves before and after the erroneous DO spike and averaged the two slopes to get the average ER rate
+tc_e_12 <- dat_full %>%
+  filter(chamber =="Chamber 12" & delta_T_min >= 225)
+
+tc_e_12_ER_mod <- lm(oxygen_mass_mg~delta_T_min, tc_e_12)
+summary(tc_e_12_ER_mod)
+tc_e_12_ER_mod$coefficients[2]
+tc_e_12_ER_slope <- unname(tc_e_12_ER_mod$coefficients[2])
+
+
+
+## checking slope of other section of ER curve to make sure they're the same before and after the anomalous DO spike
+tc_e_12 <- dat_full %>%
+  filter(chamber =="Chamber 12" & delta_T_min >= 175 & delta_T_min <= 215)
+
+tc_e_12_ER_mod2 <- lm(oxygen_mass_mg~delta_T_min, tc_e_12)
+summary(tc_e_12_ER_mod2)
+tc_e_12_ER_mod2$coefficients[2]
+tc_e_12_ER_slope2 <- unname(tc_e_12_ER_mod2$coefficients[2])
+
+
+# calculate average of the two ER slopes
+tc_e_12_ER_slope_avg <- (tc_e_12_ER_slope + tc_e_12_ER_slope2)/2
+
+
+## Now converting this rate from mg O2 per minute to per day by multiplying this rate by 1440 minutes per day. ##
+tc_e_12_ER <- tc_e_12_ER_slope_avg * 1440
+tc_e_12_ER
+```
+
+### Tank 2
+#### Chamber 15
+##### Did not stir correctly, thus rates are not accurate
+
+#### Chamber 7
+```{r}
+######################## NEP rate calculations
+
+## the linear portion of the NEP curve is roughly from minute 95 to minute 175 ##
+tc_e_7 <- dat_full %>%
+  filter(chamber == "Chamber 7" & delta_T_min >= 95 & delta_T_min <= 175)
+
+tc_e_7_NEP_mod <- lm(oxygen_mass_mg~delta_T_min, tc_e_7)
+summary(tc_e_7_NEP_mod)
+tc_e_7_NEP_mod$coefficients[2]
+tc_e_7_NEP_slope <- unname(tc_e_7_NEP_mod$coefficients[2])
+
+
+## Now converting this rate from mg O2 per minute to per day by multiplying this rate by 1440 minutes per day. ##
+tc_e_7_NEP <- tc_e_7_NEP_slope * 1440
+tc_e_7_NEP
+
+######################## ER rate calculations
+
+## linear portion of the ER curve is roughly from minute 190 to minute 245
+# This is due to a weird oxygen spike caused by temperature measurements associated with DO calculations reflecting water bath temperatures and not temperatures inside chambers, thus DO msmnts were inflated for this brief period.
+# I took slopes of ER curves before and after the erroneous DO spike and averaged the two slopes to get the average ER rate
+tc_e_7 <- dat_full %>%
+  filter(chamber =="Chamber 7" & delta_T_min >= 190 & delta_T_min <= 245)
+
+tc_e_7_ER_mod <- lm(oxygen_mass_mg~delta_T_min, tc_e_7)
+summary(tc_e_7_ER_mod)
+tc_e_7_ER_mod$coefficients[2]
+tc_e_7_ER_slope <- unname(tc_e_7_ER_mod$coefficients[2])
+
+
+
+## checking slope of other section of ER curve to make sure they're the same before and after the anomalous DO spike
+tc_e_7 <- dat_full %>%
+  filter(chamber =="Chamber 7" & delta_T_min >= 260)
+
+tc_e_7_ER_mod2 <- lm(oxygen_mass_mg~delta_T_min, tc_e_7)
+summary(tc_e_7_ER_mod2)
+tc_e_7_ER_mod2$coefficients[2]
+tc_e_7_ER_slope2 <- unname(tc_e_7_ER_mod2$coefficients[2])
+
+
+# calculate average of the two ER slopes
+tc_e_7_ER_slope_avg <- (tc_e_7_ER_slope + tc_e_7_ER_slope2)/2
+
+
+## Now converting this rate from mg O2 per minute to per day by multiplying this rate by 1440 minutes per day. ##
+tc_e_7_ER <- tc_e_7_ER_slope_avg * 1440
+tc_e_7_ER
+```
+
+#### Chamber 6
+```{r}
+######################## NEP rate calculations
+
+## the linear portion of the NEP curve is roughly from minute 95 to minute 175 ##
+tc_e_6 <- dat_full %>%
+  filter(chamber == "Chamber 6" & delta_T_min >= 95 & delta_T_min <= 175)
+
+tc_e_6_NEP_mod <- lm(oxygen_mass_mg~delta_T_min, tc_e_6)
+summary(tc_e_6_NEP_mod)
+tc_e_6_NEP_mod$coefficients[2]
+tc_e_6_NEP_slope <- unname(tc_e_6_NEP_mod$coefficients[2])
+
+
+## Now converting this rate from mg O2 per minute to per day by multiplying this rate by 1440 minutes per day. ##
+tc_e_6_NEP <- tc_e_6_NEP_slope * 1440
+tc_e_6_NEP
+
+######################## ER rate calculations
+
+## linear portion of the ER curve is roughly from minute 190 to minute 245
+# This is due to a weird oxygen spike caused by temperature measurements associated with DO calculations reflecting water bath temperatures and not temperatures inside chambers, thus DO msmnts were inflated for this brief period.
+# I took slopes of ER curves before and after the erroneous DO spike and averaged the two slopes to get the average ER rate
+tc_e_6 <- dat_full %>%
+  filter(chamber =="Chamber 6" & delta_T_min >= 190 & delta_T_min <= 245)
+
+tc_e_6_ER_mod <- lm(oxygen_mass_mg~delta_T_min, tc_e_6)
+summary(tc_e_6_ER_mod)
+tc_e_6_ER_mod$coefficients[2]
+tc_e_6_ER_slope <- unname(tc_e_6_ER_mod$coefficients[2])
+
+
+
+## checking slope of other section of ER curve to make sure they're the same before and after the anomalous DO spike
+tc_e_6 <- dat_full %>%
+  filter(chamber =="Chamber 6" & delta_T_min >= 260)
+
+tc_e_6_ER_mod2 <- lm(oxygen_mass_mg~delta_T_min, tc_e_6)
+summary(tc_e_6_ER_mod2)
+tc_e_6_ER_mod2$coefficients[2]
+tc_e_6_ER_slope2 <- unname(tc_e_6_ER_mod2$coefficients[2])
+
+
+# calculate average of the two ER slopes
+tc_e_6_ER_slope_avg <- (tc_e_6_ER_slope + tc_e_6_ER_slope2)/2
+
+
+## Now converting this rate from mg O2 per minute to per day by multiplying this rate by 1440 minutes per day. ##
+tc_e_6_ER <- tc_e_6_ER_slope_avg * 1440
+tc_e_6_ER
+```
+
+#### Chamber 5
+```{r}
+######################## NEP rate calculations
+
+## the linear portion of the NEP curve is roughly from minute 95 to minute 175 ##
+tc_e_6 <- dat_full %>%
+  filter(chamber == "Chamber 6" & delta_T_min >= 95 & delta_T_min <= 175)
+
+tc_e_6_NEP_mod <- lm(oxygen_mass_mg~delta_T_min, tc_e_6)
+summary(tc_e_6_NEP_mod)
+tc_e_6_NEP_mod$coefficients[2]
+tc_e_6_NEP_slope <- unname(tc_e_6_NEP_mod$coefficients[2])
+
+
+## Now converting this rate from mg O2 per minute to per day by multiplying this rate by 1440 minutes per day. ##
+tc_e_6_NEP <- tc_e_6_NEP_slope * 1440
+tc_e_6_NEP
+
+######################## ER rate calculations
+
+## linear portion of the ER curve is roughly from minute 190 to minute 245
+# This is due to a weird oxygen spike caused by temperature measurements associated with DO calculations reflecting water bath temperatures and not temperatures inside chambers, thus DO msmnts were inflated for this brief period.
+# I took slopes of ER curves before and after the erroneous DO spike and averaged the two slopes to get the average ER rate
+tc_e_6 <- dat_full %>%
+  filter(chamber =="Chamber 6" & delta_T_min >= 190 & delta_T_min <= 245)
+
+tc_e_6_ER_mod <- lm(oxygen_mass_mg~delta_T_min, tc_e_6)
+summary(tc_e_6_ER_mod)
+tc_e_6_ER_mod$coefficients[2]
+tc_e_6_ER_slope <- unname(tc_e_6_ER_mod$coefficients[2])
+
+
+
+## checking slope of other section of ER curve to make sure they're the same before and after the anomalous DO spike
+tc_e_6 <- dat_full %>%
+  filter(chamber =="Chamber 6" & delta_T_min >= 260)
+
+tc_e_6_ER_mod2 <- lm(oxygen_mass_mg~delta_T_min, tc_e_6)
+summary(tc_e_6_ER_mod2)
+tc_e_6_ER_mod2$coefficients[2]
+tc_e_6_ER_slope2 <- unname(tc_e_6_ER_mod2$coefficients[2])
+
+
+# calculate average of the two ER slopes
+tc_e_6_ER_slope_avg <- (tc_e_6_ER_slope + tc_e_6_ER_slope2)/2
+
+
+## Now converting this rate from mg O2 per minute to per day by multiplying this rate by 1440 minutes per day. ##
+tc_e_6_ER <- tc_e_6_ER_slope_avg * 1440
+tc_e_6_ER
+```
+
+
+
+### Creating dataframe with metab rates
+```{r}
+
 ```
 
