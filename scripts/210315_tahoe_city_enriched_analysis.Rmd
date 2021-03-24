@@ -900,17 +900,26 @@ View(dat_final)
 # subsetting only the columns I need
 metab_subset <- dat_final %>%
   select(chamber, treatment, GPP_mgO2_d_gAFDW, NEP_mgO2_d_gAFDW, ER_mgO2_d_gAFDW)
+View(metab_subset)
 
 # averaging and taking std of metabolic rates by temperature treatment (I multiplied ER by -1 to make it positive)
 metab_avg <- metab_subset %>%
   filter(!is.na(ER_mgO2_d_gAFDW)) %>%
   group_by(treatment) %>%
   summarise(avg_GPP = mean(GPP_mgO2_d_gAFDW), sd_GPP = sd(GPP_mgO2_d_gAFDW), avg_NEP = mean(NEP_mgO2_d_gAFDW), sd_NEP = sd(NEP_mgO2_d_gAFDW), avg_ER = -1 * mean(ER_mgO2_d_gAFDW), sd_ER = sd(ER_mgO2_d_gAFDW))
-View(metab_avg)
+#View(metab_avg)
+
+# trying to use gather instead of melt to set up using error bars on 3 separate y variables
+gather_metab <- metab_avg %>%
+  gather(key = "rate_variable", value = val, sd)
 
 # melting data from wide to long format in order to graph multiple y-variables at once
 melt_metab <- melt(metab_avg, id.vars = c("treatment", "sd_GPP", "sd_NEP", "sd_ER"), variable.name = "rate_variable", value.name = "metabolic_rate_mgO2_d_gAFDW")
-View(melt_metab)
+#View(melt_metab)
+
+# adding in a sd column for each metabolic rate type
+melt_metab <- melt_metab %>%
+  mutate(sd = ifelse(rate_variable == "GPP" & treatment == "7C", 7.999, ifelse(rate_variable == "GPP" & treatment == "10C", 86.443, rate_variable == "GPP" & treatment == "13C", 88.81, ifelse(rate_variable == "GPP" & treatment == "16C", 86.432, ifelse(rate_variable == "NEP" & treatment == "7C", 3.38, ifelse(rate_variable == "NEP" & treatment == "10C", 62.323, ifelse(rate_variable == "NEP" & treatment == "13C", 62.849, ifelse(rate_variable == "NEP" & treatment == "16C", 44.216, ifelse(rate_variable == "ER" & treatment == "7C", 4.623, ifelse(rate_variable == "ER" & treatment == "10C", 24.741, ifelse(rate_variable == "ER" & treatment == "13C", 26.166, 44.55)))))))) )))
 
 # making treatment a factor variable and re-ordering it for plots
 melt_metab$treatment <- factor(melt_metab$treatment, levels = c("7C", "10C", "13C", "16C"))
@@ -918,6 +927,7 @@ melt_metab$treatment <- factor(melt_metab$treatment, levels = c("7C", "10C", "13
 # plotting various rates normalized to AFDW for each temperature treatment
 melt_metab %>%
   ggplot(aes(treatment, metabolic_rate_mgO2_d_gAFDW, fill = rate_variable)) +
-  geom_bar(stat = "identity", position = "dodge")
+  geom_bar(stat = "identity", position = "dodge") +
+  ?geom_errorbar(aes(ymin = avg - sd, ymax = avg + sd), width = 0.2)
 ```
 
