@@ -20,7 +20,7 @@ knitr::opts_knit$set(root.dir = '..')
 ```{r, include = FALSE}
 # importing and cleaning up DO data
 dat <- read_csv("data/210315_tahoecity_enriched_inc/210316_DO_tahoecity_inc_enriched_R.csv", skip = 1)
-str(dat)
+#str(dat)
 #View(dat)
 
 
@@ -876,6 +876,7 @@ str(tc_e_rates)
 tc_e_rates$NEP_mg_d <- as.numeric(tc_e_rates$NEP_mg_d)
 tc_e_rates$ER_mg_d <- as.numeric(tc_e_rates$ER_mg_d)
 
+# calculating GPP from NEP and ER columns
 tc_e_rates <- tc_e_rates %>%
   mutate(GPP_mg_d = NEP_mg_d - ER_mg_d)
 head(tc_e_rates)
@@ -915,7 +916,7 @@ gather_metab <- metab_avg %>%
 
 # melting data from wide to long format in order to graph multiple y-variables at once
 melt_metab <- melt(metab_avg, id.vars = c("treatment", "sd_GPP", "sd_NEP", "sd_ER"), variable.name = "rate_variable", value.name = "metabolic_rate_mgO2_d_gAFDW")
-#View(melt_metab)
+View(melt_metab)
 
 # adding in a sd column for each metabolic rate type
 melt_metab <- melt_metab %>%
@@ -928,6 +929,6 @@ melt_metab$treatment <- factor(melt_metab$treatment, levels = c("7C", "10C", "13
 melt_metab %>%
   ggplot(aes(treatment, metabolic_rate_mgO2_d_gAFDW, fill = rate_variable)) +
   geom_bar(stat = "identity", position = "dodge") +
-  ?geom_errorbar(aes(ymin = avg - sd, ymax = avg + sd), width = 0.2)
+  geom_errorbar(aes(ymin = metabolic_rate_mgO2_d_gAFDW - ifelse(rate_variable ==  "avg_GPP", sd_GPP, ifelse(rate_variable == "avg_NEP", sd_NEP, sd_ER)), ymax = metabolic_rate_mgO2_d_gAFDW + ifelse(rate_variable ==  "avg_GPP", sd_GPP, ifelse(rate_variable == "avg_NEP", sd_NEP, sd_ER))), width = 0.9, position = "dodge")
 ```
 
