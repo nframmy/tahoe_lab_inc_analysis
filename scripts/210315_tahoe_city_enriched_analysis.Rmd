@@ -969,5 +969,7 @@ rate_plot2 <- melt_metab2 %>%
   theme_bw(base_size = 20)
 
 rate_plot2
+
+ggsave("plots/210315_tahoecity_enriched/210315_tahoecity_non_norm_rate_plot.png", plot = rate_plot2, width = 15, height = 7)
 ```
 
