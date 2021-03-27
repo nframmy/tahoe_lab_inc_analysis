@@ -932,7 +932,7 @@ rate_plot <- melt_metab %>%
 
 rate_plot
 
-ggsave("plots/210315_tahoecity_enriched/210315_tahoecity_rate_plot.png", plot = rate_plot, width = 15, height = 7)
+ggsave("plots/210315_tahoecity_enriched/210315_tahoecity_AFDW_rate_plot.png", plot = rate_plot, width = 15, height = 7)
 ```
 
 # plotting non-normalized metabolic rates to check source of variance
@@ -1007,7 +1007,7 @@ SA_rate_plot <- SA_melt_metab %>%
   geom_bar(stat = "identity", position = "dodge") +
   geom_errorbar(aes(ymin = metabolic_rate_mgO2_d_m2 - ifelse(rate_variable ==  "avg_GPP", sd_GPP, ifelse(rate_variable == "avg_NEP", sd_NEP, sd_ER)), ymax = metabolic_rate_mgO2_d_m2 + ifelse(rate_variable ==  "avg_GPP", sd_GPP, ifelse(rate_variable == "avg_NEP", sd_NEP, sd_ER))), width = 0.9, position = "dodge") +
   geom_text(aes(label = round(metabolic_rate_mgO2_d_m2, 1), y = metabolic_rate_mgO2_d_m2 + 175, x = treatment), size = 7, position = position_dodge(width = 1.05)) +
-  labs(y = expression(Metabolic~Rate~(mgO[2]~day^{-1}~m^{2})), x = "Temperature Treatment", title = "Tahoe City Enriched Incubation-Surface Area Normalized Metabolism") +
+  labs(y = expression(Metabolic~Rate~(mgO[2]~~m^{-2}~day^{-1})), x = "Temperature Treatment", title = "Tahoe City Enriched Incubation-Surface Area Normalized Metabolism") +
   scale_fill_viridis_d(name = "Rate Variable", labels = c("GPP", "NEP", "ER")) +
   scale_y_continuous(expand = c(0,0)) +
   theme_bw(base_size = 20)
