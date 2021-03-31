@@ -12,6 +12,8 @@ library(lubridate)
 library(ggpubr)
 library(plotly)
 library(reshape2)
+library(DescTools)
+
 # changing working directory from /scripts to /tahoe_lab_inc_analysis
 knitr::opts_knit$set(root.dir = '..')
 ```
@@ -1049,7 +1051,7 @@ par(mfrow=c(2,2))
 plot(aov_AFDW)
 par(mfrow=c(1,1))
 
-# post-hoc analysis
+# Tukey HSD post-hoc analysis
 tukey_AFDW<-TukeyHSD(aov_AFDW)
 
 tukey_AFDW
@@ -1057,7 +1059,36 @@ tukey_AFDW
 # plotting results of Tukey HSD
 plot(tukey_AFDW, las = 1)
 
-# looks like the only significant difference was between groups 1 and 3 (the 7C and the 13C treatments)
+# Tukey HSD reports significant difference between groups 1 and 3 (the 7C and the 13C treatments)
+
+# Dunnet post-hoc test
+DunnettTest(x = dat_AOV$NEP_mgO2_d_gAFDW, g = dat_AOV$treatment_ID)
+
+# Dunnet test reports a significant difference between treatments 1 & 3 and also 1 & 4, likely due to the increased statistical power of this test compared to the Tukey HSD
+
+
+# getting dataset with averages ready for following plot by making sure variable names are consistent and adding groupings based on the Dunnet post-hoc test results
+metab_avg_aov <- metab_avg %>%
+  mutate(treatment_ID = ifelse(treatment == "7C", "1", ifelse(treatment == "10C", "2", ifelse(treatment == "13C", "3", "4")))) %>%
+  mutate(group = ifelse(treatment == "13C" | treatment == "16C", "b", "a"))
+#View(metab_avg_aov)
+
+# plotting real data with averages and error bars overlaid
+
+aov_plot <- dat_AOV %>%
+  ggplot(aes(x = treatment_ID, y = NEP_mgO2_d_gAFDW)) +
+  geom_point(cex = 5, pch = 1.0,position = position_jitter(w = 0.1, h = 0)) +
+  geom_point(data = metab_avg_aov, aes(x = treatment_ID, y = avg_NEP), cex = 5) +
+   stat_summary(fun.data = 'mean_se', geom = 'errorbar', width = 0.2) +
+  geom_text(data = metab_avg_aov, aes(label = group, y = avg_NEP + 50, x = treatment_ID), size = 7) +
+  theme_classic2(base_size = 20) +
+  labs(title = "NEP response to Temperature",
+      x = "Temperature (1=7C, 2=10C, 3=13C, 4=16C)",
+      y = expression(NEP~(mgO[2]~~m^{-2}~day^{-1}~gAFDW^{-1})))
+
+aov_plot
+
+ggsave("plots/210315_tahoecity_enriched/NEP_AOV_plot.png", plot = aov_plot, width = 15, height = 7)
 ```
 
 # ANOVA on SA-normalized metabolic rates
