@@ -1,0 +1,67 @@
+---
+title: "210407 Pineland Ambient"
+author: "Nick Framsted"
+date: "5/7/2021"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+library(ggplot2)
+library(tidyverse)
+library(lubridate)
+library(ggpubr)
+library(plotly)
+library(reshape2)
+library(DescTools)
+
+# changing working directory from /scripts to /tahoe_lab_inc_analysis
+knitr::opts_knit$set(root.dir = '..')
+```
+
+# Importing and Processing data
+```{r, include = FALSE}
+# importing and cleaning up DO data
+dat <- read_csv("data/210407_pineland_ambient/210407_DO_pineland_ambient_R.csv", skip = 1)
+str(dat)
+#View(dat)
+
+
+# filtering out rows with error codes, and adding in chamber numbers based the tank and channel number cross referenced against incubation notes
+dat_2 <- dat %>%
+  filter(Error == 0) %>%
+  mutate(chamber = ifelse(SensorID == "458949207", "Chamber 16", ifelse(SensorID == "126217967", "Chamber 13", ifelse(SensorID == "24319898", "Chamber 14", ifelse(SensorID == "172345502", "Chamber 11", ifelse(SensorID == "848546098", "Chamber 9", ifelse(SensorID == "167845455", "Chamber 1", ifelse(SensorID == "162832118", "Chamber 8", ifelse(SensorID == "135332981", "Chamber 12", ifelse(SensorID == "814963468", "Chamber 15", ifelse(SensorID == "182196134", "Chamber 6", ifelse(SensorID == "190253489", "Chamber 7", ifelse(SensorID == "141697176", "Chamber 5", ifelse(SensorID == "50027230", "Chamber 2", ifelse(SensorID == "125448721", "Chamber 3", ifelse(SensorID == "175334401", "Chamber 4", "Chamber 10"))))))))))) ))))) %>%
+  mutate(treatment = ifelse(Temp > 6 & Temp < 9, "7C", ifelse(Temp > 8 & Temp < 12, "10C", ifelse(Temp > 12 & Temp < 15, "13C", "16C"))))
+
+
+# double checking this worked
+dat_2$chamber <- as.factor(dat_2$chamber)
+levels(dat_2$chamber)
+head(dat_2)
+#summary(dat_2)
+
+#View(dat_2 %>% select(Channel, Device_Serial, chamber))
+
+# looks like it worked, all chambers are assigned to the correct rows
+
+# renaming oxygen data column and the delta_T columns to include units
+dat_2 <- dat_2 %>%
+  rename(oxygen = Value, delta_T_min = delta_t, time = Time, date = Date, temp = Temp)
+head(dat_2)
+
+
+# selecting only columns I need
+dat_subset <- dat_2 %>%
+  select(date, time, delta_T_min, oxygen, temp, chamber, treatment)
+
+# importing in other complementary data associated with chambers
+dat_chambers <- read_csv("data/210315_tahoecity_enriched_inc/chamber_wts_enriched_R.csv")
+str(dat_chambers)
+#View(dat_chambers)
+
+# joining DO data and chamber data by "chamber" column
+dat_full <- full_join(dat_subset, dat_chambers, by = "chamber")
+#View(dat_full)
+# converting oxygen concentration (mg/L) to oxygen mass (mg) by multipying by water volumes in chambers
+dat_full <- dat_full %>%
+  mutate(oxygen_mass_mg = oxygen * water_volume_L)
+```
