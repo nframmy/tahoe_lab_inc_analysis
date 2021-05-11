@@ -346,7 +346,7 @@ tc_e_12_GPP <- tc_e_12_NEP - tc_e_12_ER
 
 ### Tank 2; 7C
 #### Chamber 15
-##### Did not stir correctly, thus rates are not accurate
+##### Did not stir correctly, thus rates are not included in the analysis
 
 #### Chamber 7
 ```{r}
@@ -890,9 +890,13 @@ head(tc_e_rates)
 dat_final <- full_join(dat_chambers, tc_e_rates, by = "chamber")
 #View(dat_final)
 
-# adding temperature treatment column based off of tank column already in data
+# adding temperature treatment (discrete factor) and temp_C (continuous numeric) columns based off of tank column already in data
 dat_final <- dat_final %>%
-  mutate(treatment = ifelse(tank == "1", "10C", ifelse(tank == "2", "7C", ifelse(tank == "3", "13C", "16C"))))
+  mutate(treatment = ifelse(tank == "1", "10C", ifelse(tank == "2", "7C", ifelse(tank == "3", "13C", "16C")))) %>%
+  mutate(temp_C = ifelse(tank == "1", "10", ifelse(tank == "2", "7", ifelse(tank == "3", "13", "16"))))
+
+# making temp_C column numberic and not a factor
+dat_final$temp_C <- as.numeric(dat_final$temp_C)
 ```
 
 # Normalizing metabolic rates to biomass and surface area
@@ -934,11 +938,12 @@ rate_plot <- melt_metab %>%
   labs(y = expression(Metabolic~Rate~(mgO[2]~day^{-1}~gAFDW^{-1})), x = "Temperature Treatment", title = "Tahoe City Enriched Incubation") +
   scale_fill_viridis_d(name = "Rate Variable", labels = c("GPP", "NEP", "ER")) +
   scale_y_continuous(expand = c(0,0), limits = c(0,365)) +
-  theme_bw(base_size = 20)
+  theme_classic(base_size = 20)
 
 rate_plot
 
 ggsave("plots/210315_tahoecity_enriched/210315_tahoecity_AFDW_rate_plot.png", plot = rate_plot, width = 15, height = 7)
+
 ```
 
 # plotting non-normalized metabolic rates to check source of variance
@@ -1103,3 +1108,52 @@ plot(aov_SA)
 par(mfrow=c(1,1))
 ```
 
+# Regression of GPP (AFDW-normalized) with temperature
+```{r}
+str(dat_final)
+
+GPP_AFDW_mod <- lm(GPP_mgO2_d_gAFDW ~ temp_C, dat_final)
+summary(GPP_AFDW_mod)
+
+dat_final %>%
+  ggplot(aes(x = temp_C, y = GPP_mgO2_d_gAFDW)) +
+  geom_point(shape = 1, size = 2) +
+  geom_smooth(method = "lm") +
+  stat_regline_equation() +
+  theme_classic() +
+  labs(title = "GPP response to Temperature",
+      x = expression('Temperature (\u00B0C)'),
+      y = expression(GPP~(mgO[2]~day^{-1}~gAFDW^{-1})))
+```
+
+# Regression of GPP (SA-normalized) with temperature
+```{r}
+GPP_SA_mod <- lm(GPP_mgO2_d_m2 ~ temp_C, dat_final)
+summary(GPP_SA_mod)
+
+dat_final %>%
+  ggplot(aes(x = temp_C, y = GPP_mgO2_d_m2)) +
+  geom_point(shape = 1, size = 2) +
+  geom_smooth(method = "lm") +
+  stat_regline_equation() +
+  theme_classic() +
+  labs(title = "GPP response to Temperature",
+      x = expression('Temperature (\u00B0C)'),
+      y = expression(GPP~(mgO[2]~~m^{-2}~day^{-1})))
+```
+
+# Regression of ER (AFDW-normalized) with temperature
+```{r}
+ER_AFDW_mod <- lm(ER_mgO2_d_gAFDW ~ temp_C, dat_final)
+summary(ER_AFDW_mod)
+
+dat_final %>%
+  ggplot(aes(x = temp_C, y = ER_mgO2_d_gAFDW)) +
+  geom_point(shape = 1, size = 2) +
+  geom_smooth(method = "lm") +
+  stat_regline_equation() +
+  theme_classic() +
+  labs(title = "ER response to Temperature",
+      x = expression('Temperature (\u00B0C)'),
+      y = expression(ER~(mgO[2]~day^{-1}~gAFDW^{-1})))
+```
