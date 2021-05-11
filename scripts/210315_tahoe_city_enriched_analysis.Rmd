@@ -866,7 +866,8 @@ tc_e_14_GPP <- tc_e_14_NEP - tc_e_14_ER
 
 ## Creating dataframe with metab rates
 ```{r}
-# creating dataframe of anoxic flux rates to make barplot
+# creating dataframe of metab rates to make barplot
+## excluding chamber 15 since it had anomalous values due to a faulty stirrer
 tc_e_rates <- data.frame(
   "NEP_mg_d" = c(tc_e_1_NEP, tc_e_2_NEP, tc_e_3_NEP, tc_e_4_NEP, tc_e_5_NEP, tc_e_6_NEP, tc_e_7_NEP, tc_e_8_NEP, tc_e_9_NEP, tc_e_10_NEP, tc_e_11_NEP, tc_e_12_NEP, tc_e_13_NEP, tc_e_14_NEP, "NA", tc_e_16_NEP),
   "ER_mg_d" = c(tc_e_1_ER, tc_e_2_ER, tc_e_3_ER, tc_e_4_ER, tc_e_5_ER, tc_e_6_ER, tc_e_7_ER, tc_e_8_ER, tc_e_9_ER, tc_e_10_ER, tc_e_11_ER, tc_e_12_ER, tc_e_13_ER, tc_e_14_ER, "NA",  tc_e_16_ER),
