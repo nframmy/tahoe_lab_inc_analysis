@@ -48,7 +48,7 @@ dat_subset <- dat_2 %>%
 
 # loading in chamber water weight data
 dat_chambers <- read_csv("data/210301_tahoecity_ambient_inc/chamber_wts_ambient.csv", skip = 1)
-View(dat_chambers)
+#View(dat_chambers)
 
 # joining DO dataframe and chamber water weight data
 dat_full <- full_join(dat_subset, dat_chambers, by = "chamber")
@@ -1033,8 +1033,11 @@ tc_a_8_plot
 tc_a_rates <- data.frame(
   "NEP_mg_d" = c(tc_a_1_NEP, tc_a_2_NEP, tc_a_3_NEP, "NA", tc_a_5_NEP, tc_a_6_NEP, tc_a_7_NEP, tc_a_8_NEP, tc_a_9_NEP, tc_a_10_NEP, tc_a_14_NEP, tc_a_15_NEP, tc_a_17_NEP, tc_a_18_NEP, tc_a_19_NEP, tc_a_20_NEP),
   "ER_mg_d" = c(tc_a_1_ER, tc_a_2_ER, tc_a_3_ER, "NA", tc_a_5_ER, tc_a_6_ER, tc_a_7_ER, tc_a_8_ER, tc_a_9_ER, tc_a_10_ER, tc_a_14_ER, tc_a_15_ER, tc_a_17_ER, tc_a_18_ER,  tc_a_19_ER, tc_a_20_ER),
-  "chamber" = c("1", "2", "3", "4", "5", "6", "7", "8", "Chamber 9", "10", "14", "15", "17", "18", "19", "20"))
+  "chamber" = c("1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "14", "15", "17", "18", "19", "20"))
 head(tc_a_rates)
+
+# coercing tc_a_rates$chamber to be numeric instead of a character
+tc_a_rates$chamber <- as.numeric(tc_a_rates$chamber)
 #str(tc_a_rates)
 
 # formatting data types of columns
@@ -1056,4 +1059,135 @@ dat_final <- full_join(dat_chambers, tc_a_rates, by = "chamber")
 dat_final <- dat_final %>%
   mutate(treatment = ifelse(water_temp_C == "10", "10C", ifelse(water_temp_C == "7", "7C", ifelse(water_temp_C == "13", "13C", "16C"))))
 
+head(dat_final)
+
 ```
+
+# Normalizing metabolic rates to biomass and surface area
+```{r}
+# normalizing metabolic rates by AFDW and by rock surface area
+dat_final <- dat_final %>%
+  mutate(GPP_mgO2_d_gAFDW = GPP_mg_d/total_AFDW_g, NEP_mgO2_d_gAFDW = NEP_mg_d/total_AFDW_g, ER_mgO2_d_gAFDW = ER_mg_d/total_AFDW_g) %>%
+  mutate(GPP_mgO2_d_m2 = GPP_mg_d/rock_SA_m2, NEP_mgO2_d_m2 = NEP_mg_d/rock_SA_m2, ER_mgO2_d_m2 = ER_mg_d/rock_SA_m2)
+
+#View(dat_final)
+
+# subsetting only the columns I need
+metab_subset <- dat_final %>%
+  select(chamber, treatment, GPP_mgO2_d_gAFDW, NEP_mgO2_d_gAFDW, ER_mgO2_d_gAFDW)
+#View(metab_subset)
+
+# averaging and taking st.dev. of metabolic rates by temperature treatment (I multiplied ER by -1 to make it positive)
+metab_avg <- metab_subset %>%
+  filter(!is.na(ER_mgO2_d_gAFDW)) %>%
+  group_by(treatment) %>%
+  summarise(avg_GPP = mean(GPP_mgO2_d_gAFDW), sd_GPP = sd(GPP_mgO2_d_gAFDW), avg_NEP = mean(NEP_mgO2_d_gAFDW), sd_NEP = sd(NEP_mgO2_d_gAFDW), avg_ER = -1 * mean(ER_mgO2_d_gAFDW), sd_ER = sd(ER_mgO2_d_gAFDW))
+#View(metab_avg)
+
+
+# melting data from wide to long format in order to graph multiple y-variables at once
+melt_metab <- melt(metab_avg, id.vars = c("treatment", "sd_GPP", "sd_NEP", "sd_ER"), variable.name = "rate_variable", value.name = "metabolic_rate_mgO2_d_gAFDW")
+#View(melt_metab)
+
+
+# making treatment a factor variable and re-ordering it for plots
+melt_metab$treatment <- factor(melt_metab$treatment, levels = c("7C", "10C", "13C", "16C"))
+
+# plotting various rates normalized to AFDW for each temperature treatment
+rate_plot <- melt_metab %>%
+  ggplot(aes(treatment, metabolic_rate_mgO2_d_gAFDW, fill = rate_variable)) +
+  geom_bar(stat = "identity", position = "dodge") +
+  geom_errorbar(aes(ymin = metabolic_rate_mgO2_d_gAFDW - ifelse(rate_variable ==  "avg_GPP", sd_GPP, ifelse(rate_variable == "avg_NEP", sd_NEP, sd_ER)), ymax = metabolic_rate_mgO2_d_gAFDW + ifelse(rate_variable ==  "avg_GPP", sd_GPP, ifelse(rate_variable == "avg_NEP", sd_NEP, sd_ER))), width = 0.9, position = "dodge") +
+  geom_text(aes(label = round(metabolic_rate_mgO2_d_gAFDW, 1), y = metabolic_rate_mgO2_d_gAFDW + 15, x = treatment), size = 7, position = position_dodge(width = 1.05)) +
+  labs(y = expression(Metabolic~Rate~(mgO[2]~day^{-1}~gAFDW^{-1})), x = "Temperature Treatment", title = "Tahoe City Ambient Incubation") +
+  scale_fill_viridis_d(name = "Rate Variable", labels = c("GPP", "NEP", "ER")) +
+  scale_y_continuous(expand = c(0,0), limits = c(0,435)) +
+  theme_classic(base_size = 20)
+
+rate_plot
+
+ggsave("plots/210301_tahoecity_ambient/210301_tahoecity_ambient_AFDW_rate_plot.png", plot = rate_plot, width = 15, height = 7)
+
+```
+Looks like the AFDW-normalized metabolic rates are much higher (~1.5x) for the ambient incubation compared to the nutrient-enriched incubation (3/15/21). This could possibly be due to the different AFDW sampling methods used between these two incubations (GF/F filtering for ambient inc. vs. nitex mesh in the enriched inc.). To check for this, lets look at rock non-normalized metabolic rates.
+
+# plotting non-normalized metabolic rates to check source of variance
+```{r}
+subset2 <- dat_final %>%
+  select(chamber, treatment, GPP_mg_d, NEP_mg_d, ER_mg_d)
+#View(subset2)
+
+# averaging and taking std of metabolic rates by temperature treatment (I multiplied ER by -1 to make it positive)
+metab_avg2 <- subset2 %>%
+  filter(!is.na(ER_mg_d)) %>%
+  group_by(treatment) %>%
+  summarise(avg_GPP = mean(GPP_mg_d), sd_GPP = sd(GPP_mg_d), avg_NEP = mean(NEP_mg_d), sd_NEP = sd(NEP_mg_d), avg_ER = -1 * mean(ER_mg_d), sd_ER = sd(ER_mg_d))
+#View(metab_avg2)
+
+
+# melting data from wide to long format in order to graph multiple y-variables at once
+melt_metab2 <- melt(metab_avg2, id.vars = c("treatment", "sd_GPP", "sd_NEP", "sd_ER"), variable.name = "rate_variable", value.name = "metabolic_rate_mgO2_d")
+#View(melt_metab2)
+
+
+# making treatment a factor variable and re-ordering it for plots
+melt_metab2$treatment <- factor(melt_metab2$treatment, levels = c("7C", "10C", "13C", "16C"))
+
+# plotting non-normalized metabolic rates for each temperature treatment
+rate_plot2 <- melt_metab2 %>%
+  ggplot(aes(treatment, metabolic_rate_mgO2_d, fill = rate_variable)) +
+  geom_bar(stat = "identity", position = "dodge") +
+  geom_errorbar(aes(ymin = metabolic_rate_mgO2_d - ifelse(rate_variable ==  "avg_GPP", sd_GPP, ifelse(rate_variable == "avg_NEP", sd_NEP, sd_ER)), ymax = metabolic_rate_mgO2_d + ifelse(rate_variable ==  "avg_GPP", sd_GPP, ifelse(rate_variable == "avg_NEP", sd_NEP, sd_ER))), width = 0.9, position = "dodge") +
+  geom_text(aes(label = round(metabolic_rate_mgO2_d, 1), y = metabolic_rate_mgO2_d + 3, x = treatment), size = 7, position = position_dodge(width = 1.05)) +
+  labs(y = expression(Metabolic~Rate~(mgO[2]~day^{-1})), x = "Temperature Treatment", title = "Tahoe City Ambient Incubation") +
+  scale_fill_viridis_d(name = "Rate Variable", labels = c("GPP", "NEP", "ER")) +
+  scale_y_continuous(expand = c(0,0), limits = c(0,100)) +
+  theme_bw(base_size = 20)
+
+rate_plot2
+
+ggsave("plots/210301_tahoecity_ambient/210301_tahoecity_non_norm_rate_plot.png", plot = rate_plot2, width = 15, height = 7)
+```
+Some interesting differences here, the enriched incubation seems to show lower GPP rates in the lower 2 temperature treatments and higher in the upper 2 temperature treatments. These slight differences could be due to different sized rocks in each of the treatments, so let's try looking at rock-SA-normalized metabolic rates.
+
+# plotting metabolic rates normalized to surface area
+```{r}
+
+# subsetting only the columns I need
+SA_metab_subset <- dat_final %>%
+  select(chamber, treatment, GPP_mgO2_d_m2, NEP_mgO2_d_m2, ER_mgO2_d_m2)
+#View(SA_metab_subset)
+
+# averaging and taking std of metabolic rates by temperature treatment (I multiplied ER by -1 to make it positive)
+SA_metab_avg <- SA_metab_subset %>%
+  filter(!is.na(ER_mgO2_d_m2)) %>%
+  group_by(treatment) %>%
+  summarise(avg_GPP = mean(GPP_mgO2_d_m2), sd_GPP = sd(GPP_mgO2_d_m2), avg_NEP = mean(NEP_mgO2_d_m2), sd_NEP = sd(NEP_mgO2_d_m2), avg_ER = -1 * mean(ER_mgO2_d_m2), sd_ER = sd(ER_mgO2_d_m2))
+#View(SA_metab_avg)
+
+
+# melting data from wide to long format in order to graph multiple y-variables at once
+SA_melt_metab <- melt(SA_metab_avg, id.vars = c("treatment", "sd_GPP", "sd_NEP", "sd_ER"), variable.name = "rate_variable", value.name = "metabolic_rate_mgO2_d_m2")
+#View(SA_melt_metab)
+
+
+# making treatment a factor variable and re-ordering it for plots
+SA_melt_metab$treatment <- factor(SA_melt_metab$treatment, levels = c("7C", "10C", "13C", "16C"))
+
+# plotting various rates normalized to AFDW for each temperature treatment
+SA_rate_plot <- SA_melt_metab %>%
+  ggplot(aes(treatment, metabolic_rate_mgO2_d_m2, fill = rate_variable)) +
+  geom_bar(stat = "identity", position = "dodge") +
+  geom_errorbar(aes(ymin = metabolic_rate_mgO2_d_m2 - ifelse(rate_variable ==  "avg_GPP", sd_GPP, ifelse(rate_variable == "avg_NEP", sd_NEP, sd_ER)), ymax = metabolic_rate_mgO2_d_m2 + ifelse(rate_variable ==  "avg_GPP", sd_GPP, ifelse(rate_variable == "avg_NEP", sd_NEP, sd_ER))), width = 0.9, position = "dodge") +
+  geom_text(aes(label = round(metabolic_rate_mgO2_d_m2, 1), y = metabolic_rate_mgO2_d_m2 + 175, x = treatment), size = 7, position = position_dodge(width = 1.05)) +
+  labs(y = expression(Metabolic~Rate~(mgO[2]~~m^{-2}~day^{-1})), x = "Temperature Treatment", title = "Tahoe City Ambient Incubation-Surface Area Normalized Metabolism") +
+  scale_fill_viridis_d(name = "Rate Variable", labels = c("GPP", "NEP", "ER")) +
+  scale_y_continuous(expand = c(0,0)) +
+  theme_bw(base_size = 20)
+
+SA_rate_plot
+
+ggsave("plots/210301_tahoecity_ambient/210301_tahoecity_SArate_plot.png", plot = SA_rate_plot, width = 15, height = 7)
+```
+
+Looks like the rock SA-normalized rates of the enriched incubation are almost double of those from the ambient incubation. Interpretation of this is further complicated by the fact that the rock-SA's of all the rocks in the ambient incubation were averaged to one overall surface area since the rocks were mixed up after the incubation and their individual chamber ID's were unavailable.
