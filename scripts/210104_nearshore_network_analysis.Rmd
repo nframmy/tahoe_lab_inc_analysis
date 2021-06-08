@@ -18,6 +18,7 @@ knitr::opts_knit$set(root.dir = '..')
 # importing dataset for tahoe city (closest site to the pineland site)
 dat_TC <- read_csv("C:/Users/ntframst/Documents/Tahoe_nearshore_network_data/TC.txt")
 str(dat_TC)
+#View(dat_TC)
 ```
 
 ### plotting temperature (probeT) for TC site
@@ -52,6 +53,20 @@ seasonal_T <- daily_T %>%
   group_by(season) %>%
   summarize(avg_daily_range = mean(range_T), max_daily_range = max(range_T))
 seasonal_T
+
+
+# calculating average june temperatures for planning june 2021 incubation
+june_T <- dat_TC %>%
+  filter(TimeLocal >= "2020-06-01 00:00:00" & TimeLocal < "2020-07-01 00:00:00") %>%
+  summarize(avg_T = mean(ProbeT))
+
+# plotting june temperatures with average june temperature overlayed
+dat_TC %>%
+  filter(TimeLocal >= "2020-06-01 00:00:00" & TimeLocal < "2020-07-01 00:00:00") %>%
+  ggplot(aes(x = TimeLocal, y = ProbeT)) +
+  geom_point() +
+  geom_hline(aes(yintercept = june_T$avg_T), data = june_T, color = "red")
+  
 ```
 
 Looks like maximum daily flucuations of temperature are on the order of 6.5C in a day and average daily fluctuations are 2-3C, thus temperature treatments should be created accordingly.
