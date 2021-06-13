@@ -66,7 +66,30 @@ dat_TC %>%
   ggplot(aes(x = TimeLocal, y = ProbeT)) +
   geom_point() +
   geom_hline(aes(yintercept = june_T$avg_T), data = june_T, color = "red")
+
+# plotting daily max temps for june 2020
+dat_june <- dat_TC %>%
+  filter(TimeLocal >= "2020-06-01 00:00:00" & TimeLocal < "2020-07-01 00:00:00") %>%
+  mutate(day = day(TimeLocal)) %>%
+  group_by(day) %>%
+  summarize(maxT = max(ProbeT))
+
+avg_max_june_T <- mean(dat_june$maxT)
+
+dat_june %>%
+  ggplot(aes(x = day, y = maxT)) +
+  geom_point() +
+  geom_hline(aes(yintercept = avg_max_june_T), color = "red")
+
+# plot just for june 5-15th for planning for june 13th incubation
+dat_june %>%
+  filter(day >= 5 & day <= 15) %>%
+  ggplot(aes(x = day, y = maxT)) +
+  geom_point() +
+  geom_hline(aes(yintercept = avg_max_june_T), color = "red")
   
 ```
 
 Looks like maximum daily flucuations of temperature are on the order of 6.5C in a day and average daily fluctuations are 2-3C, thus temperature treatments should be created accordingly.
+
+Average june 2020 temp was 12.6C, average daily max temps for june is 14.29C. The range of daily max temps from june 5-15 was a minimum of ~9.5C and a max of ~16.5C, but the average was still on par with the monthly average of 14.29C.
