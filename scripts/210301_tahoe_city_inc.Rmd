@@ -1148,7 +1148,7 @@ rate_plot2
 
 ggsave("plots/210301_tahoecity_ambient/210301_tahoecity_non_norm_rate_plot.png", plot = rate_plot2, width = 15, height = 7)
 ```
-Some interesting differences here, the enriched incubation seems to show lower GPP rates in the lower 2 temperature treatments and higher in the upper 2 temperature treatments. These slight differences could be due to different sized rocks in each of the treatments, so let's try looking at rock-SA-normalized metabolic rates.
+
 
 # plotting metabolic rates normalized to surface area
 ```{r}
@@ -1190,4 +1190,84 @@ SA_rate_plot
 ggsave("plots/210301_tahoecity_ambient/210301_tahoecity_SArate_plot.png", plot = SA_rate_plot, width = 15, height = 7)
 ```
 
-Looks like the rock SA-normalized rates of the enriched incubation are almost double of those from the ambient incubation. Interpretation of this is further complicated by the fact that the rock-SA's of all the rocks in the ambient incubation were averaged to one overall surface area since the rocks were mixed up after the incubation and their individual chamber ID's were unavailable.
+# Regression of GPP (AFDW-normalized) with temperature
+```{r}
+str(dat_final)
+
+GPP_AFDW_mod <- lm(GPP_mgO2_d_gAFDW ~ water_temp_C, dat_final)
+summary(GPP_AFDW_mod)
+
+dat_final %>%
+  ggplot(aes(x = water_temp_C, y = GPP_mgO2_d_gAFDW)) +
+  geom_point(shape = 1, size = 2) +
+  geom_smooth(method = "lm") +
+  stat_regline_equation() +
+  theme_classic() +
+  labs(title = "GPP response to Temperature",
+      x = expression('Temperature (\u00B0C)'),
+      y = expression(GPP~(mgO[2]~day^{-1}~gAFDW^{-1})))
+```
+
+No significant relationship between AFDW-normalized GPP and temperature. This is possibly due to error associated with filtering using GF/F filters and very small volumes of samples as opposed to filtering the entire sample using nitex mesh in subsequent incubations.
+
+# Regression of GPP (SA-normalized) with temperature
+```{r}
+GPP_SA_mod <- lm(GPP_mgO2_d_m2 ~ water_temp_C, dat_final)
+summary(GPP_SA_mod)
+
+dat_final %>%
+  ggplot(aes(x = water_temp_C, y = GPP_mgO2_d_m2)) +
+  geom_point(shape = 1, size = 2) +
+  geom_smooth(method = "lm") +
+  stat_regline_equation() +
+  theme_classic() +
+  labs(title = "GPP response to Temperature",
+      x = expression('Temperature (\u00B0C)'),
+      y = expression(GPP~(mgO[2]~~m^{-2}~day^{-1})))
+```
+
+# Regression of ER (AFDW-normalized) with temperature
+```{r}
+ER_AFDW_mod <- lm(ER_mgO2_d_gAFDW ~ water_temp_C, dat_final)
+summary(ER_AFDW_mod)
+
+dat_final %>%
+  ggplot(aes(x = water_temp_C, y = ER_mgO2_d_gAFDW)) +
+  geom_point(shape = 1, size = 2) +
+  geom_smooth(method = "lm") +
+  stat_regline_equation() +
+  theme_classic() +
+  labs(title = "ER response to Temperature",
+      x = expression('Temperature (\u00B0C)'),
+      y = expression(ER~(mgO[2]~day^{-1}~gAFDW^{-1})))
+```
+
+A few outliers possibly due to error in measuring AFDW using GF/F method as mentioned above.
+
+# Regression of ER (SA-normalized) with temperature
+```{r}
+ER_SA_mod <- lm(ER_mgO2_d_m2 ~ water_temp_C, dat_final)
+summary(ER_SA_mod)
+
+dat_final %>%
+  ggplot(aes(x = water_temp_C, y = ER_mgO2_d_m2)) +
+  geom_point(shape = 1, size = 2) +
+  geom_smooth(method = "lm") +
+  stat_regline_equation() +
+  theme_classic() +
+  labs(title = "ER response to Temperature",
+      x = expression('Temperature (\u00B0C)'),
+      y = expression(ER~(mgO[2]~day^{-1}~m^{2})))
+```
+
+# Exporting rate data for final analysis
+```{r}
+# adding identifier column and renaming water_temp_C column for joining to enriched incubation data for nutrient effect analysis
+
+dat_final_exp <- dat_final %>%
+  mutate(nutrient_trt = "ambient") %>%
+  rename(temp_C = water_temp_C)
+#View(dat_final)
+write_csv(dat_final_exp, "data/210301_tahoecity_ambient_inc/210301_TC_ambient_rates.csv")
+```
+
