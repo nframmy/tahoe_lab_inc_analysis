@@ -1161,9 +1161,9 @@ dat_final %>%
 
 ```{r}
 # making identifier column for joining to ambient incubation data for nutrient effect analysis
-dat_final <- dat_final %>%
+dat_final_e <- dat_final %>%
   mutate(nutrient_trt = "enriched")
 # exporting data for final analysis
-write_csv(dat_final_exp, "data/210315_tahoecity_enriched_inc/210315_TC_enriched_rates.csv")
+write_csv(dat_final_e, "data/210315_tahoecity_enriched_inc/210315_TC_enriched_rates.csv")
 ```
 
