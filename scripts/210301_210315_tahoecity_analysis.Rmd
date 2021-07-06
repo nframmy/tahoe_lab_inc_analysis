@@ -68,7 +68,7 @@ dat %>%
 GPP_SA_mod <- lm(GPP_mgO2_d_m2 ~ temp_C*nutrients, dat)
 summary(GPP_SA_mod)
 
-dat %>%
+GPP_SA_plot <- dat %>%
   ggplot(aes(x = temp_C, y = GPP_mgO2_d_m2, color = nutrient_trt)) +
   geom_point(shape = 19, size = 2) +
   geom_smooth(method = "lm") +
@@ -77,6 +77,18 @@ dat %>%
   labs(title = "GPP response to Temperature",
       x = expression('Temperature (\u00B0C)'),
       y = expression(GPP~(mgO[2]~day^{-1}~m^{-2})))
+GPP_SA_plot
+
+# making simplified plot w/o expressions for use in plotly function
+GPP_SA <- dat %>%
+  ggplot(aes(x = temp_C, y = GPP_mgO2_d_m2, color = nutrient_trt, group = chamber)) +
+  geom_point(shape = 19, size = 2) +
+  geom_smooth(method = "lm") +
+  stat_regline_equation() +
+  theme_classic()
+# interactive plotly plot to get info on individual data points
+GPP_SA_plotly <- plotly::ggplotly(GPP_SA)
+GPP_SA_plotly
 ```
 
 # Regression of ER (AFDW-normalized) with temperature and nutrients
@@ -110,5 +122,80 @@ dat %>%
   labs(title = "ER response to Temperature",
       x = expression('Temperature (\u00B0C)'),
       y = expression(ER~(mgO[2]~day^{-1}~m^{-2})))
+
+# making simplified plot without expressions in the axis labels for plotly
+ER_SA_plot <- dat %>%
+  ggplot(aes(x = temp_C, y = ER_mgO2_d_m2, color = nutrient_trt, group = chamber)) +
+  geom_point(shape = 19, size = 2) +
+  geom_smooth(method = "lm") +
+  stat_regline_equation() +
+  theme_classic()
+
+# ploting interactive plot in plotly to identify which datapoints correspond to which chambers
+ER_SA_plotly <- plotly::ggplotly(ER_SA_plot)
+ER_SA_plotly
+
+```
+
+
+# Regression of surface area-normalized NEP with temp and nutrients
+```{r}
+# linear model of GPP and temp
+NEP_SA_mod <- lm(NEP_mgO2_d_m2 ~ temp_C*nutrients, dat)
+summary(NEP_SA_mod)
+
+dat %>%
+  ggplot(aes(x = temp_C, y = NEP_mgO2_d_m2, color = nutrient_trt)) +
+  geom_point(shape = 19, size = 2) +
+  geom_smooth(method = "lm") +
+  stat_regline_equation() +
+  theme_classic() +
+  labs(title = "NEP response to Temperature",
+      x = expression('Temperature (\u00B0C)'),
+      y = expression(NEP~(mgO[2]~day^{-1}~m^{-2})))
+
+# making simplified plot without expressions in the axis labels for plotly
+NEP_SA_plot <- dat %>%
+  ggplot(aes(x = temp_C, y = NEP_mgO2_d_m2, color = nutrient_trt, group = chamber)) +
+  geom_point(shape = 19, size = 2) +
+  geom_smooth(method = "lm") +
+  stat_regline_equation() +
+  theme_classic()
+
+# ploting interactive plot in plotly to identify which datapoints correspond to which chambers
+NEP_SA_plotly <- plotly::ggplotly(NEP_SA_plot)
+NEP_SA_plotly
+```
+Still seeing some outliers for chambers 2, 8, and 13. These chambers have large NEP rates and low ER rates when normalized to rock surface area. To test if this is due to possible errors in surface area measurments or is actually the result of abnormal DO curves I will plot non-normalized metabolic rates.
+
+# Investigating outlying datapoints
+```{r}
+# Plotting non normalized NEP + ER to investigate sources of variation. This could either be error in DO measurements or error in surface area measurments.
+
+## NEP ##
+# making simplified plot without expressions in the axis labels for plotly
+NEP_plot <- dat %>%
+  ggplot(aes(x = temp_C, y = NEP_mg_d, color = nutrient_trt, group = chamber)) +
+  geom_point(shape = 19, size = 2) +
+  geom_smooth(method = "lm") +
+  stat_regline_equation() +
+  theme_classic()
+
+# ploting interactive plot in plotly to identify which datapoints correspond to which chambers
+NEP_plotly <- plotly::ggplotly(NEP_plot)
+NEP_plotly
+
+## ER ##
+# making simplified plot without expressions in the axis labels for plotly
+ER_plot <- dat %>%
+  ggplot(aes(x = temp_C, y = ER_mg_d, color = nutrient_trt, group = chamber)) +
+  geom_point(shape = 19, size = 2) +
+  geom_smooth(method = "lm") +
+  stat_regline_equation() +
+  theme_classic()
+
+# ploting interactive plot in plotly to identify which datapoints correspond to which chambers
+ER_plotly <- plotly::ggplotly(ER_plot)
+ER_plotly
 ```
 
