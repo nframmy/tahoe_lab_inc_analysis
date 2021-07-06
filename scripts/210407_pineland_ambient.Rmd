@@ -22,11 +22,13 @@ knitr::opts_knit$set(root.dir = '..')
 ```{r, include = FALSE}
 # importing and cleaning up DO data
 dat <- read_csv("data/210407_pineland_ambient/210407_DO_pineland_ambient_R.csv", skip = 1)
-str(dat)
-View(dat)
+#str(dat)
+#View(dat)
 
 
 # filtering out rows with error codes, and adding in chamber numbers based the tank and channel number cross referenced against incubation notes
+## double checked for correctness on 7/6/21 NTF
+
 dat_2 <- dat %>%
   filter(Error == 0) %>%
   mutate(chamber = ifelse(SensorID == "458949207", "16", ifelse(SensorID == "126217967", "13", ifelse(SensorID == "24319898", "14", ifelse(SensorID == "172345502", "11", ifelse(SensorID == "848546098", "9", ifelse(SensorID == "167845455", "1", ifelse(SensorID == "162832118", "8", ifelse(SensorID == "135332981", "12", ifelse(SensorID == "814963468", "15", ifelse(SensorID == "182196134", "6", ifelse(SensorID == "190253489", "7", ifelse(SensorID == "141697176", "5", ifelse(SensorID == "50027230", "2", ifelse(SensorID == "125448721", "3", ifelse(SensorID == "175334401", "4", "10"))))))))))) ))))) %>%
@@ -36,7 +38,7 @@ dat_2 <- dat %>%
 # double checking this worked
 dat_2$chamber <- as.factor(dat_2$chamber)
 levels(dat_2$chamber)
-str(dat_2)
+#str(dat_2)
 #summary(dat_2)
 
 #View(dat_2 %>% select(Channel, Device_Serial, chamber))
@@ -57,7 +59,7 @@ dat_subset <- dat_2 %>%
 
 # importing in other complementary data associated with chambers
 dat_chambers <- read_csv("data/210407_pineland_ambient/210407_pineland_datasheet_R.csv")
-str(dat_chambers)
+#str(dat_chambers)
 dat_chambers$chamber <- as.numeric(dat_chambers$chamber)
 #View(dat_chambers)
 
