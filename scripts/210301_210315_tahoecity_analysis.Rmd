@@ -168,7 +168,7 @@ NEP_SA_plotly
 ```
 Still seeing some outliers for chambers 2, 8, and 13. These chambers have large NEP rates and low ER rates when normalized to rock surface area. To test if this is due to possible errors in surface area measurments or is actually the result of abnormal DO curves I will plot non-normalized metabolic rates.
 
-# Investigating outlying datapoints
+# Investigating outlying datapoints and sources of error
 ```{r}
 # Plotting non normalized NEP + ER to investigate sources of variation. This could either be error in DO measurements or error in surface area measurments.
 
@@ -198,4 +198,4 @@ ER_plot <- dat %>%
 ER_plotly <- plotly::ggplotly(ER_plot)
 ER_plotly
 ```
-
+Rocks 2, 8, and 13 have outlying data points. They appear to have near-normal metabolic rates before being normalized to rock surface area. Additionally, these 3 outlying rocks each tend to be on the smaller end with rocks 2 and 8 being the smallest 2 rocks and rock 13 being the 4th smallest rock. This suggests the source of error for these outlying data points is in the surface area measurements rather than the DO measurements. For this reason they should possibly be excluded from the regression analyses.
