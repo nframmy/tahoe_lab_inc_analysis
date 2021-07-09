@@ -1258,3 +1258,74 @@ pnld_a_5_plot <- dat_full %>%
 pnld_a_5_plot
 ```
 
+## Creating dataframe with metab rates
+```{r}
+# creating dataframe of metab rates to make barplot
+## excluding chamber 15 since it had anomalous values due to a faulty stirrer
+pnld_a_rates <- data.frame(
+  "NEP_mg_d" = c(pnld_a_1_NEP, pnld_a_2_NEP, pnld_a_3_NEP, pnld_a_4_NEP, pnld_a_5_NEP, pnld_a_6_NEP, pnld_a_7_NEP, pnld_a_8_NEP, pnld_a_9_NEP, pnld_a_10_NEP, pnld_a_11_NEP, pnld_a_12_NEP, pnld_a_13_NEP, pnld_a_14_NEP, pnld_a_15_NEP, pnld_a_16_NEP),
+  "ER_mg_d" = c(pnld_a_1_ER, pnld_a_2_ER, pnld_a_3_ER, pnld_a_4_ER, pnld_a_5_ER, pnld_a_6_ER, pnld_a_7_ER, pnld_a_8_ER, pnld_a_9_ER, pnld_a_10_ER, pnld_a_11_ER, pnld_a_12_ER, pnld_a_13_ER, pnld_a_14_ER, pnld_a_15_ER,  pnld_a_16_ER),
+  "chamber" = c("1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16"))
+head(pnld_a_rates)
+#str(pnld_a_rates)
+
+# formatting data types of columns
+pnld_a_rates$NEP_mg_d <- as.numeric(pnld_a_rates$NEP_mg_d)
+pnld_a_rates$ER_mg_d <- as.numeric(pnld_a_rates$ER_mg_d)
+
+# calculating GPP from NEP and ER columns
+pnld_a_rates <- pnld_a_rates %>%
+  mutate(GPP_mg_d = NEP_mg_d - ER_mg_d)
+head(pnld_a_rates)
+```
+
+## Joining metab rates dataframe with chamber dataframe
+```{r}
+# changing chamber column in datasheet to character to be compatable to joining to pnld_a_rates
+dat_chambers$chamber <- as.factor(dat_chambers$chamber)
+
+# joining chamber and metabolic rate data
+dat_final <- full_join(dat_chambers, pnld_a_rates, by = "chamber")
+#View(dat_final)
+
+# adding temperature treatment (discrete factor) and temp_C (continuous numeric) columns based off of tank column already in data
+dat_final <- dat_final %>%
+  mutate(
+    treatment = case_when(
+      tank == "1" ~ "10C",
+      tank == "2" ~ "7C",
+      tank == "3" ~ "13C",
+      tank == "4" ~ "16C"
+    )) %>%
+  mutate(
+    temp_C = case_when(
+           tank == "1" ~ "10",
+           tank == "2" ~ "7",
+           tank == "3" ~ "13",
+           tank == "4" ~ "16"
+           ))
+
+# making temp_C column numberic and not a factor
+dat_final$temp_C <- as.numeric(dat_final$temp_C)
+
+#View(dat_final)
+```
+
+## Normalizing metabolic rates
+```{r}
+# normalizing metabolic rates by AFDW and by rock surface area
+dat_final <- dat_final %>%
+  mutate(GPP_mgO2_d_gAFDW = GPP_mg_d/total_AFDW_g, NEP_mgO2_d_gAFDW = NEP_mg_d/total_AFDW_g, ER_mgO2_d_gAFDW = ER_mg_d/total_AFDW_g) %>%
+  mutate(GPP_mgO2_d_m2 = GPP_mg_d/rock_SA_m2, NEP_mgO2_d_m2 = NEP_mg_d/rock_SA_m2, ER_mgO2_d_m2 = ER_mg_d/rock_SA_m2)
+
+#View(dat_final)
+```
+
+# Exporting metabolic rate data for further analysis
+```{r}
+# making identifier column for joining to ambient incubation data for nutrient effect analysis
+dat_final_a <- dat_final %>%
+  mutate(nutrient_trt = "ambient")
+# exporting data for final analysis
+write_csv(dat_final_a, "data/210407_pineland_ambient/210407_pnld_ambient_rates.csv")
+```
