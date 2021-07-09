@@ -1158,7 +1158,7 @@ dat_final %>%
       y = expression(ER~(mgO[2]~day^{-1}~gAFDW^{-1})))
 ```
 
-
+# Exporting metabolic rate data for further analysis
 ```{r}
 # making identifier column for joining to ambient incubation data for nutrient effect analysis
 dat_final_e <- dat_final %>%
