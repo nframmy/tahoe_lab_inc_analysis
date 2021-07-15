@@ -21,19 +21,22 @@ knitr::opts_knit$set(root.dir = '..')
 # Importing and Processing data
 ```{r, include = FALSE}
 # importing and cleaning up metabolism data from both ambient and enriched incubations
-dat_a <- read_csv("data/210301_tahoecity_ambient_inc/210301_TC_ambient_rates.csv")
+dat_a <- read_csv("data/210407_pineland_ambient/210407_pnld_ambient_rates.csv")
 # changing class of chamber column to be compatible with the other dataframe
 dat_a$chamber <- as.character(dat_a$chamber)
 
 # selecting only the columns that I need
 dat_a <- dat_a %>%
-  select(chamber, temp_C, total_DW_g, total_AFDW_g, rock_SA_m2, NEP_mg_d:nutrient_trt)
+  select(chamber, total_DW_g, total_AFDW_g, rock_SA_m2, NEP_mg_d:nutrient_trt)
 
-dat_e <- read_csv("data/210315_tahoecity_enriched_inc/210315_TC_enriched_rates.csv")
+dat_e <- read_csv("data/210421_pineland_enriched/210421_pnld_enriched_rates.csv")
 
 # selecting only the columns that I need
 dat_e <- dat_e %>%
   select(chamber, total_DW_g, total_AFDW_g, rock_SA_m2, NEP_mg_d:nutrient_trt)
+
+# changing chamber column in dat_a to numeric to be compatible with dat_e
+dat_a$chamber <- as.numeric(dat_a$chamber)
 
 # binding the rows of the two dataframes together
 dat <- bind_rows(dat_a, dat_e)
