@@ -132,7 +132,6 @@ ggsave("plots/210421_pineland_enriched/210421_pineland_enriched_temp_plot.png", 
 DO_mass_plot <- dat_full %>%
   ggplot(aes(x = delta_T_min, y = oxygen_mass_mg, color = chamber)) +
   geom_line(size = 1.5) +
-  xlim(70, 380) +
   scale_color_viridis_d() +
   facet_wrap(~treatment) +
   labs(y = expression(Oxygen~Mass~(mg)), x = "Elapsed Time (min)", title = "Pineland Ambient Incubation DO Mass") +
