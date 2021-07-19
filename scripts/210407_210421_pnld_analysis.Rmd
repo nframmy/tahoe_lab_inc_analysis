@@ -157,10 +157,9 @@ dat %>%
 
 # making simplified plot without expressions in the axis labels for plotly
 NEP_SA_plot <- dat %>%
-  ggplot(aes(x = temp_C, y = NEP_mgO2_d_m2, color = nutrient_trt, group = chamber)) +
+  ggplot(aes(x = temp_C, y = NEP_mgO2_d_m2, color = nutrient_trt)) +
   geom_point(shape = 19, size = 2) +
   geom_smooth(method = "lm") +
-  stat_regline_equation() +
   theme_classic()
 
 # ploting interactive plot in plotly to identify which datapoints correspond to which chambers
