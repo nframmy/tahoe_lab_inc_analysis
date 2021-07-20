@@ -47,6 +47,25 @@ dat <- dat %>%
 
 ```
 
+### Investigating biomass changes
+```{r}
+# Investigating changes in biomass between the ambient and enriched incubations. Anecdotally we noticed a significant amount of sloughing in the field in the two weeks between the two experiments and lower periphyton coverage on the rocks in the enriched incubation compared to the ambient incubation. This may lead to lowered metabolic rates in the enriched incubations, but this may be accounted for in the AFDW-normalized metabolic rates.
+
+### calculating average AFDW/m2 for the ambient and enriched incubations
+avg_AFDW <- dat %>%
+  group_by(nutrient_trt) %>%
+  summarize(avg_AFDW_g_m2 = mean(total_AFDW_g/rock_SA_m2), sd_AFDW_g_m2 = sd(total_AFDW_g/rock_SA_m2))
+avg_AFDW
+
+avg_AFDW %>%
+  ggplot(aes(x = nutrient_trt, y = avg_AFDW_g_m2)) +
+  geom_point() +
+  geom_errorbar(aes(ymin = avg_AFDW_g_m2 - sd_AFDW_g_m2, ymax = avg_AFDW_g_m2 + sd_AFDW_g_m2), width = 0.2) +
+  theme_classic()
+```
+
+Looks like there is a 27% decrease in afdw/m2 between the ambient and enriched incubations, which could potentially have confounded the results of this pair of experiments.
+
 # Regression of AFDW-normalized GPP with temperature and nutrients
 ```{r}
 # linear model of GPP and temp
