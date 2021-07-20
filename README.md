@@ -14,7 +14,7 @@ Important Incubation Details:
   
   210421 Pineland Incubation:
     -under-enriched nutrients to 45ug/L NH4-N and NO3-N (~11% of target concentrations) and 67ug/L SRP (~21% of target concentrations) so nutrent effect might be underestimated in these incubations.
-    -There was significant differences in periphyton biomass between the ambient and enriched incubations in april due to sloughing, the difference in average AFDW/m2 between the two incubations was: ___________. This possibly led to lower surface area-normalized metabolic rates between the ambient and enriched incubations.
+    -There was significant differences in periphyton biomass between the ambient and enriched incubations in april due to sloughing, the average AFDW/m2 decreased by 27% between the ambient and enriched incubations which could potentially confound results. This possibly led to lower surface area-normalized metabolic rates between the ambient and enriched incubations.
     
   210613 Pineland Incubations:
     -Performed ambient and enriched incubations on the same set of rocks and paired biomass msmsnts for these incubations.
