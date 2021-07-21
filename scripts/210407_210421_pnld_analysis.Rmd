@@ -66,7 +66,7 @@ avg_AFDW %>%
 
 Looks like there is a 27% decrease in afdw/m2 between the ambient and enriched incubations, which could potentially have confounded the results of this pair of experiments.
 
-# Regression of AFDW-normalized GPP with temperature and nutrients
+# AFDW-normalized GPP vs temperature and nutrients
 ```{r}
 # linear model of GPP and temp
 GPP_AFDW_mod <- lm(GPP_mgO2_d_gAFDW ~ temp_C*nutrients, dat)
@@ -77,13 +77,29 @@ dat %>%
   geom_point(shape = 19, size = 2) +
   geom_smooth(method = "lm") +
   stat_regline_equation() +
+  scale_color_discrete(name = "Nutrient Treatment")+
   theme_classic() +
-  labs(title = "GPP response to Temperature",
+  labs(title = "Periphyton GPP vs. Temperature",
       x = expression('Temperature (\u00B0C)'),
       y = expression(GPP~(mgO[2]~day^{-1}~gAFDW^{-1})))
+
+# simplified plot for Tahoe State of the Lake Report
+GPP_AFDW_model_plot <- dat %>%
+  ggplot(aes(x = temp_C, y = GPP_mgO2_d_gAFDW, color = nutrient_trt)) +
+  geom_point(shape = 19, size = 2) +
+  geom_smooth(method = "lm") +
+  scale_color_discrete(name = "Nutrient Treatment")+
+  theme_classic() +
+  labs(title = "Periphyton GPP vs. Temperature",
+      x = expression('Temperature (\u00B0C)'),
+      y = expression(GPP~(mgO[2]~day^{-1}~gAFDW^{-1})))
+
+GPP_AFDW_model_plot
+
+ggsave("plots/210421_pineland_enriched/210407_210421_GPP_AFDW_model_plot.png", plot = GPP_AFDW_model_plot, width = 7, height = 3.5)
 ```
 
-# Regression of surface area-normalized GPP with temperature and nutrients
+# Surface area-normalized GPP vs temperature and nutrients model
 ```{r}
 # linear model of GPP and temp
 GPP_SA_mod <- lm(GPP_mgO2_d_m2 ~ temp_C*nutrients, dat)
@@ -112,7 +128,7 @@ GPP_SA_plotly <- plotly::ggplotly(GPP_SA)
 GPP_SA_plotly
 ```
 
-# Regression of ER (AFDW-normalized) with temperature and nutrients
+# ER (AFDW-normalized) vs temperature and nutrients
 ```{r}
 ER_AFDW_mod <- lm(ER_mgO2_d_gAFDW ~ temp_C*nutrients, dat)
 summary(ER_AFDW_mod)
@@ -128,7 +144,7 @@ dat %>%
       y = expression(ER~(mgO[2]~day^{-1}~gAFDW^{-1})))
 ```
 
-# Regression of surface area-normalized ER with temp and nutrients
+# Surface area-normalized ER vs temp and nutrients
 ```{r}
 # linear model of GPP and temp
 ER_SA_mod <- lm(ER_mgO2_d_m2 ~ temp_C*nutrients, dat)
@@ -158,9 +174,28 @@ ER_SA_plotly
 
 ```
 
-# Regression of surface area-normalized NEP with temp and nutrients
+# AFDW-normalized NEP vs. temp and nutrients
 ```{r}
-# linear model of GPP and temp
+# linear model of NEP and temp
+NEP_AFDW_mod <- lm(NEP_mgO2_d_gAFDW ~ temp_C*nutrients, dat)
+summary(NEP_AFDW_mod)
+
+dat %>%
+  ggplot(aes(x = temp_C, y = NEP_mgO2_d_gAFDW, color = nutrient_trt)) +
+  geom_point(shape = 19, size = 2) +
+  geom_smooth(method = "lm") +
+  stat_regline_equation() +
+  theme_classic() +
+  labs(title = "NEP response to Temperature",
+      x = expression('Temperature (\u00B0C)'),
+      y = expression(NEP~(mgO[2]~day^{-1}~gAFDW)))
+
+```
+
+
+# Surface area-normalized NEP vs temp and nutrients
+```{r}
+# linear model of NEP and temp
 NEP_SA_mod <- lm(NEP_mgO2_d_m2 ~ temp_C*nutrients, dat)
 summary(NEP_SA_mod)
 
