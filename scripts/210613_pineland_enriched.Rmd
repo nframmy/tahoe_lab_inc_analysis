@@ -40,7 +40,7 @@ dat <- dat %>%
 
 
 # filtering out rows with error codes, and adding in chamber numbers based the tank and channel number cross referenced against incubation notes
-## double checked for correctness on 7/6/21 NTF
+## double checked for correctness on 7/26/21 NTF
 
 dat_2 <- dat %>%
   filter(Error == 0) %>%
@@ -1303,17 +1303,17 @@ dat_final <- full_join(dat_chambers, pnld_e_rates, by = "chamber")
 dat_final <- dat_final %>%
   mutate(
     treatment = case_when(
-      Tank == "1" ~ "17.5C",
-      Tank == "2" ~ "14.5C",
-      Tank == "3" ~ "20.5C",
-      Tank == "4" ~ "23.5C"
+      Tank_e == "1" ~ "17.5C",
+      Tank_e == "2" ~ "14.5C",
+      Tank_e == "3" ~ "20.5C",
+      Tank_e == "4" ~ "23.5C"
     )) %>%
   mutate(
     temp_C = case_when(
-           Tank == "1" ~ 17.5,
-           Tank == "2" ~ 14.5,
-           Tank == "3" ~ 20.5,
-           Tank == "4" ~ 23.5
+           Tank_e == "1" ~ 17.5,
+           Tank_e == "2" ~ 14.5,
+           Tank_e == "3" ~ 20.5,
+           Tank_e == "4" ~ 23.5
            ))
 
 
