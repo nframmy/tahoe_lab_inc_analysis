@@ -1,0 +1,200 @@
+---
+title: "210613_pnld_A_E_analysis"
+author: "Nick Framsted"
+date: "7/26/2021"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+library(ggplot2)
+library(tidyverse)
+library(lubridate)
+library(ggpubr)
+library(plotly)
+library(reshape2)
+library(DescTools)
+
+# changing working directory from /scripts to /tahoe_lab_inc_analysis
+knitr::opts_knit$set(root.dir = '..')
+```
+
+# Importing and Processing data
+```{r, include = FALSE}
+# importing and cleaning up metabolism data from both ambient and enriched incubations
+dat_a <- read_csv("data/210613_pineland_a_e/210613_pnld_ambient_rates.csv")
+
+# selecting only the columns that I need
+dat_a <- dat_a %>%
+  select(chamber, total_DW_g, total_AFDW_g, rock_SA_m2, NEP_mg_d:nutrient_trt)
+
+dat_e <- read_csv("data/210613_pineland_a_e/210613_pnld_enriched_rates.csv")
+
+# selecting only the columns that I need
+dat_e <- dat_e %>%
+  select(chamber, total_DW_g, total_AFDW_g, rock_SA_m2, NEP_mg_d:nutrient_trt)
+
+
+# binding the rows of the two dataframes together
+dat <- bind_rows(dat_a, dat_e)
+# adding in nutrient enriched dummy variable column (0 = ambient, 1 = enriched nutrients)
+dat <- dat %>%
+  mutate(nutrients = ifelse(nutrient_trt == "ambient", 0, 1))
+#View(dat)
+
+```
+
+# AFDW-normalized Metabolic rates
+### GPP vs temperature and nutrients
+```{r}
+# linear model of GPP and temp
+GPP_AFDW_mod <- lm(GPP_mgO2_d_gAFDW ~ temp_C*nutrients, dat)
+summary(GPP_AFDW_mod)
+
+dat %>%
+  ggplot(aes(x = temp_C, y = GPP_mgO2_d_gAFDW, color = nutrient_trt)) +
+  geom_point(shape = 19, size = 2) +
+  geom_smooth(method = "lm") +
+  stat_regline_equation() +
+  scale_color_discrete(name = "Nutrient Treatment")+
+  theme_classic() +
+  labs(title = "Periphyton GPP vs. Temperature",
+      x = expression('Temperature (\u00B0C)'),
+      y = expression(GPP~(mgO[2]~day^{-1}~gAFDW^{-1})))
+
+# simplified plot
+GPP_AFDW_model_plot <- dat %>%
+  ggplot(aes(x = temp_C, y = GPP_mgO2_d_gAFDW, color = nutrient_trt)) +
+  geom_point(shape = 19, size = 2) +
+  geom_smooth(method = "lm") +
+  scale_color_discrete(name = "Nutrient Treatment")+
+  theme_classic() +
+  labs(title = "Periphyton GPP vs. Temperature",
+      x = expression('Temperature (\u00B0C)'),
+      y = expression(GPP~(mgO[2]~day^{-1}~gAFDW^{-1})))
+
+GPP_AFDW_model_plot
+
+ggsave("plots/210613_pineland_ambient_enriched/210613_GPP_AFDW_model_plot.png", plot = GPP_AFDW_model_plot, width = 7, height = 3.5)
+```
+
+### ER vs temperature and nutrients
+```{r}
+ER_AFDW_mod <- lm(ER_mgO2_d_gAFDW ~ temp_C*nutrients, dat)
+summary(ER_AFDW_mod)
+
+dat %>%
+  ggplot(aes(x = temp_C, y = ER_mgO2_d_gAFDW, color = nutrient_trt)) +
+  geom_point(shape = 19, size = 2) +
+  geom_smooth(method = "lm") +
+  stat_regline_equation() +
+  theme_classic() +
+  labs(title = "ER response to Temperature",
+      x = expression('Temperature (\u00B0C)'),
+      y = expression(ER~(mgO[2]~day^{-1}~gAFDW^{-1})))
+```
+
+### NEP vs. temp and nutrients
+```{r}
+# linear model of NEP and temp
+NEP_AFDW_mod <- lm(NEP_mgO2_d_gAFDW ~ temp_C*nutrients, dat)
+summary(NEP_AFDW_mod)
+
+dat %>%
+  ggplot(aes(x = temp_C, y = NEP_mgO2_d_gAFDW, color = nutrient_trt)) +
+  geom_point(shape = 19, size = 2) +
+  geom_smooth(method = "lm") +
+  stat_regline_equation() +
+  theme_classic() +
+  labs(title = "NEP response to Temperature",
+      x = expression('Temperature (\u00B0C)'),
+      y = expression(NEP~(mgO[2]~day^{-1}~gAFDW)))
+
+```
+
+# SA-normalized metabolic rates
+### GPP vs temperature and nutrients model
+```{r}
+# linear model of GPP and temp
+GPP_SA_mod <- lm(GPP_mgO2_d_m2 ~ temp_C*nutrients, dat)
+summary(GPP_SA_mod)
+
+GPP_SA_plot <- dat %>%
+  ggplot(aes(x = temp_C, y = GPP_mgO2_d_m2, color = nutrient_trt)) +
+  geom_point(shape = 19, size = 2) +
+  geom_smooth(method = "lm") +
+  stat_regline_equation() +
+  theme_classic() +
+  labs(title = "GPP response to Temperature",
+      x = expression('Temperature (\u00B0C)'),
+      y = expression(GPP~(mgO[2]~day^{-1}~m^{-2})))
+GPP_SA_plot
+
+# making simplified plot w/o expressions for use in plotly function
+GPP_SA <- dat %>%
+  ggplot(aes(x = temp_C, y = GPP_mgO2_d_m2, color = nutrient_trt, group = chamber)) +
+  geom_point(shape = 19, size = 2) +
+  geom_smooth(method = "lm") +
+  stat_regline_equation() +
+  theme_classic()
+# interactive plotly plot to get info on individual data points
+GPP_SA_plotly <- plotly::ggplotly(GPP_SA)
+GPP_SA_plotly
+```
+
+### ER vs temp and nutrients
+```{r}
+# linear model of GPP and temp
+ER_SA_mod <- lm(ER_mgO2_d_m2 ~ temp_C*nutrients, dat)
+summary(ER_SA_mod)
+
+dat %>%
+  ggplot(aes(x = temp_C, y = ER_mgO2_d_m2, color = nutrient_trt)) +
+  geom_point(shape = 19, size = 2) +
+  geom_smooth(method = "lm") +
+  stat_regline_equation() +
+  theme_classic() +
+  labs(title = "ER response to Temperature",
+      x = expression('Temperature (\u00B0C)'),
+      y = expression(ER~(mgO[2]~day^{-1}~m^{-2})))
+
+# making simplified plot without expressions in the axis labels for plotly
+ER_SA_plot <- dat %>%
+  ggplot(aes(x = temp_C, y = ER_mgO2_d_m2, color = nutrient_trt, group = chamber)) +
+  geom_point(shape = 19, size = 2) +
+  geom_smooth(method = "lm") +
+  stat_regline_equation() +
+  theme_classic()
+
+# ploting interactive plot in plotly to identify which datapoints correspond to which chambers
+ER_SA_plotly <- plotly::ggplotly(ER_SA_plot)
+ER_SA_plotly
+
+```
+
+### NEP vs temp and nutrients
+```{r}
+# linear model of NEP and temp
+NEP_SA_mod <- lm(NEP_mgO2_d_m2 ~ temp_C*nutrients, dat)
+summary(NEP_SA_mod)
+
+dat %>%
+  ggplot(aes(x = temp_C, y = NEP_mgO2_d_m2, color = nutrient_trt)) +
+  geom_point(shape = 19, size = 2) +
+  geom_smooth(method = "lm") +
+  stat_regline_equation() +
+  theme_classic() +
+  labs(title = "NEP response to Temperature",
+      x = expression('Temperature (\u00B0C)'),
+      y = expression(NEP~(mgO[2]~day^{-1}~m^{-2})))
+
+# making simplified plot without expressions in the axis labels for plotly
+NEP_SA_plot <- dat %>%
+  ggplot(aes(x = temp_C, y = NEP_mgO2_d_m2, color = nutrient_trt)) +
+  geom_point(shape = 19, size = 2) +
+  geom_smooth(method = "lm") +
+  theme_classic()
+
+# ploting interactive plot in plotly to identify which datapoints correspond to which chambers
+NEP_SA_plotly <- plotly::ggplotly(NEP_SA_plot)
+NEP_SA_plotly
+```
