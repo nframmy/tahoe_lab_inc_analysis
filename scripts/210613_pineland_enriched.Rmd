@@ -31,7 +31,7 @@ dat <- dat %>%
 # converting datetime column into actual datetimes using lubridate
 dat$datetime <- mdy_hms(dat$datetime)
 
-# Creating new delta_T_min column to reflect new datetimes generated for Tank 4
+# Creating new delta_T_min column to reflect new datetimes generated for Tank 4 in other script
 dat <- dat %>%
   mutate(delta_T_min = as.duration(("2021-06-15 15:44:14" %--% datetime))/dminutes(1))
 #View(dat)
@@ -1267,4 +1267,74 @@ pnld_e_12_plot
 # plotting in plotly to find what time DO signals stabilize for ER incubation
 pnld_e_12_plotly<- plotly::ggplotly(pnld_e_12_plot)
 pnld_e_12_plotly
+```
+
+## Creating dataframe with metab rates
+```{r}
+# creating dataframe of metab rates to make barplot
+## excluding chamber 15 since it had anomalous values due to a faulty stirrer
+pnld_e_rates <- data.frame(
+  "NEP_mg_d" = c(pnld_e_1_NEP, pnld_e_2_NEP, pnld_e_3_NEP, pnld_e_4_NEP, pnld_e_5_NEP, pnld_e_6_NEP, pnld_e_7_NEP, pnld_e_8_NEP, pnld_e_9_NEP, pnld_e_10_NEP, pnld_e_11_NEP, pnld_e_12_NEP, pnld_e_13_NEP, pnld_e_14_NEP, pnld_e_15_NEP, pnld_e_16_NEP),
+  "ER_mg_d" = c(pnld_e_1_ER, pnld_e_2_ER, pnld_e_3_ER, pnld_e_4_ER, pnld_e_5_ER, pnld_e_6_ER, pnld_e_7_ER, pnld_e_8_ER, pnld_e_9_ER, pnld_e_10_ER, pnld_e_11_ER, pnld_e_12_ER, pnld_e_13_ER, pnld_e_14_ER, pnld_e_15_ER,  pnld_e_16_ER),
+  "chamber" = c("1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16"))
+head(pnld_e_rates)
+#str(pnld_e_rates)
+
+# formatting data types of columns
+pnld_e_rates$NEP_mg_d <- as.numeric(pnld_e_rates$NEP_mg_d)
+pnld_e_rates$ER_mg_d <- as.numeric(pnld_e_rates$ER_mg_d)
+
+# calculating GPP from NEP and ER columns
+pnld_e_rates <- pnld_e_rates %>%
+  mutate(GPP_mg_d = NEP_mg_d - ER_mg_d)
+head(pnld_e_rates)
+```
+
+## Joining metab rates dataframe with chamber dataframe
+```{r}
+# changing chamber column in datasheet to character to be compatable to joining to pnld_a_rates
+dat_chambers$chamber <- as.factor(dat_chambers$chamber)
+
+# joining chamber and metabolic rate data
+dat_final <- full_join(dat_chambers, pnld_e_rates, by = "chamber")
+#View(dat_final)
+
+# adding temperature treatment (discrete factor) and temp_C (continuous numeric) columns based off of tank column already in data
+dat_final <- dat_final %>%
+  mutate(
+    treatment = case_when(
+      Tank == "1" ~ "17.5C",
+      Tank == "2" ~ "14.5C",
+      Tank == "3" ~ "20.5C",
+      Tank == "4" ~ "23.5C"
+    )) %>%
+  mutate(
+    temp_C = case_when(
+           Tank == "1" ~ 17.5,
+           Tank == "2" ~ 14.5,
+           Tank == "3" ~ 20.5,
+           Tank == "4" ~ 23.5
+           ))
+
+
+#View(dat_final)
+```
+
+## Normalizing metabolic rates
+```{r}
+# normalizing metabolic rates by AFDW and by rock surface area
+dat_final <- dat_final %>%
+  mutate(GPP_mgO2_d_gAFDW = GPP_mg_d/total_AFDW_g, NEP_mgO2_d_gAFDW = NEP_mg_d/total_AFDW_g, ER_mgO2_d_gAFDW = ER_mg_d/total_AFDW_g) %>%
+  mutate(GPP_mgO2_d_m2 = GPP_mg_d/rock_SA_m2, NEP_mgO2_d_m2 = NEP_mg_d/rock_SA_m2, ER_mgO2_d_m2 = ER_mg_d/rock_SA_m2)
+
+#View(dat_final)
+```
+
+# Exporting metabolic rate data for further analysis
+```{r}
+# making identifier column for joining to ambient incubation data for nutrient effect analysis
+dat_final_e <- dat_final %>%
+  mutate(nutrient_trt = "enriched")
+# exporting data for final analysis
+write_csv(dat_final_e, "data/210613_pineland_a_e/210613_pnld_enriched_rates.csv")
 ```
