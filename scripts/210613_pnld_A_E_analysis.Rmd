@@ -75,6 +75,25 @@ GPP_AFDW_model_plot <- dat %>%
 GPP_AFDW_model_plot
 
 ggsave("plots/210613_pineland_ambient_enriched/210613_GPP_AFDW_model_plot.png", plot = GPP_AFDW_model_plot, width = 7, height = 3.5)
+
+# dataset with single outlier (chamber 1) removed
+dat_clean <- dat %>%
+  filter(!chamber == 1)
+
+# model of ER with single outlier (chamber 1) removed
+GPP_AFDW_mod2 <- lm(GPP_mgO2_d_gAFDW ~ temp_C*nutrients, dat_clean)
+summary(GPP_AFDW_mod2)
+
+dat_clean %>%
+  ggplot(aes(x = temp_C, y = GPP_mgO2_d_gAFDW, color = nutrient_trt)) +
+  geom_point(shape = 19, size = 2) +
+  geom_smooth(method = "lm") +
+  stat_regline_equation() +
+  scale_color_discrete(name = "Nutrient Treatment")+
+  theme_classic() +
+  labs(title = "Periphyton GPP vs. Temperature",
+      x = expression('Temperature (\u00B0C)'),
+      y = expression(GPP~(mgO[2]~day^{-1}~gAFDW^{-1})))
 ```
 
 ### ER vs temperature and nutrients
@@ -91,7 +110,37 @@ dat %>%
   labs(title = "ER response to Temperature",
       x = expression('Temperature (\u00B0C)'),
       y = expression(ER~(mgO[2]~day^{-1}~gAFDW^{-1})))
+
+
+# simplified plot w/o axis labels for use in plotly--This is used to identify which chambers correspond to outlier datapoints
+p <- dat %>%
+  ggplot(aes(x = temp_C, y = ER_mgO2_d_gAFDW, color = nutrient_trt)) +
+  geom_point(aes(group = chamber), shape = 19, size = 2) +
+  geom_smooth(method = "lm") +
+  theme_classic() +
+  labs(title = "ER response to Temperature")
+
+ER_plot <- plotly::ggplotly(p)
+ER_plot
+
+
+# model of ER with single outlier (chamber 1) removed
+ER_AFDW_mod2 <- lm(ER_mgO2_d_gAFDW ~ temp_C*nutrients, dat_clean)
+summary(ER_AFDW_mod2)
+
+# Plot of this model
+dat_clean %>%
+  ggplot(aes(x = temp_C, y = ER_mgO2_d_gAFDW, color = nutrient_trt)) +
+  geom_point(shape = 19, size = 2) +
+  geom_smooth(method = "lm") +
+  stat_regline_equation() +
+  theme_classic() +
+  labs(title = "ER response to Temperature",
+      x = expression('Temperature (\u00B0C)'),
+      y = expression(ER~(mgO[2]~day^{-1}~gAFDW^{-1})))
+
 ```
+Chamber 1 had unusually large ER, though it's not quite clear why. This chamber had the lowest AFDW of all chambers (not by a large margin), and an average-looking total DW. The rock was average-sized according to the water volume measurements for the chambers.
 
 ### NEP vs. temp and nutrients
 ```{r}
@@ -109,7 +158,36 @@ dat %>%
       x = expression('Temperature (\u00B0C)'),
       y = expression(NEP~(mgO[2]~day^{-1}~gAFDW)))
 
+# simplified plot w/o axis labels for use in plotly--This is used to identify which chambers correspond to outlier datapoints
+p <- dat %>%
+  ggplot(aes(x = temp_C, y = NEP_mgO2_d_gAFDW, color = nutrient_trt)) +
+  geom_point(aes(group = chamber), shape = 19, size = 2) +
+  geom_smooth(method = "lm") +
+  theme_classic() +
+  labs(title = "NEP response to Temperature")
+
+NEP_plot <- plotly::ggplotly(p)
+NEP_plot
+
+# dataset with single outlier (chamber 1) removed
+dat_clean <- dat %>%
+  filter(!chamber == 1)
+
+# model of ER without potential outlier
+NEP_AFDW_mod2 <- lm(NEP_mgO2_d_gAFDW ~ temp_C*nutrients, dat_clean)
+summary(NEP_AFDW_mod2)
+
+dat_clean %>%
+  ggplot(aes(x = temp_C, y = NEP_mgO2_d_gAFDW, color = nutrient_trt)) +
+  geom_point(shape = 19, size = 2) +
+  geom_smooth(method = "lm") +
+  stat_regline_equation() +
+  theme_classic() +
+  labs(title = "NEP response to Temperature",
+      x = expression('Temperature (\u00B0C)'),
+      y = expression(NEP~(mgO[2]~day^{-1}~gAFDW)))
 ```
+Looks like chamber 1 is an outlier and has unusually high NEP in the 23.5C treatment. Again, it's not clear what is the cause of this outlier besides measurement error.
 
 # SA-normalized metabolic rates
 ### GPP vs temperature and nutrients model
@@ -131,8 +209,8 @@ GPP_SA_plot
 
 # making simplified plot w/o expressions for use in plotly function
 GPP_SA <- dat %>%
-  ggplot(aes(x = temp_C, y = GPP_mgO2_d_m2, color = nutrient_trt, group = chamber)) +
-  geom_point(shape = 19, size = 2) +
+  ggplot(aes(x = temp_C, y = GPP_mgO2_d_m2, color = nutrient_trt)) +
+  geom_point(aes(group = chamber), shape = 19, size = 2) +
   geom_smooth(method = "lm") +
   stat_regline_equation() +
   theme_classic()
@@ -159,8 +237,8 @@ dat %>%
 
 # making simplified plot without expressions in the axis labels for plotly
 ER_SA_plot <- dat %>%
-  ggplot(aes(x = temp_C, y = ER_mgO2_d_m2, color = nutrient_trt, group = chamber)) +
-  geom_point(shape = 19, size = 2) +
+  ggplot(aes(x = temp_C, y = ER_mgO2_d_m2, color = nutrient_trt)) +
+  geom_point(aes(group = chamber), shape = 19, size = 2) +
   geom_smooth(method = "lm") +
   stat_regline_equation() +
   theme_classic()
@@ -190,7 +268,7 @@ dat %>%
 # making simplified plot without expressions in the axis labels for plotly
 NEP_SA_plot <- dat %>%
   ggplot(aes(x = temp_C, y = NEP_mgO2_d_m2, color = nutrient_trt)) +
-  geom_point(shape = 19, size = 2) +
+  geom_point(aes(group = chamber), shape = 19, size = 2) +
   geom_smooth(method = "lm") +
   theme_classic()
 
@@ -198,3 +276,37 @@ NEP_SA_plot <- dat %>%
 NEP_SA_plotly <- plotly::ggplotly(NEP_SA_plot)
 NEP_SA_plotly
 ```
+
+# Plotting additional Variables to asses outlier datapoints
+```{r}
+#View(dat)
+# plot of total AFDW of all chambers
+dat %>%
+  ggplot(aes(x = chamber, y = total_AFDW_g)) +
+  geom_col() +
+  theme_classic()
+
+# plot of total DW of all chambers
+dat %>%
+  ggplot(aes(x = chamber, y = total_DW_g)) +
+  geom_col() +
+  theme_classic()
+
+# plot of rock surface area of all chambers
+dat %>%
+  ggplot(aes(x = chamber, y = rock_SA_m2)) +
+  geom_col() +
+  theme_classic()
+
+# calculating average total AFDW for thi incubation to compare to that of other incubations
+mean(dat$total_AFDW_g)
+
+
+### calculating average AFDW/m2 for the ambient and enriched incubations
+avg_AFDW <- dat %>%
+  filter(nutrient_trt == "ambient") %>% # subsetting to only include ambient since same rocks were used for ambient and enriched and would artificially double the sample size used to calculate the sd
+  summarize(avg_AFDW_g_m2 = mean(total_AFDW_g/rock_SA_m2), sd_AFDW_g_m2 = sd(total_AFDW_g/rock_SA_m2))
+avg_AFDW
+
+```
+Looks like average AFDW/m2 during the april 2020 incubations was 23 +- 8 g/m2, which is nearly double that of this incubation. Thus there may be a lack of temperature and nutrient effects either due to this, or due to a lack of temperature response at this higher range of temperatures.
