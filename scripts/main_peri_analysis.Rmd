@@ -1,0 +1,43 @@
+---
+title: "Main Periphyton Analysis"
+author: "Nick Framsted"
+date: "7/29/2021"
+output: pdf_document
+---
+```{r setup, include=FALSE}
+library(ggplot2)
+library(tidyverse)
+library(lubridate)
+library(ggpubr)
+library(plotly)
+library(reshape2)
+library(DescTools)
+
+# changing working directory from /scripts to /tahoe_lab_inc_analysis
+knitr::opts_knit$set(root.dir = '..')
+```
+
+
+```{r, include = FALSE}
+# importing, cleaning up, and combining metabolism data from all incubations
+### 210301 TC Ambient data
+dat1 <- read_csv("data/210301_tahoecity_ambient_inc/210301_TC_ambient_rates.csv")
+
+dat1 <- dat1 %>%
+  select(chamber, temp_C, water_volume_L, total_DW_g:nutrient_trt) %>% # selecting only the columns I need
+  rename(chamber_vol_L = water_volume_L) # renaming this column to be consistent between experiments
+
+### 210315 TC Enriched data
+dat2 <- read_csv("data/210315_tahoecity_enriched_inc/210315_TC_enriched_rates.csv")
+
+dat2 <- dat2 %>%
+  mutate(chamber = substr(dat2$chamber, nchar(dat2$chamber) - 1, nchar(dat2$chamber))) %>%# removing the word "chamber" from the column and only keeping the number
+ rename(chamber_vol_L = water_volume_L) # renaming this column to be consistent between experiments
+
+dat2$chamber <- as.numeric(dat2$chamber) # coercing chamber column to be numeric
+
+###
+
+dat_a <- read_csv("data/210407_pineland_ambient/210407_pnld_ambient_rates.csv")
+```
+
