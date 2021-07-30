@@ -44,7 +44,8 @@ dat <- dat %>%
 
 ```
 
-# Regression of AFDW-normalized GPP with temperature and nutrients
+# AFDW-normalized rates
+## GPP vs. temperature and nutrients
 ```{r}
 # linear model of GPP and temp
 GPP_AFDW_mod <- lm(GPP_mgO2_d_gAFDW ~ temp_C*nutrients, dat)
@@ -59,10 +60,73 @@ dat %>%
   labs(title = "GPP response to Temperature",
       x = expression('Temperature (\u00B0C)'),
       y = expression(GPP~(mgO[2]~day^{-1}~gAFDW^{-1})))
+
+# making plotly plot to investigate outlying datapoints
+p <- dat %>%
+  ggplot(aes(x = temp_C, y = GPP_mgO2_d_gAFDW, color = nutrient_trt)) +
+  geom_point(aes(group = chamber), shape = 19, size = 2) +
+  geom_smooth(method = "lm") +
+  theme_classic()
+
+p <- plotly::ggplotly(p)
+p
 ```
 
+## ER (AFDW-normalized) vs. temperature and nutrients
+```{r}
+ER_AFDW_mod <- lm(ER_mgO2_d_gAFDW ~ temp_C*nutrients, dat)
+summary(ER_AFDW_mod)
 
-# Regression of surface area-normalized GPP with temperature and nutrients
+dat %>%
+  ggplot(aes(x = temp_C, y = ER_mgO2_d_gAFDW, color = nutrient_trt)) +
+  geom_point(shape = 19, size = 2) +
+  geom_smooth(method = "lm") +
+  stat_regline_equation() +
+  theme_classic() +
+  labs(title = "ER response to Temperature",
+      x = expression('Temperature (\u00B0C)'),
+      y = expression(ER~(mgO[2]~day^{-1}~gAFDW^{-1})))
+
+# making plotly plot to investigate outlying datapoints
+p <- dat %>%
+  ggplot(aes(x = temp_C, y = ER_mgO2_d_gAFDW, color = nutrient_trt)) +
+  geom_point(aes(group = chamber), shape = 19, size = 2) +
+  geom_smooth(method = "lm") +
+  theme_classic()
+
+p <- plotly::ggplotly(p)
+p
+```
+
+## NEP (AFDW-normalized) vs. temperature and nutrients
+```{r}
+NEP_AFDW_mod <- lm(NEP_mgO2_d_gAFDW ~ temp_C*nutrients, dat)
+summary(NEP_AFDW_mod)
+
+dat %>%
+  ggplot(aes(x = temp_C, y = NEP_mgO2_d_gAFDW, color = nutrient_trt)) +
+  geom_point(shape = 19, size = 2) +
+  geom_smooth(method = "lm") +
+  stat_regline_equation() +
+  theme_classic() +
+  labs(title = "NEP response to Temperature",
+      x = expression('Temperature (\u00B0C)'),
+      y = expression(NEP~(mgO[2]~day^{-1}~gAFDW^{-1})))
+
+# making plotly plot to investigate outlying datapoints
+p <- dat %>%
+  ggplot(aes(x = temp_C, y = NEP_mgO2_d_gAFDW, color = nutrient_trt)) +
+  geom_point(aes(group = chamber) shape = 19, size = 2) +
+  geom_smooth(method = "lm") +
+  theme_classic()
+
+p <- plotly::ggplotly(p)
+p
+```
+Looks like chambers 14 and 15 are likely outliers for both AFDW-normalized NEP and ER, this is potentially due to sampling error in measurements of AFDW.
+
+# Surface area-normalized rates
+## GPP vs. temperature and nutrients
 ```{r}
 # linear model of GPP and temp
 GPP_SA_mod <- lm(GPP_mgO2_d_m2 ~ temp_C*nutrients, dat)
@@ -81,33 +145,17 @@ GPP_SA_plot
 
 # making simplified plot w/o expressions for use in plotly function
 GPP_SA <- dat %>%
-  ggplot(aes(x = temp_C, y = GPP_mgO2_d_m2, color = nutrient_trt, group = chamber)) +
-  geom_point(shape = 19, size = 2) +
+  ggplot(aes(x = temp_C, y = GPP_mgO2_d_m2, color = nutrient_trt)) +
+  geom_point(aes(group = chamber), shape = 19, size = 2) +
   geom_smooth(method = "lm") +
-  stat_regline_equation() +
   theme_classic()
 # interactive plotly plot to get info on individual data points
 GPP_SA_plotly <- plotly::ggplotly(GPP_SA)
 GPP_SA_plotly
 ```
 
-# Regression of ER (AFDW-normalized) with temperature and nutrients
-```{r}
-ER_AFDW_mod <- lm(ER_mgO2_d_gAFDW ~ temp_C*nutrients, dat)
-summary(ER_AFDW_mod)
 
-dat %>%
-  ggplot(aes(x = temp_C, y = ER_mgO2_d_gAFDW, color = nutrient_trt)) +
-  geom_point(shape = 19, size = 2) +
-  geom_smooth(method = "lm") +
-  stat_regline_equation() +
-  theme_classic() +
-  labs(title = "ER response to Temperature",
-      x = expression('Temperature (\u00B0C)'),
-      y = expression(ER~(mgO[2]~day^{-1}~gAFDW^{-1})))
-```
-
-# Regression of surface area-normalized ER with temp and nutrients
+## ER with temp and nutrients
 ```{r}
 # linear model of GPP and temp
 ER_SA_mod <- lm(ER_mgO2_d_m2 ~ temp_C*nutrients, dat)
@@ -125,10 +173,9 @@ dat %>%
 
 # making simplified plot without expressions in the axis labels for plotly
 ER_SA_plot <- dat %>%
-  ggplot(aes(x = temp_C, y = ER_mgO2_d_m2, color = nutrient_trt, group = chamber)) +
-  geom_point(shape = 19, size = 2) +
+  ggplot(aes(x = temp_C, y = ER_mgO2_d_m2, color = nutrient_trt)) +
+  geom_point(aes(group = chamber), shape = 19, size = 2) +
   geom_smooth(method = "lm") +
-  stat_regline_equation() +
   theme_classic()
 
 # ploting interactive plot in plotly to identify which datapoints correspond to which chambers
@@ -138,7 +185,7 @@ ER_SA_plotly
 ```
 
 
-# Regression of surface area-normalized NEP with temp and nutrients
+## NEP with temp and nutrients
 ```{r}
 # linear model of GPP and temp
 NEP_SA_mod <- lm(NEP_mgO2_d_m2 ~ temp_C*nutrients, dat)
@@ -156,17 +203,16 @@ dat %>%
 
 # making simplified plot without expressions in the axis labels for plotly
 NEP_SA_plot <- dat %>%
-  ggplot(aes(x = temp_C, y = NEP_mgO2_d_m2, color = nutrient_trt, group = chamber)) +
-  geom_point(shape = 19, size = 2) +
+  ggplot(aes(x = temp_C, y = NEP_mgO2_d_m2, color = nutrient_trt)) +
+  geom_point(aes(group = chamber), shape = 19, size = 2) +
   geom_smooth(method = "lm") +
-  stat_regline_equation() +
   theme_classic()
 
 # ploting interactive plot in plotly to identify which datapoints correspond to which chambers
 NEP_SA_plotly <- plotly::ggplotly(NEP_SA_plot)
 NEP_SA_plotly
 ```
-Still seeing some outliers for chambers 2, 8, and 13. These chambers have large NEP rates and low ER rates when normalized to rock surface area. To test if this is due to possible errors in surface area measurments or is actually the result of abnormal DO curves I will plot non-normalized metabolic rates.
+Still seeing some outliers for chambers 2 and 8. These chambers have large NEP rates and low ER rates when normalized to rock surface area. These are the two smallest rocks in the incubation, and these anomalous rates may be due to errors associated with surface area measurements or just not having enough periphyhton to get an accurate signal from. To test if this is due to possible errors in surface area measurments or is actually the result of abnormal DO curves I will plot non-normalized metabolic rates.
 
 # Investigating outlying datapoints and sources of error
 ```{r}
@@ -198,4 +244,4 @@ ER_plot <- dat %>%
 ER_plotly <- plotly::ggplotly(ER_plot)
 ER_plotly
 ```
-Rocks 2, 8, and 13 have outlying data points. They appear to have near-normal metabolic rates before being normalized to rock surface area. Additionally, these 3 outlying rocks each tend to be on the smaller end with rocks 2 and 8 being the smallest 2 rocks and rock 13 being the 4th smallest rock. This suggests the source of error for these outlying data points is in the surface area measurements rather than the DO measurements. For this reason they should possibly be excluded from the regression analyses.
+For NEP measurements, rock 16 likely has an outlying value. For ER rates, rocks , 8, and 10 seem to have outlying data points. Rock 8 is also an outlier after normalizing rates by rock surface area, thus there may have been an error in DO measurements. Rock 2 is an emerging outlier according to surface area-normalized rates, but not for raw, non-normalized rates. This suggests possible error in the surface area measurement for rock 2. For this reason they should possibly be excluded from the regression analyses.
