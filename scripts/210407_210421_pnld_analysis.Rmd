@@ -120,7 +120,7 @@ dat %>%
   ggplot(aes(x = temp_C, y = ER_mgO2_d_gAFDW, color = nutrient_trt)) +
   geom_point(shape = 19, size = 2) +
   geom_smooth(method = "lm") +
-  stat_regline_equation() +
+  #stat_regline_equation() +
   theme_classic() +
   labs(title = "ER response to Temperature",
       x = expression('Temperature (\u00B0C)'),
