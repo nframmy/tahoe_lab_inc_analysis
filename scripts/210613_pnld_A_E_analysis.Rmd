@@ -2,7 +2,9 @@
 title: "210613_pnld_A_E_analysis"
 author: "Nick Framsted"
 date: "7/26/2021"
-output: pdf_document
+output:
+  html_document:
+    df_print: paged
 ---
 
 ```{r setup, include=FALSE}
@@ -133,7 +135,7 @@ dat_clean %>%
   ggplot(aes(x = temp_C, y = ER_mgO2_d_gAFDW, color = nutrient_trt)) +
   geom_point(shape = 19, size = 2) +
   geom_smooth(method = "lm") +
-  stat_regline_equation() +
+  #stat_regline_equation() +
   theme_classic() +
   labs(title = "ER response to Temperature",
       x = expression('Temperature (\u00B0C)'),
@@ -181,7 +183,7 @@ dat_clean %>%
   ggplot(aes(x = temp_C, y = NEP_mgO2_d_gAFDW, color = nutrient_trt)) +
   geom_point(shape = 19, size = 2) +
   geom_smooth(method = "lm") +
-  stat_regline_equation() +
+  #stat_regline_equation() +
   theme_classic() +
   labs(title = "NEP response to Temperature",
       x = expression('Temperature (\u00B0C)'),
