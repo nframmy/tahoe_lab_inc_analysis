@@ -93,3 +93,46 @@ dat_june %>%
 Looks like maximum daily flucuations of temperature are on the order of 6.5C in a day and average daily fluctuations are 2-3C, thus temperature treatments should be created accordingly.
 
 Average june 2020 temp was 12.6C, average daily max temps for june is 14.29C. The range of daily max temps from june 5-15 was a minimum of ~9.5C and a max of ~16.5C, but the average was still on par with the monthly average of 14.29C.
+
+# Plotting Aug 2020 temps to plan for Aug. 2021 temp treatments
+```{r}
+# calculating average August temperatures for planning August 2021 incubation
+aug_T <- dat_TC %>%
+  filter(!is.na(ProbeT) & TimeLocal >= "2020-08-01 00:00:00" & TimeLocal < "2020-09-01 00:00:00") %>%
+  summarize(avg_T = mean(ProbeT))
+#View(aug_T)
+
+# plotting August temperatures with average august temperature overlayed
+dat_TC %>%
+  filter(TimeLocal >= "2020-08-01 00:00:00" & TimeLocal < "2020-09-01 00:00:00") %>%
+  ggplot(aes(x = TimeLocal, y = ProbeT)) +
+  geom_point() +
+  geom_hline(aes(yintercept = avg_T), data = aug_T, color = "red")
+
+# plotting daily max temps for August 2020
+dat_aug <- dat_TC %>%
+  filter(!is.na(ProbeT) & TimeLocal >= "2020-08-01 00:00:00" & TimeLocal < "2020-09-01 00:00:00") %>%
+  mutate(day = day(TimeLocal)) %>%
+  group_by(day) %>%
+  summarize(maxT = max(ProbeT))
+
+avg_max_aug_T <- mean(dat_aug$maxT)
+
+dat_aug %>%
+  ggplot(aes(x = day, y = maxT)) +
+  geom_point() +
+  geom_hline(aes(yintercept = avg_max_aug_T), color = "red")
+
+# plot just for August 5-15th for planning for August 8th incubation
+dat_aug %>%
+  filter(day >= 5 & day <= 15) %>%
+  ggplot(aes(x = day, y = maxT)) +
+  geom_point() +
+  geom_hline(aes(yintercept = avg_max_aug_T), color = "red")
+```
+
+Average August 2020 temperature is ~20C, with daily fluctuations on the scale of 1-2C.
+
+Average maximum daily temps in August 2020 were ~21C, but ranged from 20C-21.75C.
+
+During August 5-15, 2020, the average max daily temperature was 21C and variation was very small. 
