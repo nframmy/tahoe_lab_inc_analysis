@@ -119,7 +119,7 @@ summary(ER_AFDW_mod)
 
 plot(ER_AFDW_mod)
 
-# interpreting effect size of temperature on GPP
+# interpreting effect size of temperature effect
 exp(coef(ER_AFDW_mod)["temp_C"])
 # looks that GPP increases about 10% for every 1C temp increase
 
