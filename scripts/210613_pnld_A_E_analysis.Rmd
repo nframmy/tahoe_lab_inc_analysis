@@ -41,6 +41,11 @@ dat <- bind_rows(dat_a, dat_e)
 # adding in nutrient enriched dummy variable column (0 = ambient, 1 = enriched nutrients)
 dat <- dat %>%
   mutate(nutrients = ifelse(nutrient_trt == "ambient", 0, 1))
+
+# making ER rates positive so that we can log-transform them in subsequent models
+dat <- dat %>%
+  mutate(ER_mg_d = -1 * ER_mg_d, ER_mgO2_d_gAFDW = -1 * ER_mgO2_d_gAFDW, ER_mgO2_d_m2 = -1 * ER_mgO2_d_m2)
+
 #View(dat)
 
 ```
@@ -49,11 +54,16 @@ dat <- dat %>%
 ### GPP vs temperature and nutrients
 ```{r}
 # linear model of GPP and temp
-GPP_AFDW_mod <- lm(GPP_mgO2_d_gAFDW ~ temp_C*nutrients, dat)
+GPP_AFDW_mod <- lm(log(GPP_mgO2_d_gAFDW) ~ temp_C*nutrients, dat)
 summary(GPP_AFDW_mod)
+
+# checking that model assumptions are met
+plot(GPP_AFDW_mod)
+
 
 dat %>%
   ggplot(aes(x = temp_C, y = GPP_mgO2_d_gAFDW, color = nutrient_trt)) +
+  scale_y_log10() +
   geom_point(shape = 19, size = 2) +
   geom_smooth(method = "lm") +
   stat_regline_equation() +
@@ -66,6 +76,7 @@ dat %>%
 # simplified plot
 GPP_AFDW_model_plot <- dat %>%
   ggplot(aes(x = temp_C, y = GPP_mgO2_d_gAFDW, color = nutrient_trt)) +
+  scale_y_log10() +
   geom_point(shape = 19, size = 2) +
   geom_smooth(method = "lm") +
   scale_color_discrete(name = "Nutrient Treatment")+
@@ -83,11 +94,14 @@ dat_clean <- dat %>%
   filter(!chamber == 1)
 
 # model of ER with single outlier (chamber 1) removed
-GPP_AFDW_mod2 <- lm(GPP_mgO2_d_gAFDW ~ temp_C*nutrients, dat_clean)
+GPP_AFDW_mod2 <- lm(log(GPP_mgO2_d_gAFDW) ~ temp_C*nutrients, dat_clean)
 summary(GPP_AFDW_mod2)
+
+plot(GPP_AFDW_mod2)
 
 dat_clean %>%
   ggplot(aes(x = temp_C, y = GPP_mgO2_d_gAFDW, color = nutrient_trt)) +
+  scale_y_log10() +
   geom_point(shape = 19, size = 2) +
   geom_smooth(method = "lm") +
   stat_regline_equation() +
@@ -100,11 +114,18 @@ dat_clean %>%
 
 ### ER vs temperature and nutrients
 ```{r}
-ER_AFDW_mod <- lm(ER_mgO2_d_gAFDW ~ temp_C*nutrients, dat)
+ER_AFDW_mod <- lm(log(ER_mgO2_d_gAFDW) ~ temp_C*nutrients, dat)
 summary(ER_AFDW_mod)
+
+plot(ER_AFDW_mod)
+
+# interpreting effect size of temperature on GPP
+exp(coef(ER_AFDW_mod)["temp_C"])
+# looks that GPP increases about 10% for every 1C temp increase
 
 dat %>%
   ggplot(aes(x = temp_C, y = ER_mgO2_d_gAFDW, color = nutrient_trt)) +
+  scale_y_log10() +
   geom_point(shape = 19, size = 2) +
   geom_smooth(method = "lm") +
   stat_regline_equation() +
@@ -117,6 +138,7 @@ dat %>%
 # simplified plot w/o axis labels for use in plotly--This is used to identify which chambers correspond to outlier datapoints
 p <- dat %>%
   ggplot(aes(x = temp_C, y = ER_mgO2_d_gAFDW, color = nutrient_trt)) +
+  scale_y_log10() +
   geom_point(aes(group = chamber), shape = 19, size = 2) +
   geom_smooth(method = "lm") +
   theme_classic() +
@@ -127,12 +149,13 @@ ER_plot
 
 
 # model of ER with single outlier (chamber 1) removed
-ER_AFDW_mod2 <- lm(ER_mgO2_d_gAFDW ~ temp_C*nutrients, dat_clean)
+ER_AFDW_mod2 <- lm(log(ER_mgO2_d_gAFDW) ~ temp_C*nutrients, dat_clean)
 summary(ER_AFDW_mod2)
 
 # Plot of this model
 dat_clean %>%
   ggplot(aes(x = temp_C, y = ER_mgO2_d_gAFDW, color = nutrient_trt)) +
+  scale_y_log10() +
   geom_point(shape = 19, size = 2) +
   geom_smooth(method = "lm") +
   #stat_regline_equation() +
@@ -144,11 +167,15 @@ dat_clean %>%
 ```
 Chamber 1 had unusually large ER, though it's not quite clear why. This chamber had the lowest AFDW of all chambers (not by a large margin), and an average-looking total DW. The rock was average-sized according to the water volume measurements for the chambers.
 
+According to the first model (with chamber 1 included), temp had a significant effect on ER, with ER increasing by 11% for each 1C temperature increase.
+
 ### NEP vs. temp and nutrients
 ```{r}
 # linear model of NEP and temp
-NEP_AFDW_mod <- lm(NEP_mgO2_d_gAFDW ~ temp_C*nutrients, dat)
+NEP_AFDW_mod <- lm(log(NEP_mgO2_d_gAFDW) ~ temp_C*nutrients, dat)
 summary(NEP_AFDW_mod)
+
+plot(NEP_AFDW_mod)
 
 dat %>%
   ggplot(aes(x = temp_C, y = NEP_mgO2_d_gAFDW, color = nutrient_trt)) +
@@ -195,11 +222,18 @@ Looks like chamber 1 is an outlier and has unusually high NEP in the 23.5C treat
 ### GPP vs temperature and nutrients model
 ```{r}
 # linear model of GPP and temp
-GPP_SA_mod <- lm(GPP_mgO2_d_m2 ~ temp_C*nutrients, dat)
+GPP_SA_mod <- lm(log(GPP_mgO2_d_m2) ~ temp_C*nutrients, dat)
 summary(GPP_SA_mod)
+
+plot(GPP_SA_mod)
+
+# interpreting effect size of temperature on GPP
+exp(coef(GPP_SA_mod)["temp_C"])
+# looks that GPP increases about 6% for every 1C temp increase
 
 GPP_SA_plot <- dat %>%
   ggplot(aes(x = temp_C, y = GPP_mgO2_d_m2, color = nutrient_trt)) +
+  scale_y_log10() +
   geom_point(shape = 19, size = 2) +
   geom_smooth(method = "lm") +
   stat_regline_equation() +
@@ -212,6 +246,7 @@ GPP_SA_plot
 # making simplified plot w/o expressions for use in plotly function
 GPP_SA <- dat %>%
   ggplot(aes(x = temp_C, y = GPP_mgO2_d_m2, color = nutrient_trt)) +
+  scale_y_log10() +
   geom_point(aes(group = chamber), shape = 19, size = 2) +
   geom_smooth(method = "lm") +
   stat_regline_equation() +
@@ -220,15 +255,23 @@ GPP_SA <- dat %>%
 GPP_SA_plotly <- plotly::ggplotly(GPP_SA)
 GPP_SA_plotly
 ```
+Temp was found to have a significant effect on SA-normalized GPP, with a 1C temperature increase corresponding to a 6% increase in GPP.
 
 ### ER vs temp and nutrients
 ```{r}
 # linear model of GPP and temp
-ER_SA_mod <- lm(ER_mgO2_d_m2 ~ temp_C*nutrients, dat)
+ER_SA_mod <- lm(log(ER_mgO2_d_m2) ~ temp_C*nutrients, dat)
 summary(ER_SA_mod)
+
+plot(ER_SA_mod)
+
+# interpreting effect size of temperature effect
+exp(coef(ER_SA_mod)["temp_C"])
+# looks that ER increases about 9.8% for every 1C temp increase
 
 dat %>%
   ggplot(aes(x = temp_C, y = ER_mgO2_d_m2, color = nutrient_trt)) +
+  scale_y_log10() +
   geom_point(shape = 19, size = 2) +
   geom_smooth(method = "lm") +
   stat_regline_equation() +
@@ -240,6 +283,7 @@ dat %>%
 # making simplified plot without expressions in the axis labels for plotly
 ER_SA_plot <- dat %>%
   ggplot(aes(x = temp_C, y = ER_mgO2_d_m2, color = nutrient_trt)) +
+  scale_y_log10() +
   geom_point(aes(group = chamber), shape = 19, size = 2) +
   geom_smooth(method = "lm") +
   stat_regline_equation() +
@@ -250,15 +294,23 @@ ER_SA_plotly <- plotly::ggplotly(ER_SA_plot)
 ER_SA_plotly
 
 ```
+Looks like temp has a significant effect on ER, with a 1C increase corresponding to a 9.8% increase in ER. Nutrients and the temp:nutrient interaction effects each were nearly significant with p-values of 0.054 and 0.094 respectively.
 
 ### NEP vs temp and nutrients
 ```{r}
 # linear model of NEP and temp
-NEP_SA_mod <- lm(NEP_mgO2_d_m2 ~ temp_C*nutrients, dat)
+NEP_SA_mod <- lm(log(NEP_mgO2_d_m2) ~ temp_C*nutrients, dat)
 summary(NEP_SA_mod)
+
+plot(NEP_SA_mod)
+
+# interpreting effect size of temperature effect
+exp(coef(NEP_SA_mod)["temp_C"])
+# looks that ER increases about 5% for every 1C temp increase
 
 dat %>%
   ggplot(aes(x = temp_C, y = NEP_mgO2_d_m2, color = nutrient_trt)) +
+  scale_y_log10() +
   geom_point(shape = 19, size = 2) +
   geom_smooth(method = "lm") +
   stat_regline_equation() +
@@ -278,6 +330,7 @@ NEP_SA_plot <- dat %>%
 NEP_SA_plotly <- plotly::ggplotly(NEP_SA_plot)
 NEP_SA_plotly
 ```
+Temp had a significant effect on NEP, increasing it by 5% for every 1C temperature increase.
 
 # Plotting additional Variables to asses outlier datapoints
 ```{r}
