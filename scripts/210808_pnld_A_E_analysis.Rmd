@@ -78,6 +78,7 @@ GPP_AFDW_plot
 
 ggsave("plots/210808_pineland_ambient_enriched/210808_GPP_AFDW_plot.png", plot = GPP_AFDW_plot, width = 7, height = 3.5)
 ```
+Temperature has signficant effect on GPP, with 1C temperature increases corresponding to a 4% increase in GPP.
 
 ### ER vs temperature and nutrients
 ```{r}
@@ -117,6 +118,7 @@ ER_plot <- plotly::ggplotly(p)
 ER_plot
 
 ```
+Temp was a significant predictor of AFDW-normalized ER, with a 1C temp increase corresponding to a 9% increase in ER.
 
 ### NEP vs. temp and nutrients
 ```{r}
@@ -151,7 +153,7 @@ NEP_plot
 
 Chambers 14 an 6 seem like potential outliers for GPP, ER, and NEP. Chamber 14 highest dry weight and AFDW of all the chambers, perhaps these extreme values are affecting the AFDW-normalized rates. Chamber 6 has the second lowest AFDW, and the largest rock by volume, so this may potentially be affecting metabolic rates.
 
-It also appears that temperature had the only significant effect (increasing both GPP and ER), and had a larger stimulatory effect on GPP rather than R. There are some potential issues with violations of linear model assumptions--particularly with normality--that need to be addressed.
+It also appears that temperature had the only significant effect (increasing both GPP and ER but not NEP). There are some potential issues with violations of linear model assumptions--particularly with normality--that need to be addressed.
 
 
 # SA-normalized metabolic rates
