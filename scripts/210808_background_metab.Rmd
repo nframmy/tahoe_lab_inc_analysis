@@ -29,7 +29,7 @@ head(dat)
 dat[2,8] <- "09:03:00"
 ```
 
-# Calculating Background Metabolic Rates
+# Calculating Background NEP Rates
 ```{r}
 # creating column of average of the 3 DO measurements for each jar
 dat2 <- dat %>%
@@ -37,7 +37,7 @@ dat2 <- dat %>%
 head(dat2)
 View(dat2)
 
-# plotting data
+# plotting DO data vs. time
 dat2 %>%
   ggplot(aes(x = time, y = DO_avg, color = jar)) +
   geom_point() +
@@ -63,3 +63,25 @@ dat3 <- dat3 %>%
 #View(dat3)
 ```
 Looks like background NEP rates (range:-3 - 4 mg O2/day) are much smaller compared to the periphyton NEP rates (19-41 mg O2/day) on a per chamber basis, but should be accounted for in periphyton metabolism calculations.
+
+# Calculating background ER rates
+```{r}
+# calculating ER rates in jars
+dat_ER <- dat2 %>%
+  filter(time >= hms::as.hms("10:07:00")) %>% # filtering out initial DO msmnt to only get NEP
+  group_by(jar) %>%
+  summarise(treatment, tank, temp, DO_diff_mg_L = first(DO_avg) - last(DO_avg), delta_T_days = as.duration(first(time) %--% last(time))/ddays(1)) # taking difference in DO conc. between pre- and post-dark exposure and difference in time (in days) to calculate ER rates
+
+#View(dat_ER)
+
+# now converting DO concentrations in mg/L to DO mass in mg by multiplying by jar volumes
+dat_ER <- dat_ER %>%
+  mutate(DO_avg_mass_mg = DO_diff_mg_L * 0.473)
+
+# calculating background ER rates (in mg O2 per day) for the ambient and enriched water(ER rates for jars are multiplied by the ratio of water volume of the periphyton chambers:jars to account for the difference in water volume)
+# one mason jar is 0.473L, each periphyton chamber is ~2.75L with a rock inside
+dat_ER <- dat_ER %>%
+  mutate(ER = DO_avg_mass_mg/delta_T_days * (2.75/.473))
+View(dat_ER)
+```
+Background ER rates range from -0.7 to 1.5mg O2/day per chamber (excluding the one outlier jar 31), which is much smaller than the 7-15mg O2/day produced by the periphyton. These values are perhaps large enough that they should be accounted for in periphyton ER rate determination.
