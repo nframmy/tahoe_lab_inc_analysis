@@ -17,7 +17,7 @@ knitr::opts_knit$set(root.dir = '..')
 ```{r}
 # importing dataset for tahoe city (closest site to the pineland site)
 dat_TC <- read_csv("C:/Users/ntframst/Documents/Tahoe_nearshore_network_data/TC.txt")
-str(dat_TC)
+#str(dat_TC)
 #View(dat_TC)
 ```
 
@@ -135,4 +135,43 @@ Average August 2020 temperature is ~20C, with daily fluctuations on the scale of
 
 Average maximum daily temps in August 2020 were ~21C, but ranged from 20C-21.75C.
 
-During August 5-15, 2020, the average max daily temperature was 21C and variation was very small. 
+During August 5-15, 2020, the average max daily temperature was 21C and variation was very small.
+
+# October 2020 temp analysis
+```{r}
+# calculating average Sept/October temperatures for planning October 2021 incubation
+View(dat_TC)
+oct_T <- dat_TC %>%
+  filter(!is.na(ProbeT) & TimeLocal >= "2020-09-15 00:00:00" & TimeLocal < "2020-11-01 00:00:00") %>%
+  summarize(avg_T = mean(ProbeT))
+#View(oct_T)
+
+# plotting October temperatures with average august temperature overlayed
+dat_TC %>%
+  filter(TimeLocal >= "2020-09-15 00:00:00" & TimeLocal < "2020-11-01 00:00:00") %>%
+  ggplot(aes(x = TimeLocal, y = ProbeT)) +
+  geom_point() +
+  geom_hline(aes(yintercept = avg_T), data = oct_T, color = "red")
+
+# plotting daily max temps for October 2020
+dat_oct <- dat_TC %>%
+  filter(!is.na(ProbeT) & TimeLocal >= "2020-09-15 00:00:00" & TimeLocal < "2020-11-01 00:00:00") %>%
+  mutate(day = day(TimeLocal)) %>%
+  group_by(day) %>%
+  summarize(maxT = max(ProbeT))
+
+avg_max_oct_T <- mean(dat_oct$maxT)
+
+dat_oct %>%
+  ggplot(aes(x = day, y = maxT)) +
+  geom_point() +
+  geom_hline(aes(yintercept = avg_max_oct_T), color = "red")
+
+# plot just for August 5-15th for planning for October 3-14th incubation
+dat_oct %>%
+  filter(day >= 3 & day <= 14) %>%
+  ggplot(aes(x = day, y = maxT)) +
+  geom_point() +
+  geom_hline(aes(yintercept = avg_max_oct_T), color = "red")
+```
+
