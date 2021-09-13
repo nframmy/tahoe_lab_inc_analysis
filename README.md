@@ -3,6 +3,39 @@ Analysis of laboratory incubations of periphyton collected from Lake Tahoe as pa
 
 This also contains analysis of tahoe nearshore network data provided by Sergio Valbuena.
 
+Incubation Datasheet Column Meanings:
+Chamber: Chamber ID #
+
+drained_wt_g: weight in grams of chamber and rock with no water
+
+filled_wt_g: same as above, but with water added to chamber
+
+Tank_a: ambient experiment tank #
+
+Tank_e: enriched experiment tank #
+
+water_wt_g: weight in grams of water inside chamber
+
+water_vol_L: volume of water in chamber in liters
+
+total_wet_wt_g: total wet weight of periphyton harvested from rock in grams
+
+PP_wt_g, chla_wt_g, PC_PN_wet_wt_g: wet weight (in grams) subsamples of periphyton for each specific analysis
+
+PC_PN_tin_wt_g, AFDW_tin_wt_g: weights of pre-tared sample containers for PCPN and AFDW
+
+SWW_g: sediment wet weight (grams) of AFDW subsample
+
+SDW_60C_g: sediment dry weight (grams) of AFDW subsample after drying at 60C for 24 hrs
+
+SCW_500C_g: sediment combusted weight (grams) of AFDW subsample after combusting at 500C for 1hr
+
+total_DW_g: total dry weight (grams) of periphyton scaled up to the whole rock
+
+total_AFDW_g: total ash-free dry weight (grams) of periphyton scaled up to the whole rock (using methods from Scott Hackley of TERC; AFDW = SDW_60C-SCW_500C)
+
+rock_SA_m2: rock surface area covered by periphyton in sq. meters approximated as an ellipsoid and assuming an average periphyton coverage of 67% 
+
 Important Incubation Details:
 
   210301 Tahoe City incubation:
