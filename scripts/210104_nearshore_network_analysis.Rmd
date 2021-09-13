@@ -19,6 +19,9 @@ knitr::opts_knit$set(root.dir = '..')
 dat_TC <- read_csv("C:/Users/ntframst/Documents/Tahoe_nearshore_network_data/TC.txt")
 #str(dat_TC)
 #View(dat_TC)
+
+# importing data for homewood site (next closest to pineland site)
+dat_HW <- read_csv("C:/Users/ntframst/Documents/Tahoe_nearshore_network_data/HW.txt")
 ```
 
 ### plotting temperature (probeT) for TC site
@@ -140,25 +143,26 @@ During August 5-15, 2020, the average max daily temperature was 21C and variatio
 # October 2020 temp analysis
 ```{r}
 # calculating average Sept/October temperatures for planning October 2021 incubation
-View(dat_TC)
+#View(dat_TC)
+# using T variable instead of ProbeT since ProbeT has all NAs for this time period
 oct_T <- dat_TC %>%
-  filter(!is.na(ProbeT) & TimeLocal >= "2020-09-15 00:00:00" & TimeLocal < "2020-11-01 00:00:00") %>%
-  summarize(avg_T = mean(ProbeT))
+  filter(!is.na(T) & TimeLocal >= "2020-09-15 00:00:00" & TimeLocal < "2020-11-01 00:00:00") %>%
+  summarize(avg_T = mean(T))
 #View(oct_T)
 
 # plotting October temperatures with average august temperature overlayed
 dat_TC %>%
   filter(TimeLocal >= "2020-09-15 00:00:00" & TimeLocal < "2020-11-01 00:00:00") %>%
-  ggplot(aes(x = TimeLocal, y = ProbeT)) +
+  ggplot(aes(x = TimeLocal, y = T)) +
   geom_point() +
   geom_hline(aes(yintercept = avg_T), data = oct_T, color = "red")
 
 # plotting daily max temps for October 2020
 dat_oct <- dat_TC %>%
-  filter(!is.na(ProbeT) & TimeLocal >= "2020-09-15 00:00:00" & TimeLocal < "2020-11-01 00:00:00") %>%
+  filter(!is.na(T) & TimeLocal >= "2020-09-15 00:00:00" & TimeLocal < "2020-11-01 00:00:00") %>%
   mutate(day = day(TimeLocal)) %>%
   group_by(day) %>%
-  summarize(maxT = max(ProbeT))
+  summarize(maxT = max(T))
 
 avg_max_oct_T <- mean(dat_oct$maxT)
 
@@ -175,3 +179,17 @@ dat_oct %>%
   geom_hline(aes(yintercept = avg_max_oct_T), color = "red")
 ```
 
+Since there's a gap in data for Tahoe city water temps for the period of mid sept-october, I'm using data from Homewood site just south of Pineland instead.
+
+# Homewood Sept-Oct Water Temps
+```{r}
+View(dat_HW)
+
+dat_HW %>%
+  filter(!is.na(T)) %>%
+  ggplot(aes(x = TimeLocal, y = T)) +
+  geom_point() +
+  geom_smooth()
+```
+
+Looks like 15-17.5C range at the beginning of october at Homewood's nearshore station (based on interpolation of the data), with daily fluctuations of 1-2C in mid october.
