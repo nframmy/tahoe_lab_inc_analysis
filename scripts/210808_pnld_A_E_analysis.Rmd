@@ -77,6 +77,21 @@ GPP_AFDW_plot <- dat %>%
 GPP_AFDW_plot
 
 ggsave("plots/210808_pineland_ambient_enriched/210808_GPP_AFDW_plot.png", plot = GPP_AFDW_plot, width = 7, height = 3.5)
+
+# plotting an over-fitted line just to see what the resulting plot is. Looks very messy, and there is no clear trend.
+GPP_AFDW_smooth_plot <- dat %>%
+  ggplot(aes(x = temp_C, y = GPP_mgO2_d_gAFDW, color = nutrient_trt)) +
+  scale_y_log10() +
+  geom_point(shape = 19, size = 2) +
+  geom_smooth() +
+  stat_regline_equation() +
+  scale_color_discrete(name = "Nutrient Treatment")+
+  theme_classic() +
+  labs(title = "Periphyton GPP vs. Temperature",
+      x = expression('Temperature (\u00B0C)'),
+      y = expression(GPP~(mgO[2]~day^{-1}~gAFDW^{-1})))
+
+GPP_AFDW_smooth_plot
 ```
 Temperature has signficant effect on GPP, with 1C temperature increases corresponding to a 4% increase in GPP.
 
@@ -290,3 +305,84 @@ avg_AFDW <- dat %>%
 avg_AFDW
 
 ```
+
+# Double Logarithmic graphs (as specified in section 7.3.3 of del Giorgio & Williams 2005)
+
+## GPP
+```{r}
+# linear model of log-transformed GPP (biomass-normalized) and log-transformed temperature
+
+log_GPP_AFDW_mod <- lm(log(GPP_mgO2_d_gAFDW) ~ log(temp_C)*nutrients, dat)
+summary(log_GPP_AFDW_mod)
+
+plot(log_GPP_AFDW_mod)
+###### Model interpretations ######
+
+# interpreting effect size of temperature effect
+exp(coef(log_GPP_AFDW_mod)["log(temp_C)"])
+
+
+dat %>%
+  ggplot(aes(x = temp_C, y = GPP_mgO2_d_gAFDW, color = nutrient_trt)) +
+  scale_y_log10() +
+  scale_x_log10() +
+  geom_point(shape = 19, size = 2) +
+  geom_smooth(method = "lm") +
+  scale_color_discrete(name = "Nutrient Treatment")+
+  theme_classic() +
+  labs(title = "Periphyton GPP vs. Temperature",
+      x = expression('Temperature (\u00B0C)'),
+      y = expression(GPP~(mgO[2]~day^{-1}~gAFDW^{-1})))
+```
+
+## ER
+```{r}
+# linear model of log-transformed ER rates (biomass normalized) and log-transformed temperature
+log_ER_AFDW_mod <- lm(log(ER_mgO2_d_gAFDW) ~ log(temp_C)*nutrients, dat)
+summary(log_ER_AFDW_mod)
+
+plot(log_ER_AFDW_mod)
+
+###### Model interpretations ######
+
+# interpreting effect size of temperature effect
+exp(coef(log_ER_AFDW_mod)["log(temp_C)"])
+
+
+dat %>%
+  ggplot(aes(x = temp_C, y = ER_mgO2_d_gAFDW, color = nutrient_trt)) +
+  scale_y_log10() +
+  scale_x_log10() +
+  geom_point(shape = 19, size = 2) +
+  geom_smooth(method = "lm") +
+  #stat_regline_equation() +
+  theme_classic() +
+  labs(title = "ER response to Temperature",
+      x = expression('Temperature (\u00B0C)'),
+      y = expression(ER~(mgO[2]~day^{-1}~gAFDW^{-1})))
+```
+
+## NEP
+```{r}
+# linear model of log-transformed NEP (biomass normalized) and log-transformed temp
+log_NEP_AFDW_mod <- lm(log(NEP_mgO2_d_gAFDW) ~ log(temp_C)*nutrients, dat)
+summary(log_NEP_AFDW_mod)
+
+plot(log_NEP_AFDW_mod)
+
+# no significant predictors in the model
+
+
+dat %>%
+  ggplot(aes(x = temp_C, y = NEP_mgO2_d_gAFDW, color = nutrient_trt)) +
+  scale_y_log10() +
+  scale_x_log10() +
+  geom_point(shape = 19, size = 2) +
+  geom_smooth(method = "lm") +
+  stat_regline_equation() +
+  theme_classic() +
+  labs(title = "NEP response to Temperature",
+      x = expression('Temperature (\u00B0C)'),
+      y = expression(NEP~(mgO[2]~day^{-1}~gAFDW)))
+```
+
