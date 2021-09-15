@@ -393,7 +393,7 @@ plot(log_GPP_AFDW_mod)
 
 # interpreting effect size of temperature effect
 exp(coef(log_GPP_AFDW_mod)["log(temp_C)"])
-# looks that GPP increases about 10% for every 1C temp increase
+
 
 # interpreting effect size of nutrient effect
 exp(coef(log_GPP_AFDW_mod)["nutrients"])
