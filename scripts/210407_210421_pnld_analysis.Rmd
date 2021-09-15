@@ -120,6 +120,7 @@ GPP_AFDW_model_plot
 
 ggsave("plots/210421_pineland_enriched/210407_210421_GPP_AFDW_model_plot.png", plot = GPP_AFDW_model_plot, width = 7, height = 3.5)
 
+
 # making plotly plot to identify which chambers correspond to which datapoints
 p <- dat %>%
   ggplot(aes(x = temp_C, y = GPP_mgO2_d_gAFDW, color = nutrient_trt)) +
@@ -378,3 +379,209 @@ GPP_plot <- dat %>%
 GPP_plotly <- plotly::ggplotly(GPP_plot)
 GPP_plotly
 ```
+
+# Double Logarithmic graphs (as specified in section 7.3.3 of del Giorgio & Williams 2005)
+## GPP
+```{r}
+# linear model of log-transformed GPP (biomass-normalized) and log-transformed temperature
+
+log_GPP_AFDW_mod <- lm(log(GPP_mgO2_d_gAFDW) ~ log(temp_C)*nutrients, dat)
+summary(log_GPP_AFDW_mod)
+
+plot(log_GPP_AFDW_mod)
+###### Model interpretations ######
+
+# interpreting effect size of temperature effect
+exp(coef(log_GPP_AFDW_mod)["log(temp_C)"])
+# looks that GPP increases about 10% for every 1C temp increase
+
+# interpreting effect size of nutrient effect
+exp(coef(log_GPP_AFDW_mod)["nutrients"])
+
+# interpreting effect size of temperature and nutrient interaction
+exp(coef(log_GPP_AFDW_mod)["log(temp_C):nutrients"])
+
+dat %>%
+  ggplot(aes(x = temp_C, y = GPP_mgO2_d_gAFDW, color = nutrient_trt)) +
+  scale_y_log10() +
+  scale_x_log10() +
+  geom_point(shape = 19, size = 2) +
+  geom_smooth(method = "lm") +
+  scale_color_discrete(name = "Nutrient Treatment")+
+  theme_classic() +
+  labs(title = "Periphyton GPP vs. Temperature",
+      x = expression('Temperature (\u00B0C)'),
+      y = expression(GPP~(mgO[2]~day^{-1}~gAFDW^{-1})))
+```
+
+## ER
+```{r}
+# linear model of log-transformed ER rates (biomass normalized) and log-transformed temperature
+log_ER_AFDW_mod <- lm(log(ER_mgO2_d_gAFDW) ~ log(temp_C)*nutrients, dat)
+summary(log_ER_AFDW_mod)
+
+plot(log_ER_AFDW_mod)
+
+###### Model interpretations ######
+
+# interpreting effect size of temperature effect
+exp(coef(log_ER_AFDW_mod)["log(temp_C)"])
+
+
+# interpreting effect size of nutrient effect
+exp(coef(log_ER_AFDW_mod)["nutrients"])
+
+# interpreting effect size of temperature and nutrient interaction
+exp(coef(log_ER_AFDW_mod)["log(temp_C):nutrients"])
+
+dat %>%
+  ggplot(aes(x = temp_C, y = ER_mgO2_d_gAFDW, color = nutrient_trt)) +
+  scale_y_log10() +
+  scale_x_log10() +
+  geom_point(shape = 19, size = 2) +
+  geom_smooth(method = "lm") +
+  #stat_regline_equation() +
+  theme_classic() +
+  labs(title = "ER response to Temperature",
+      x = expression('Temperature (\u00B0C)'),
+      y = expression(ER~(mgO[2]~day^{-1}~gAFDW^{-1})))
+```
+
+## NEP
+```{r}
+# linear model of log-transformed NEP (biomass normalized) and log-transformed temp
+log_NEP_AFDW_mod <- lm(log(NEP_mgO2_d_gAFDW) ~ log(temp_C)*nutrients, dat)
+summary(log_NEP_AFDW_mod)
+
+plot(log_NEP_AFDW_mod)
+
+###### Model interpretations ######
+
+# interpreting effect size of temperature effect
+exp(coef(log_NEP_AFDW_mod)["log(temp_C)"])
+
+
+dat %>%
+  ggplot(aes(x = temp_C, y = NEP_mgO2_d_gAFDW, color = nutrient_trt)) +
+  scale_y_log10() +
+  scale_x_log10() +
+  geom_point(shape = 19, size = 2) +
+  geom_smooth(method = "lm") +
+  stat_regline_equation() +
+  theme_classic() +
+  labs(title = "NEP response to Temperature",
+      x = expression('Temperature (\u00B0C)'),
+      y = expression(NEP~(mgO[2]~day^{-1}~gAFDW)))
+```
+
+
+
+# Welter et al. 2015 Metabolism Models
+## GPP Temp + Nutrient Model
+```{r}
+# making column of ln-transformed mass-specific metabolic rates and transforming temperature to 1/kT where k is the Boltzman constant (8.61e-5 eV/K) and T is temp in Kelvin.
+
+dat2 <- dat %>%
+  mutate(ln_GPP_mgO2_d_gAFDW = log(GPP_mgO2_d_gAFDW), ln_ER_mgO2_d_gAFDW = log(ER_mgO2_d_gAFDW), ln_NEP_mgO2_d_gAFDW = log(NEP_mgO2_d_gAFDW), temp_kT = 1/(8.61e-5 * temp_C))
+head(dat2)
+
+# linear model of GPP regressed against temp and nutrients
+GPP_welter_mod <- lm(ln_GPP_mgO2_d_gAFDW ~ temp_kT*nutrients, dat2)
+summary(GPP_welter_mod)
+
+plot(GPP_welter_mod)
+###### Model interpretations ######
+
+# interpreting effect size of temperature effect
+exp(coef(GPP_welter_mod)["temp_kT"])
+# looks that GPP increases about 10% for every 1C temp increase
+
+# interpreting effect size of nutrient effect
+exp(coef(GPP_welter_mod)["nutrients"])
+
+# interpreting effect size of temperature and nutrient interaction
+exp(coef(GPP_welter_mod)["temp_C:nutrients"])
+
+
+
+# plotting model results
+dat2 %>%
+  ggplot(aes(x = temp_kT, y = ln_GPP_mgO2_d_gAFDW, color = nutrient_trt)) +
+  geom_point(shape = 19, size = 2) +
+  geom_smooth(method = "lm") +
+  stat_regline_equation() +
+  scale_color_discrete(name = "Nutrient Treatment")+
+  theme_classic() +
+  labs(title = "Periphyton GPP vs. Temperature",
+      x = expression('Temperature (1/kT)'),
+      y = expression(ln(GPP~(mgO[2]~day^{-1}~gAFDW^{-1}))))
+```
+
+## ER Temp and Nutrient Model
+```{r}
+# linear model of ER regressed against temp and nutrients
+ER_welter_mod <- lm(ln_ER_mgO2_d_gAFDW ~ temp_kT*nutrients, dat2)
+summary(ER_welter_mod)
+
+plot(ER_welter_mod)
+###### Model interpretations ######
+
+# interpreting effect size of temperature effect
+exp(coef(ER_welter_mod)["temp_kT"])
+# looks that ER increases about 10% for every 1C temp increase
+
+# interpreting effect size of nutrient effect
+exp(coef(ER_welter_mod)["nutrients"])
+
+# interpreting effect size of temperature and nutrient interaction
+exp(coef(ER_welter_mod)["temp_C:nutrients"])
+
+
+
+# plotting model results
+dat2 %>%
+  ggplot(aes(x = temp_kT, y = ln_ER_mgO2_d_gAFDW, color = nutrient_trt)) +
+  geom_point(shape = 19, size = 2) +
+  geom_smooth(method = "lm") +
+  stat_regline_equation() +
+  scale_color_discrete(name = "Nutrient Treatment")+
+  theme_classic() +
+  labs(title = "Periphyton ER vs. Temperature",
+      x = expression('Temperature (1/kT)'),
+      y = expression(ln(ER~(mgO[2]~day^{-1}~gAFDW^{-1}))))
+```
+
+## NEP Temp and Nutrient Model
+```{r}
+# linear model of NEP regressed against temp and nutrients
+NEP_welter_mod <- lm(ln_NEP_mgO2_d_gAFDW ~ temp_kT*nutrients, dat2)
+summary(NEP_welter_mod)
+
+plot(NEP_welter_mod)
+###### Model interpretations ######
+
+# interpreting effect size of temperature effect
+exp(coef(NEP_welter_mod)["temp_kT"])
+# looks that NEP increases about 10% for every 1C temp increase
+
+# interpreting effect size of nutrient effect
+exp(coef(NEP_welter_mod)["nutrients"])
+
+# interpreting effect size of temperature and nutrient interaction
+exp(coef(NEP_welter_mod)["temp_C:nutrients"])
+
+
+
+# plotting model results
+dat2 %>%
+  ggplot(aes(x = temp_kT, y = ln_NEP_mgO2_d_gAFDW, color = nutrient_trt)) +
+  geom_point(shape = 19, size = 2) +
+  geom_smooth(method = "lm") +
+  stat_regline_equation() +
+  scale_color_discrete(name = "Nutrient Treatment")+
+  theme_classic() +
+  labs(title = "Periphyton NEP vs. Temperature",
+      x = expression('Temperature (1/kT)'),
+      y = expression(ln(NEP~(mgO[2]~day^{-1}~gAFDW^{-1}))))
+```
+
