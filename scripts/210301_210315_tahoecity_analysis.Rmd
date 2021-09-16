@@ -33,7 +33,9 @@ dat_e <- read_csv("data/210315_tahoecity_enriched_inc/210315_TC_enriched_rates.c
 
 # selecting only the columns that I need
 dat_e <- dat_e %>%
+  mutate(chamber = substr(dat_e$chamber, nchar(dat_e$chamber) - 1, nchar(dat_e$chamber))) %>% # removing the word "chamber" from the column and only keeping the number
   select(chamber, total_DW_g, total_AFDW_g, rock_SA_m2, NEP_mg_d:nutrient_trt)
+#View(dat_e)
 
 # binding the rows of the two dataframes together
 dat <- bind_rows(dat_a, dat_e)
@@ -44,6 +46,9 @@ dat <- dat %>%
 # making ER rates positive so that we can log-transform them in subsequent models
 dat <- dat %>%
   mutate(ER_mg_d = -1 * ER_mg_d, ER_mgO2_d_gAFDW = -1 * ER_mgO2_d_gAFDW, ER_mgO2_d_m2 = -1 * ER_mgO2_d_m2)
+
+# exporting combined dataframe of ambient and enriched experiments
+write_csv(dat, "data/main_analysis/210301_210315_TC_A_E_rates.csv")
 
 #View(dat)
 
