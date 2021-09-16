@@ -380,18 +380,32 @@ plot(log_GPP_AFDW_mod)
 
 # no significant predictors in this model
 
+################ Removing Outliers ###########
 
-dat %>%
+# dataset with single outlier (chamber 1) removed
+dat_clean <- dat %>%
+  filter(!chamber == 1)
+
+# model of ER with single outlier (chamber 1) removed
+log_GPP_AFDW_mod2 <- lm(log(GPP_mgO2_d_gAFDW) ~ log(temp_C)*nutrients, dat_clean)
+summary(log_GPP_AFDW_mod2)
+
+plot(log_GPP_AFDW_mod2)
+
+GPP_log_log <- dat_clean %>%
   ggplot(aes(x = temp_C, y = GPP_mgO2_d_gAFDW, color = nutrient_trt)) +
   scale_y_log10() +
-  scale_x_log10() +
   geom_point(shape = 19, size = 2) +
   geom_smooth(method = "lm") +
-  scale_color_discrete(name = "Nutrient Treatment")+
+  #stat_regline_equation() +
+  #scale_color_discrete(name = "Nutrient Treatment")+
   theme_classic() +
   labs(title = "Periphyton GPP vs. Temperature",
       x = expression('Temperature (\u00B0C)'),
       y = expression(GPP~(mgO[2]~day^{-1}~gAFDW^{-1})))
+
+
+ggsave("plots/210613_pineland_ambient_enriched/210613_GPP_log_log_plot.png", plot = GPP_log_log, width = 4, height = 2.5)
 ```
 
 ## ER
@@ -408,7 +422,7 @@ plot(log_ER_AFDW_mod)
 exp(coef(log_ER_AFDW_mod)["log(temp_C)"])
 
 
-dat %>%
+ER_log_log <- dat %>%
   ggplot(aes(x = temp_C, y = ER_mgO2_d_gAFDW, color = nutrient_trt)) +
   scale_y_log10() +
   scale_x_log10() +
@@ -419,6 +433,8 @@ dat %>%
   labs(title = "ER response to Temperature",
       x = expression('Temperature (\u00B0C)'),
       y = expression(ER~(mgO[2]~day^{-1}~gAFDW^{-1})))
+
+ggsave("plots/210613_pineland_ambient_enriched/210613_ER_log_log_plot.png", plot = ER_log_log, width = 4, height = 2.5)
 ```
 
 ## NEP
@@ -432,15 +448,17 @@ plot(log_NEP_AFDW_mod)
 # no significant predictors in the model
 
 
-dat %>%
+NEP_log_log <- dat %>%
   ggplot(aes(x = temp_C, y = NEP_mgO2_d_gAFDW, color = nutrient_trt)) +
   scale_y_log10() +
   scale_x_log10() +
   geom_point(shape = 19, size = 2) +
   geom_smooth(method = "lm") +
-  stat_regline_equation() +
+  #stat_regline_equation() +
   theme_classic() +
   labs(title = "NEP response to Temperature",
       x = expression('Temperature (\u00B0C)'),
       y = expression(NEP~(mgO[2]~day^{-1}~gAFDW)))
+
+ggsave("plots/210613_pineland_ambient_enriched/210613_NEP_log_log_plot.png", plot = NEP_log_log, width = 4, height = 2.5)
 ```
