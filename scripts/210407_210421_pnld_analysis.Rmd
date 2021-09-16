@@ -401,17 +401,19 @@ exp(coef(log_GPP_AFDW_mod)["nutrients"])
 # interpreting effect size of temperature and nutrient interaction
 exp(coef(log_GPP_AFDW_mod)["log(temp_C):nutrients"])
 
-dat %>%
+GPP_log_log <- dat %>%
   ggplot(aes(x = temp_C, y = GPP_mgO2_d_gAFDW, color = nutrient_trt)) +
   scale_y_log10() +
   scale_x_log10() +
   geom_point(shape = 19, size = 2) +
   geom_smooth(method = "lm") +
-  scale_color_discrete(name = "Nutrient Treatment")+
+  #scale_color_discrete(name = "Nutrient Treatment")+
   theme_classic() +
   labs(title = "Periphyton GPP vs. Temperature",
       x = expression('Temperature (\u00B0C)'),
       y = expression(GPP~(mgO[2]~day^{-1}~gAFDW^{-1})))
+
+ggsave("plots/210421_pineland_enriched/210407_210421_GPP_log_log_plot.png", plot = GPP_log_log, width = 4, height = 2.5)
 ```
 
 ## ER
@@ -434,7 +436,7 @@ exp(coef(log_ER_AFDW_mod)["nutrients"])
 # interpreting effect size of temperature and nutrient interaction
 exp(coef(log_ER_AFDW_mod)["log(temp_C):nutrients"])
 
-dat %>%
+ER_log_log <- dat %>%
   ggplot(aes(x = temp_C, y = ER_mgO2_d_gAFDW, color = nutrient_trt)) +
   scale_y_log10() +
   scale_x_log10() +
@@ -445,6 +447,8 @@ dat %>%
   labs(title = "ER response to Temperature",
       x = expression('Temperature (\u00B0C)'),
       y = expression(ER~(mgO[2]~day^{-1}~gAFDW^{-1})))
+
+ggsave("plots/210421_pineland_enriched/210407_210421_ER_log_log_plot.png", plot = ER_log_log, width = 4, height = 2.5)
 ```
 
 ## NEP
@@ -461,17 +465,19 @@ plot(log_NEP_AFDW_mod)
 exp(coef(log_NEP_AFDW_mod)["log(temp_C)"])
 
 
-dat %>%
+NEP_log_log <- dat %>%
   ggplot(aes(x = temp_C, y = NEP_mgO2_d_gAFDW, color = nutrient_trt)) +
   scale_y_log10() +
   scale_x_log10() +
   geom_point(shape = 19, size = 2) +
   geom_smooth(method = "lm") +
-  stat_regline_equation() +
+  #stat_regline_equation() +
   theme_classic() +
   labs(title = "NEP response to Temperature",
       x = expression('Temperature (\u00B0C)'),
       y = expression(NEP~(mgO[2]~day^{-1}~gAFDW)))
+
+ggsave("plots/210421_pineland_enriched/210407_210421_NEP_log_log_plot.png", plot = NEP_log_log, width = 4, height = 2.5)
 ```
 
 
