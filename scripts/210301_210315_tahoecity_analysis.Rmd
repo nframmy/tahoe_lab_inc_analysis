@@ -40,6 +40,11 @@ dat <- bind_rows(dat_a, dat_e)
 # adding in nutrient enriched dummy variable column (0 = ambient, 1 = enriched nutrients)
 dat <- dat %>%
   mutate(nutrients = ifelse(nutrient_trt == "ambient", 0, 1))
+
+# making ER rates positive so that we can log-transform them in subsequent models
+dat <- dat %>%
+  mutate(ER_mg_d = -1 * ER_mg_d, ER_mgO2_d_gAFDW = -1 * ER_mgO2_d_gAFDW, ER_mgO2_d_m2 = -1 * ER_mgO2_d_m2)
+
 #View(dat)
 
 ```
@@ -314,4 +319,91 @@ avg_AFDW <- dat %>%
   summarize(avg_AFDW_g_m2 = mean(total_AFDW_g/rock_SA_m2), sd_AFDW_g_m2 = sd(total_AFDW_g/rock_SA_m2))
 avg_AFDW
 
+```
+
+
+# Double Logarithmic graphs (as specified in section 7.3.3 of del Giorgio & Williams 2005)
+
+## GPP
+```{r}
+# linear model of log-transformed GPP (biomass-normalized) and log-transformed temperature
+
+log_GPP_AFDW_mod <- lm(log(GPP_mgO2_d_gAFDW) ~ log(temp_C)*nutrients, dat)
+summary(log_GPP_AFDW_mod)
+
+plot(log_GPP_AFDW_mod)
+###### Model interpretations ######
+
+# interpreting effect size of temperature effect
+exp(coef(log_GPP_AFDW_mod)["log(temp_C)"])
+
+
+GPP_log_log <- dat %>%
+  ggplot(aes(x = temp_C, y = GPP_mgO2_d_gAFDW, color = nutrient_trt)) +
+  scale_y_log10() +
+  scale_x_log10() +
+  geom_point(shape = 19, size = 2) +
+  geom_smooth(method = "lm") +
+  #scale_color_discrete(name = "Nutrient Treatment")+
+  theme_classic() +
+  labs(title = "Periphyton GPP vs. Temperature",
+      x = expression('Temperature (\u00B0C)'),
+      y = expression(GPP~(mgO[2]~day^{-1}~gAFDW^{-1})))
+
+ggsave("plots/210315_tahoecity_enriched/210315_GPP_log_log_plot.png", plot = GPP_log_log, width = 4, height = 2.5)
+```
+
+## ER
+```{r}
+# linear model of log-transformed ER rates (biomass normalized) and log-transformed temperature
+log_ER_AFDW_mod <- lm(log(ER_mgO2_d_gAFDW) ~ log(temp_C)*nutrients, dat)
+summary(log_ER_AFDW_mod)
+
+plot(log_ER_AFDW_mod)
+
+###### Model interpretations ######
+
+# interpreting effect size of temperature effect
+exp(coef(log_ER_AFDW_mod)["log(temp_C)"])
+
+
+ER_log_log <- dat %>%
+  ggplot(aes(x = temp_C, y = ER_mgO2_d_gAFDW, color = nutrient_trt)) +
+  scale_y_log10() +
+  scale_x_log10() +
+  geom_point(shape = 19, size = 2) +
+  geom_smooth(method = "lm") +
+  #stat_regline_equation() +
+  theme_classic() +
+  labs(title = "ER response to Temperature",
+      x = expression('Temperature (\u00B0C)'),
+      y = expression(ER~(mgO[2]~day^{-1}~gAFDW^{-1})))
+
+ggsave("plots/210315_tahoecity_enriched/210315_ER_log_log_plot.png", plot = ER_log_log, width = 4, height = 2.5)
+```
+
+## NEP
+```{r}
+# linear model of log-transformed NEP (biomass normalized) and log-transformed temp
+log_NEP_AFDW_mod <- lm(log(NEP_mgO2_d_gAFDW) ~ log(temp_C)*nutrients, dat)
+summary(log_NEP_AFDW_mod)
+
+plot(log_NEP_AFDW_mod)
+
+# no significant predictors in the model
+
+
+NEP_log_log <- dat %>%
+  ggplot(aes(x = temp_C, y = NEP_mgO2_d_gAFDW, color = nutrient_trt)) +
+  scale_y_log10() +
+  scale_x_log10() +
+  geom_point(shape = 19, size = 2) +
+  geom_smooth(method = "lm") +
+  #stat_regline_equation() +
+  theme_classic() +
+  labs(title = "NEP response to Temperature",
+      x = expression('Temperature (\u00B0C)'),
+      y = expression(NEP~(mgO[2]~day^{-1}~gAFDW)))
+
+ggsave("plots/210315_tahoecity_enriched/210315_NEP_log_log_plot.png", plot = NEP_log_log, width = 4, height = 2.5)
 ```
