@@ -46,6 +46,8 @@ dat <- dat %>%
 dat <- dat %>%
   mutate(ER_mg_d = -1 * ER_mg_d, ER_mgO2_d_gAFDW = -1 * ER_mgO2_d_gAFDW, ER_mgO2_d_m2 = -1 * ER_mgO2_d_m2)
 
+write_csv(dat, "data/main_analysis/210613_pnld_A_E_rates.csv")
+
 #View(dat)
 
 ```
