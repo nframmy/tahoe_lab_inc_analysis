@@ -4,6 +4,12 @@ author: "Nick Framsted"
 date: "7/29/2021"
 output: pdf_document
 ---
+Analysis of all Tahoe Periphyton Metabolism Data
+
+Input data files: Individual dataframes generated from separate analyses of each incubation.
+
+Output data files: Main dataframe of combined dataframes from each incubation.
+
 ```{r setup, include=FALSE}
 library(ggplot2)
 library(tidyverse)
@@ -17,27 +23,86 @@ library(DescTools)
 knitr::opts_knit$set(root.dir = '..')
 ```
 
-
+# Loading and formatting dataframe
 ```{r, include = FALSE}
 # importing, cleaning up, and combining metabolism data from all incubations
-### 210301 TC Ambient data
-dat1 <- read_csv("data/210301_tahoecity_ambient_inc/210301_TC_ambient_rates.csv")
+### 210301-210315 TC Ambient & Enriched data
+dat1 <- read_csv("data/main_analysis/210301_210315_TC_A_E_rates.csv")
+
+
+### 210407-210421 Pineland A & E data
+dat2 <- read_csv("data/main_analysis/210407_210421_pnld_A_E_rates.csv")
+
+
+### 210613 Pineland A & E data
+
+dat3 <- read_csv("data/main_analysis/210613_pnld_A_E_rates.csv")
+
+### 210808 Pineland A & E data
+
+dat4 <- read_csv("data/main_analysis/210808_pnld_A_E_rates.csv")
+
+
+
+########## Data Formatting #############
 
 dat1 <- dat1 %>%
-  select(chamber, temp_C, water_volume_L, total_DW_g:nutrient_trt) %>% # selecting only the columns I need
-  rename(chamber_vol_L = water_volume_L) # renaming this column to be consistent between experiments
+  mutate(season = "spring", month = "march") # adding season and month columns to dataframe
 
-### 210315 TC Enriched data
-dat2 <- read_csv("data/210315_tahoecity_enriched_inc/210315_TC_enriched_rates.csv")
+
 
 dat2 <- dat2 %>%
-  mutate(chamber = substr(dat2$chamber, nchar(dat2$chamber) - 1, nchar(dat2$chamber))) %>%# removing the word "chamber" from the column and only keeping the number
- rename(chamber_vol_L = water_volume_L) # renaming this column to be consistent between experiments
+  mutate(season = "spring", month = "april")
 
-dat2$chamber <- as.numeric(dat2$chamber) # coercing chamber column to be numeric
 
-###
+dat3 <- dat3 %>%
+  mutate(season = "summer", month = "june")
 
-dat_a <- read_csv("data/210407_pineland_ambient/210407_pnld_ambient_rates.csv")
+
+dat4 <- dat4 %>%
+  mutate(season = "summer", month = "august")
+
+######### Combining dataframes #########
+dat <- bind_rows(dat1, dat2, dat3, dat4)
+
+#View(dat)
+
 ```
+
+# Plotting main data
+## AFDW-normalized metabolic rates
+### GPP
+```{r}
+# linear model of log-transformed GPP (biomass-normalized) and log-transformed temperature
+
+# removing data from march experiments since it was at a different site and had excessive variation in AFDW-normalized GPP rates
+dat_pnld <- dat %>%
+  filter(!month == "march")
+
+log_GPP_AFDW_mod <- lm(log(GPP_mgO2_d_gAFDW) ~ log(temp_C)*nutrients*season, dat_pnld)
+summary(log_GPP_AFDW_mod)
+
+plot(log_GPP_AFDW_mod)
+###### Model interpretations ######
+
+# interpreting effect size of temperature effect
+exp(coef(log_GPP_AFDW_mod)["log(temp_C)"])
+
+
+GPP_log_log <- dat_pnld %>%
+  ggplot(aes(x = temp_C, y = GPP_mgO2_d_gAFDW, color = season)) +
+  facet_wrap(~nutrients) +
+  scale_y_log10() +
+  scale_x_log10() +
+  geom_point(shape = 19, size = 2) +
+  geom_smooth(method = "lm") +
+  #scale_color_discrete(name = "Nutrient Treatment")+
+  theme_classic() +
+  labs(title = "Periphyton GPP vs. Temperature",
+      x = expression('Temperature (\u00B0C)'),
+      y = expression(GPP~(mgO[2]~day^{-1}~gAFDW^{-1})))
+
+GPP_log_log
+```
+
 
