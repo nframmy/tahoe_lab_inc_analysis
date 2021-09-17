@@ -171,7 +171,7 @@ dat_oct %>%
   geom_point() +
   geom_hline(aes(yintercept = avg_max_oct_T), color = "red")
 
-# plot just for August 5-15th for planning for October 3-14th incubation
+# plot just for October 3-14th for planning for October 3-14th incubation
 dat_oct %>%
   filter(day >= 3 & day <= 14) %>%
   ggplot(aes(x = day, y = maxT)) +
@@ -193,3 +193,53 @@ dat_HW %>%
 ```
 
 Looks like 15-17.5C range at the beginning of october at Homewood's nearshore station (based on interpolation of the data), with daily fluctuations of 1-2C in mid october.
+
+# July-Sept Water Temp Tahoe City
+```{r}
+# loading in new .csv file provided by Sergio Valbuena on 9/17/21 of 2019 Tahoe City water temps for july-oct to make up for data gap for this period in 2020 data
+dat_2019 <- read_csv("C:/Users/ntframst/Documents/Tahoe_nearshore_network_data/NS_TahoeCity_2019_07_01_to_2019_11_01_editedNTF.csv", skip = 1)
+
+head(dat_2019)
+
+# plot of mid-Sept-mid-Oct temps
+dat_2019 %>%
+  filter(TahoeTime > "2019-09-15 00:00:00" & TahoeTime < "2019-10-20 00:00:00") %>%
+  ggplot(aes(x = TahoeTime, y = Temp_C)) +
+  geom_point() +
+  geom_smooth()
+
+# calculating average Sept/October temperatures for planning October 2021 incubation
+oct_T <- dat_2019 %>%
+  filter(TahoeTime > "2019-10-01 00:00:00" & TahoeTime < "2019-11-01 00:00:00") %>%
+  summarize(avg_T = mean(Temp_C))
+#View(oct_T)
+
+# plotting October temperatures with average oct temperature overlayed
+dat_2019 %>%
+  filter(TahoeTime >= "2019-10-01 00:00:00" & TahoeTime < "2019-11-01 00:00:00") %>%
+  ggplot(aes(x = TahoeTime, y = Temp_C)) +
+  geom_point() +
+  geom_hline(aes(yintercept = avg_T), data = oct_T, color = "red") +
+  labs(title = "Average October 2019 Water Temp")
+
+# plotting daily max temps for October 2020
+dat_oct <- dat_2019 %>%
+  filter(!is.na(Temp_C) & TahoeTime >= "2019-10-01 00:00:00" & TahoeTime < "2019-11-01 00:00:00") %>%
+  mutate(day = day(TahoeTime)) %>%
+  group_by(day) %>%
+  summarize(maxT = max(Temp_C))
+
+avg_max_oct_T <- mean(dat_oct$maxT)
+
+dat_oct %>%
+  ggplot(aes(x = day, y = maxT)) +
+  geom_point() +
+  geom_hline(aes(yintercept = avg_max_oct_T), color = "red") +
+  labs(title = "Daily October 2019 Max Water Temp")
+```
+
+Sept-Oct temps in 2019 show that this is a period of rapid cooling in the nearshore. In early october, temps were ~13-14C with 1-2C daily temperature swings.
+
+Average October water temp is ~12.5C, but tends to be a degree or two warmer during the first few weeks of the month. Average daily max temp is ~13.5C.
+
+Expect temps in the field to be ~12.5-15.5C and temp treatments to be based in that range.
