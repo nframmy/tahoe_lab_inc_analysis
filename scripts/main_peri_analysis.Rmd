@@ -64,8 +64,17 @@ dat4 <- dat4 %>%
 
 ######### Combining dataframes #########
 dat <- bind_rows(dat1, dat2, dat3, dat4)
+head(dat)
+
+# exporting combined dataframe as .csv
+write_csv(dat, "data/main_analysis/main_rate_data.csv")
 
 #View(dat)
+
+# removing data from march experiments since it was at a different site and had excessive variation in AFDW-normalized GPP rates due to a discrepancy in filtering methods
+dat_pnld <- dat %>%
+  filter(!month == "march")
+#View(dat_pnld)
 
 ```
 
@@ -75,10 +84,7 @@ dat <- bind_rows(dat1, dat2, dat3, dat4)
 ```{r}
 # linear model of log-transformed GPP (biomass-normalized) and log-transformed temperature
 
-# removing data from march experiments since it was at a different site and had excessive variation in AFDW-normalized GPP rates
-dat_pnld <- dat %>%
-  filter(!month == "march")
-
+# linear model of GPP (AFDW-normalized)
 log_GPP_AFDW_mod <- lm(log(GPP_mgO2_d_gAFDW) ~ log(temp_C)*nutrients*season, dat_pnld)
 summary(log_GPP_AFDW_mod)
 
@@ -91,7 +97,7 @@ exp(coef(log_GPP_AFDW_mod)["log(temp_C)"])
 
 GPP_log_log <- dat_pnld %>%
   ggplot(aes(x = temp_C, y = GPP_mgO2_d_gAFDW, color = season)) +
-  facet_wrap(~nutrients) +
+  facet_wrap(~nutrient_trt) +
   scale_y_log10() +
   scale_x_log10() +
   geom_point(shape = 19, size = 2) +
@@ -103,6 +109,117 @@ GPP_log_log <- dat_pnld %>%
       y = expression(GPP~(mgO[2]~day^{-1}~gAFDW^{-1})))
 
 GPP_log_log
+
+
+# investigating outlier datapoints using plotly to identify datapoints
+GPP_plotly <- dat_pnld %>%
+  ggplot(aes(x = temp_C, y = GPP_mgO2_d_gAFDW, color = season)) +
+  facet_wrap(~nutrient_trt) +
+  scale_y_log10() +
+  scale_x_log10() +
+  geom_point(aes(group = chamber), shape = 19, size = 2) +
+  geom_smooth(method = "lm") +
+  #scale_color_discrete(name = "Nutrient Treatment")+
+  theme_classic()
+
+p <- plotly::ggplotly(GPP_plotly)
+p
+
+# Chambers 1 and 3 appear to be outliers for the june ambient incubations, and will be removed in subsequent analyses.
+
+# removing outliers
+dat_clean <- dat_pnld[-c(33,35),]
+
+# linear model of GPP (AFDW-normalized)
+log_GPP_AFDW_mod <- lm(log(GPP_mgO2_d_gAFDW) ~ log(temp_C)*nutrients*season, dat_clean)
+summary(log_GPP_AFDW_mod)
+
+plot(log_GPP_AFDW_mod)
+###### Model interpretations ######
+
+# interpreting effect size of temperature effect
+exp(coef(log_GPP_AFDW_mod)["log(temp_C)"])
+
+
+GPP_log_log <- dat_clean %>%
+  ggplot(aes(x = temp_C, y = GPP_mgO2_d_gAFDW, color = season)) +
+  facet_wrap(~nutrient_trt) +
+  scale_y_log10() +
+  scale_x_log10() +
+  geom_point(shape = 19, size = 2) +
+  geom_smooth(method = "lm") +
+  #scale_color_discrete(name = "Nutrient Treatment")+
+  theme_classic() +
+  labs(title = "Periphyton GPP vs. Temperature",
+      x = expression('Temperature (\u00B0C)'),
+      y = expression(GPP~(mgO[2]~day^{-1}~gAFDW^{-1})))
+
+GPP_log_log
+
+ggsave("plots/main_analysis/GPP_log_log_main.png", plot = GPP_log_log, width = 4, height = 2.5)
 ```
 
+
+### ER
+```{r}
+# linear model of ER (AFDW-normalized)
+log_ER_AFDW_mod <- lm(log(ER_mgO2_d_gAFDW) ~ log(temp_C)*nutrients*season, dat_clean)
+summary(log_ER_AFDW_mod)
+
+plot(log_ER_AFDW_mod)
+
+###### Model interpretations ######
+
+# interpreting effect size of temperature effect
+exp(coef(log_ER_AFDW_mod)["log(temp_C)"])
+
+
+ER_log_log <- dat_clean %>%
+  ggplot(aes(x = temp_C, y = ER_mgO2_d_gAFDW, color = season)) +
+  facet_wrap(~nutrient_trt) +
+  scale_y_log10() +
+  scale_x_log10() +
+  geom_point(shape = 19, size = 2) +
+  geom_smooth(method = "lm") +
+  #scale_color_discrete(name = "Nutrient Treatment")+
+  theme_classic() +
+  labs(title = "Periphyton ER vs. Temperature",
+      x = expression('Temperature (\u00B0C)'),
+      y = expression(ER~(mgO[2]~day^{-1}~gAFDW^{-1})))
+
+ER_log_log
+
+ggsave("plots/main_analysis/ER_log_log_main.png", plot = ER_log_log, width = 4, height = 2.5)
+```
+
+### NEP
+```{r}
+# linear model of NEP (AFDW-normalized)
+log_NEP_AFDW_mod <- lm(log(NEP_mgO2_d_gAFDW) ~ log(temp_C)*nutrients*season, dat_clean)
+summary(log_NEP_AFDW_mod)
+
+plot(log_NEP_AFDW_mod)
+###### Model interpretations ######
+
+# interpreting effect size of temperature effect
+exp(coef(log_NEP_AFDW_mod)["log(temp_C)"])
+
+
+NEP_log_log <- dat_clean %>%
+  ggplot(aes(x = temp_C, y = NEP_mgO2_d_gAFDW, color = season)) +
+  facet_wrap(~nutrient_trt) +
+  scale_y_log10() +
+  scale_x_log10() +
+  geom_point(shape = 19, size = 2) +
+  geom_smooth(method = "lm") +
+  #scale_color_discrete(name = "Nutrient Treatment")+
+  theme_classic() +
+  labs(title = "Periphyton NEP vs. Temperature",
+      x = expression('Temperature (\u00B0C)'),
+      y = expression(NEP~(mgO[2]~day^{-1}~gAFDW^{-1})))
+
+NEP_log_log
+
+ggsave("plots/main_analysis/NEP_log_log_main.png", plot = NEP_log_log, width = 4, height = 2.5)
+```
 
