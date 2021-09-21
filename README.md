@@ -52,6 +52,6 @@ rock_SA_m2: rock surface area covered by periphyton in sq. meters approximated a
     
   210613 Pineland Incubations:
     -Performed ambient and enriched incubations on the same set of rocks and paired biomass msmsnts for these incubations.
-    -Enriched chambers to the correct nutrient conctrations of 400ug/L NO3-N and NH4-N and 318ug/L SRP.
+    -Enriched chambers to the correct nutrient concentrations of 400ug/L NO3-N and NH4-N and 318ug/L SRP.
     -Data was lost from first ambient incubation, thus it was performed again later that evening.
     -Data from one presens 4-channel device quit recording during the dark portion of the enriched incubation, but the issue was fixed and data was recorded in a different file and added to the main data file later.
