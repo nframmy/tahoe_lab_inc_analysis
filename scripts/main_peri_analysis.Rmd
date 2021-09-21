@@ -142,12 +142,12 @@ exp(coef(log_GPP_AFDW_mod)["log(temp_C)"])
 
 
 GPP_log_log <- dat_clean %>%
-  ggplot(aes(x = temp_C, y = GPP_mgO2_d_gAFDW, color = season)) +
-  facet_wrap(~nutrient_trt) +
+  ggplot(aes(x = temp_C, y = GPP_mgO2_d_gAFDW, group = interaction(season, nutrients))) +
   scale_y_log10() +
   scale_x_log10() +
-  geom_point(shape = 19, size = 2) +
-  geom_smooth(method = "lm") +
+  geom_point(aes(shape = season, color = nutrient_trt), size = 1.5) +
+  scale_shape_manual(values = c(17, 19)) +
+  geom_smooth(aes(color = nutrient_trt), method = "lm") +
   #scale_color_discrete(name = "Nutrient Treatment")+
   theme_classic() +
   labs(title = "Periphyton GPP vs. Temperature",
@@ -175,12 +175,12 @@ exp(coef(log_ER_AFDW_mod)["log(temp_C)"])
 
 
 ER_log_log <- dat_clean %>%
-  ggplot(aes(x = temp_C, y = ER_mgO2_d_gAFDW, color = season)) +
-  facet_wrap(~nutrient_trt) +
+  ggplot(aes(x = temp_C, y = ER_mgO2_d_gAFDW, group = interaction(season, nutrients))) +
   scale_y_log10() +
   scale_x_log10() +
-  geom_point(shape = 19, size = 2) +
-  geom_smooth(method = "lm") +
+  geom_point(aes(shape = season, color = nutrient_trt), size = 1.5) +
+  scale_shape_manual(values = c(17, 19)) +
+  geom_smooth(aes(color = nutrient_trt), method = "lm") +
   #scale_color_discrete(name = "Nutrient Treatment")+
   theme_classic() +
   labs(title = "Periphyton ER vs. Temperature",
@@ -206,12 +206,12 @@ exp(coef(log_NEP_AFDW_mod)["log(temp_C)"])
 
 
 NEP_log_log <- dat_clean %>%
-  ggplot(aes(x = temp_C, y = NEP_mgO2_d_gAFDW, color = season)) +
-  facet_wrap(~nutrient_trt) +
+  ggplot(aes(x = temp_C, y = NEP_mgO2_d_gAFDW, group = interaction(season, nutrients))) +
   scale_y_log10() +
   scale_x_log10() +
-  geom_point(shape = 19, size = 2) +
-  geom_smooth(method = "lm") +
+ geom_point(aes(shape = season, color = nutrient_trt), size = 1.5) +
+  scale_shape_manual(values = c(17, 19)) +
+  geom_smooth(aes(color = nutrient_trt), method = "lm") +
   #scale_color_discrete(name = "Nutrient Treatment")+
   theme_classic() +
   labs(title = "Periphyton NEP vs. Temperature",
