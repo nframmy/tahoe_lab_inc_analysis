@@ -18,6 +18,9 @@ library(ggpubr)
 library(plotly)
 library(reshape2)
 library(DescTools)
+library(arm)
+library(lme4)
+library(lattice)
 
 # changing working directory from /scripts to /tahoe_lab_inc_analysis
 knitr::opts_knit$set(root.dir = '..')
@@ -221,5 +224,66 @@ NEP_log_log <- dat_clean %>%
 NEP_log_log
 
 ggsave("plots/main_analysis/NEP_log_log_main.png", plot = NEP_log_log, width = 4, height = 2.5)
+```
+
+# Faceting the above plots
+```{r}
+# melting dataframe to long format so that metabolic rate columns are combined into one column and values are in a separate column so all can be plotted at once
+dat_long <- dat_clean %>%
+  rename(GPP = GPP_mgO2_d_gAFDW, ER = ER_mgO2_d_gAFDW, NEP = NEP_mgO2_d_gAFDW) %>% # renaming columns so that facet labels are more tidy
+  pivot_longer(cols = c(NEP, GPP, ER),
+               names_to = "rate_name_AFDW",
+               values_to = "rates_AFDW",
+               values_drop_na = TRUE)
+#View(dat_long)
+
+# plotting same as above plots, but facetting by rate_name so that the temperature axis is shared between plots
+
+rates_log_log <- dat_long %>%
+  ggplot(aes(x = temp_C, y = rates_AFDW, group = interaction(season, nutrients))) +
+  facet_grid(cols = vars(rate_name_AFDW)) +
+  scale_y_log10() +
+  scale_x_log10() +
+ geom_point(aes(shape = season, color = nutrient_trt), size = 1.5) +
+  scale_shape_manual(values = c(17, 19)) +
+  geom_smooth(aes(color = nutrient_trt), method = "lm") +
+  scale_color_viridis_d("Nutrient Treatment") + # renaming label of color legend
+  scale_shape_discrete(name = "Season") +# renaming label of point shape legend
+  theme_minimal() +
+  theme(legend.position = "bottom") +
+  labs(title = "Periphyton Metabolic Rates vs. Temperature",
+      x = expression('Temperature (\u00B0C)'),
+      y = expression(Rates~(mgO[2]~day^{-1}~gAFDW^{-1})))
+
+rates_log_log
+
+ggsave("plots/main_analysis/rates_log_log_main.png", plot = rates_log_log, width = 7, height = 3)
+```
+
+# Random Effects Modeling
+## GPP
+```{r}
+# nested random effects model with temp and nutrients as predictors, and season as a random effect (with differing intercept and slope for each season)
+
+# this basically is saying that the effect of increasing temperature varies among seasons, and that each season has different GPP values
+m1 <- lmer(GPP_mgO2_d_gAFDW ~ temp_C*nutrients + (1 + temp_C|season), data = dat_clean)
+display(m1)
+
+# random effects model with random intercept for season only
+
+m2 <- lmer(GPP_mgO2_d_gAFDW ~ temp_C*nutrients + (1|season), data = dat_clean)
+display(m2)
+
+m3 <- lmer(GPP_mgO2_d_gAFDW ~ temp_C*nutrients + (1 + nutrients|season), data = dat_clean)
+
+m4 <- lmer(GPP_mgO2_d_gAFDW ~ temp_C*nutrients + (1 + nutrients|season) + (1 + temp_C|season), data = dat_clean)
+
+m5 <- lm(GPP_mgO2_d_gAFDW ~ temp_C*nutrients, data = dat_clean)
+
+m6 <- lm(GPP_mgO2_d_gAFDW ~ temp_C, data = dat_clean)
+
+m7 <- lm(GPP_mgO2_d_gAFDW ~ nutrients, data = dat_clean)
+
+AIC(m1, m2, m3, m4, m5, m6, m7)
 ```
 
