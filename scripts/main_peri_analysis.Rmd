@@ -201,6 +201,9 @@ ggsave("plots/main_analysis/ER_log_log_main.png", plot = ER_log_log, width = 4, 
 log_NEP_AFDW_mod <- lm(log(NEP_mgO2_d_gAFDW) ~ log(temp_C)*nutrients*season, dat_clean)
 summary(log_NEP_AFDW_mod)
 
+# plotting residuals by season
+#boxplot(resid(log_NEP_AFDW_mod) ~ dat_clean)
+
 plot(log_NEP_AFDW_mod)
 ###### Model interpretations ######
 
@@ -225,6 +228,8 @@ NEP_log_log
 
 ggsave("plots/main_analysis/NEP_log_log_main.png", plot = NEP_log_log, width = 4, height = 2.5)
 ```
+
+These linear models with no random effects may be overstating their confidence in the significance of the predictors since pooling the variance between seasons might be masking some of the season-level correlation (or covariance) between predictors like temperature.
 
 # Faceting the above plots
 ```{r}
@@ -266,24 +271,40 @@ ggsave("plots/main_analysis/rates_log_log_main.png", plot = rates_log_log, width
 # nested random effects model with temp and nutrients as predictors, and season as a random effect (with differing intercept and slope for each season)
 
 # this basically is saying that the effect of increasing temperature varies among seasons, and that each season has different GPP values
-m1 <- lmer(GPP_mgO2_d_gAFDW ~ temp_C*nutrients + (1 + temp_C|season), data = dat_clean)
+m1 <- lmer(log(GPP_mgO2_d_gAFDW) ~ log(temp_C)*nutrients + (1 + log(temp_C)|season), data = dat_clean)
 display(m1)
+summary (m1)
+
 
 # random effects model with random intercept for season only
 
-m2 <- lmer(GPP_mgO2_d_gAFDW ~ temp_C*nutrients + (1|season), data = dat_clean)
+m2 <- lmer(log(GPP_mgO2_d_gAFDW) ~ log(temp_C)*nutrients + (1|season), data = dat_clean)
 display(m2)
+summary(m2)
 
-m3 <- lmer(GPP_mgO2_d_gAFDW ~ temp_C*nutrients + (1 + nutrients|season), data = dat_clean)
+m3 <- lmer(log(GPP_mgO2_d_gAFDW) ~ log(temp_C)*nutrients + (1 + nutrients|season), data = dat_clean)
 
-m4 <- lmer(GPP_mgO2_d_gAFDW ~ temp_C*nutrients + (1 + nutrients|season) + (1 + temp_C|season), data = dat_clean)
+m4 <- lmer(log(GPP_mgO2_d_gAFDW) ~ log(temp_C)*nutrients + (1 + nutrients|season) + (1 + log(temp_C)|season), data = dat_clean)
 
-m5 <- lm(GPP_mgO2_d_gAFDW ~ temp_C*nutrients, data = dat_clean)
+m5 <- lm(log(GPP_mgO2_d_gAFDW) ~ log(temp_C)*nutrients, data = dat_clean)
 
-m6 <- lm(GPP_mgO2_d_gAFDW ~ temp_C, data = dat_clean)
+m6 <- lm(log(GPP_mgO2_d_gAFDW) ~ log(temp_C), data = dat_clean)
 
-m7 <- lm(GPP_mgO2_d_gAFDW ~ nutrients, data = dat_clean)
+m7 <- lm(log(GPP_mgO2_d_gAFDW) ~ nutrients, data = dat_clean)
 
-AIC(m1, m2, m3, m4, m5, m6, m7)
+m8 <- lm(log(GPP_mgO2_d_gAFDW) ~ log(temp_C)*nutrients*season, data = dat_clean)
+summary(m8)
+
+
+AIC(m1, m2, m3, m4, m5, m6, m7, m8)
+BIC(m1, m2, m3, m4, m5, m6, m7, m8)
+
 ```
 
+Looks like model 8 has the lowest AIC and is the most parsimonious model with temperature, nutrients, season, and their interaction as predictors.
+
+What does this model look like plotted out?
+
+How to interpret significant 3-way interaction btwn temp, nuts, and season?
+
+Does the interaction between temp and season even meaningful since we already know temp covaries with season?
