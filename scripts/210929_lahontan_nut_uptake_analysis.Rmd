@@ -1,0 +1,191 @@
+---
+title: "Lahontan Nutrient Uptake Analysis"
+author: "Nick Framsted"
+date: "9/29/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+library(ggplot2)
+library(tidyverse)
+library(lubridate)
+library(ggpubr)
+library(plotly)
+library(reshape2)
+library(DescTools)
+library(arm)
+library(lme4)
+library(lattice)
+
+# changing working directory from /scripts to /tahoe_lab_inc_analysis
+knitr::opts_knit$set(root.dir = '..')
+```
+
+# Loading and formatting dataframe
+```{r, include = FALSE}
+# importing nutrient data
+dat <- read_csv("data/nutrient_data/210928_nutrientdata_mar_aug_R.csv", skip = 2)
+head(dat)
+
+
+# reformatting date column into datetimes in POSIXct
+dat$date <- mdy_hm(dat$date)
+
+#renaming date column as datetime and creating a separate data column without the time
+dat <- dat %>%
+  rename(datetime = date) %>%
+  mutate(date = date(datetime))
+#View(dat)
+```
+
+# Creating dataframe containing field nutrient concentrations only
+```{r}
+ambient_nutrients <- dat %>%
+  filter(site_treatment == "TPI_TC_NA" | site_treatment == "TPI_PNLD_0.5m")
+
+#View(ambient_nutrients)
+```
+
+The nutrient data for the 3/15/21 experiment at Tahoe City was taken from 0.45um-filtered water instead of raw water since all water was mistakenly filtered before nutrient analysis were completed.
+
+# Calculating nutrient uptake rates by temperature
+```{r}
+# dataframe of starting (initial) nutrient concentrations
+bulk <- dat %>%
+  filter(site_treatment == "TPI_TC_Bulk" | site_treatment == "TPI_PNLD_bulk" & chamber != "T_bulk_1") %>% #filtering out T_bulk_1 since this nutrient sample was taken too long before the start of the experiment to be accurate
+  dplyr::select(date, NO3_N_py, NH4_N, SRP, DP) %>% # selecting only nutrient data columns
+  rename(bulk_NO3_N_py = NO3_N_py, bulk_NH4_N = NH4_N, bulk_SRP = SRP, bulk_DP = DP) # renaming columns to indicate these were the initial concentrations for joining to the uptake dataframe
+
+# added in values for bulk concentrations in excel for 6/13 and 8/8 experiments since these were reported as TNO3, TNH4, TRP, and TP instead of the dissolved concentrations in previous experiments
+
+#View(bulk)
+
+
+
+
+# dataframe of final nutrient concentrations in enriched chambers
+uptake <- dat %>%
+  filter(site_treatment == "TPI_PNLD_E" | site_treatment == "TPI_TC_E") %>%
+  unite(date_chamber, date, chamber, sep = "_", remove = "FALSE") %>% # combining columns so I can assign temperature treatments to each individual row from recorded treatments in experimental notes
+  mutate(
+    temp_C = case_when(
+      date_chamber == "2021-03-15_F_15" |
+        date_chamber == "2021-03-15_F_7"|
+        date_chamber == "2021-03-15_F_6"|
+        date_chamber == "2021-03-15_F_5"|
+        date_chamber == "2021-04-21_F_2"|
+        date_chamber == "2021-04-21_F_5"|
+        date_chamber == "2021-04-21_F_15"|
+        date_chamber == "2021-04-21_F_1" ~ 7,
+      date_chamber == "2021-03-15_F_9"|
+        date_chamber == "2021-03-15_F_1"|
+        date_chamber == "2021-03-15_F_8"|
+        date_chamber == "2021-03-15_F_12"|
+        date_chamber == "2021-04-21_F_11"|
+        date_chamber == "2021-04-21_F_6"|
+        date_chamber == "2021-04-21_F_12"|
+        date_chamber == "2021-04-21_F_14" ~ 10,
+      date_chamber == "2021-03-15_F_3" |
+        date_chamber == "2021-03-15_F_2" |
+        date_chamber == "2021-03-15_F_4" |
+        date_chamber == "2021-03-15_F_10" |
+        date_chamber == "2021-04-21_F_16"|
+        date_chamber == "2021-04-21_F_3"|
+        date_chamber == "2021-04-21_F_10"|
+        date_chamber == "2021-04-21_F_9" ~ 13,
+      date_chamber == "2021-03-15_F_16" |
+        date_chamber == "2021-03-15_F_11" |
+        date_chamber == "2021-03-15_F_13" |
+        date_chamber == "2021-03-15_F_14" |
+        date_chamber == "2021-04-21_F_7"|
+        date_chamber == "2021-04-21_F_13"|
+        date_chamber == "2021-04-21_F_8"|
+        date_chamber == "2021-04-21_F_4" ~ 16,
+      date_chamber == "2021-06-13_F_5"|
+        date_chamber == "2021-06-13_F_9"|
+        date_chamber == "2021-06-13_F_10"|
+        date_chamber == "2021-06-13_F_16" ~ 14.5,
+      date_chamber == "2021-06-13_F_6"|
+        date_chamber == "2021-06-13_F_7"|
+        date_chamber == "2021-06-13_F_13"|
+        date_chamber == "2021-06-13_F_14" ~ 17.5,
+      date_chamber == "2021-06-13_F_3"|
+        date_chamber == "2021-06-13_F_4"|
+        date_chamber == "2021-06-13_F_11"|
+        date_chamber == "2021-06-13_F_15" ~ 20.5,
+      date_chamber == "2021-06-13_F_1"|
+        date_chamber == "2021-06-13_F_2"|
+        date_chamber == "2021-06-13_F_8"|
+        date_chamber == "2021-06-13_F_12" ~ 23.5,
+      date_chamber == "2021-08-08_F_3"|
+        date_chamber == "2021-08-08_F_5"|
+        date_chamber == "2021-08-08_F_7"|
+        date_chamber == "2021-08-08_F_14"|
+        date_chamber == "2021-08-08_F_A_35" ~ 19.5,
+      date_chamber == "2021-08-08_F_1"|
+        date_chamber == "2021-08-08_F_8"|
+        date_chamber == "2021-08-08_F_11"|
+        date_chamber == "2021-08-08_F_12"|
+        date_chamber == "2021-08-08_F_A_37" ~ 22.5,
+      date_chamber == "2021-08-08_F_4"|
+        date_chamber == "2021-08-08_F_9"|
+        date_chamber == "2021-08-08_F_13"|
+        date_chamber == "2021-08-08_F_15"|
+        date_chamber == "2021-08-08_F_A_25" ~ 25.5,
+      date_chamber == "2021-08-08_F_2"|
+        date_chamber == "2021-08-08_F_6"|
+        date_chamber == "2021-08-08_F_10"|
+        date_chamber == "2021-08-08_F_16"|
+        date_chamber == "2021-08-08_F_A_13" ~ 28.5
+    )) # values double-checked by NTF on 9/29/21
+
+#View(uptake)
+
+# joining both the above dataframes (both initial and final nutrient concentrations) to calculate nutrient uptake rates from
+uptake_rates <- left_join(uptake, bulk, by = "date")
+#View(uptake_rates)
+
+# adding in length of incubation period in hours to calculate uptake rates
+# Uptake times for the 3/15, and 4/21 experiments are approximate since the exact start and finish times were not logged
+uptake_rates <- uptake_rates %>%
+  mutate(
+    hrs = case_when(
+      date == "2021-03-15" ~ 24.5,
+      date == "2021-04-21" ~ 25.5,
+      date == "2021-06-13" ~ 11,
+      date == "2021-08-08" ~ 23,
+      )) %>%
+  mutate(NO3_uptake_ug_N_hr = (bulk_NO3_N_py - NO3_N_py)/hrs, NH4_uptake_ug_N_hr = (bulk_NH4_N - NH4_N)/hrs, SRP_uptake_ug_P_hr = (bulk_SRP - SRP)/hrs, DP_uptake_ug_P_hr = (bulk_DP - DP)/hrs) %>% # calculating uptake rates per hour
+  mutate(NO3_use_ug_N = bulk_NO3_N_py - NO3_N_py, NH4_use_ug_N = bulk_NH4_N - NH4_N, SRP_use_ug_P = bulk_SRP - SRP, DP_use_ug_P = bulk_DP - DP) # calculating drawdown in nutrients
+
+#View(uptake_rates)
+  
+```
+
+# Plotting nutrient uptake rates
+```{r}
+# melting dataframe to long format so that uptake rate columns are combined into one column and values are in a separate column so all can be plotted at once
+dat_long <- uptake_rates %>%
+  rename(NO3_rate = NO3_uptake_ug_N_hr, NH4_rate = NH4_uptake_ug_N_hr, SRP_rate = SRP_uptake_ug_P_hr, DP_rate = DP_uptake_ug_P_hr) %>% # renaming columns so that facet labels are more tidy
+  pivot_longer(cols = c(NO3_rate, NH4_rate, SRP_rate, DP_rate),
+               names_to = "uptake_rate_name",
+               values_to = "rates",
+               values_drop_na = TRUE)
+#View(dat_long)
+
+# plotting nutrient uptake rates
+p <- dat_long %>%
+  ggplot(aes(x = temp_C, y = rates, group = date)) +
+  facet_grid(cols = vars(uptake_rate_name)) +
+  geom_point(aes(group = date_chamber)) +
+  geom_smooth(method = "lm") +
+  theme_minimal()
+p
+
+# making plotly plot to investigate individual datapoints
+p <- plotly::ggplotly(p)
+p
+
+
+```
+
