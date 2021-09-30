@@ -173,19 +173,94 @@ dat_long <- uptake_rates %>%
                values_drop_na = TRUE)
 #View(dat_long)
 
+# adding in column to distinguish background jar uptake rates so they're plotted separately from august incubation rates
+dat_long <- dat_long %>%
+  mutate(
+    date_background = case_when(
+      chamber == "F_A_13" |
+        chamber == "F_A_25" |
+        chamber == "F_A_35" |
+        chamber == "F_A_37" ~ "2021-08-08_background_rate",
+      TRUE ~ as.character(date)
+    )
+  )
+#View(dat_long)
+
+# formatting date column to be a discrete variable for plotting purposes
+dat_long$date <- as.character(dat_long$date)
+
 # plotting nutrient uptake rates
 p <- dat_long %>%
-  ggplot(aes(x = temp_C, y = rates, group = date)) +
+  ggplot(aes(x = temp_C, y = rates)) +
   facet_grid(cols = vars(uptake_rate_name)) +
-  geom_point(aes(group = date_chamber)) +
-  geom_smooth(method = "lm") +
-  theme_minimal()
+  geom_point(aes(group = date_chamber, color = date_background)) +
+  geom_smooth(aes(color = date_background), method = "lm") +
+  scale_color_viridis_d("Experiment Date") +
+  theme_bw() +
+  labs(title = "Periphyton Nutrient Uptake Rates vs. Temperature",
+      x = expression('Temperature (\u00B0C)'),
+      y = expression(Nutrient~Uptake~(ugN/ugP~hr^{-1})))
 p
 
 # making plotly plot to investigate individual datapoints
 p <- plotly::ggplotly(p)
 p
 
+
+```
+
+Important things to keep in mind: 1) The April experiment had much lower initial nutrient concentrations than the other experiments and nutrients were virtually exhausted in these chambers. 
+2) The June experiment only had an 11-hr incubation, which was about half as long as the ~24hr incubation period in the other experiments
+3) The March 2021 experiment had slightly higher nutrient enrichment concentrations, and the stoichiometry of N & P in the additions were slightly different as well.
+
+# Plotting AFDW-normalized nutrient uptake rates
+```{r}
+# prepping nutrient data for joining to incubation AFDW data
+# creating numeric chamber column in nutrient data and removing the "F_" from individual cells
+dat_long <- dat_long %>%
+  mutate(chamber_num = as.numeric(gsub("F_", "", chamber))) %>% #removing unwanted characters
+  unite(chamber_ID, date, chamber_num, sep = "_", remove = "FALSE") # combining date and chamber number columns for use in joining AFDW data from previous incubations
+
+#View(dat_long)
+
+
+# prepping AFDW data for joining
+# creating chamber_ID column same as in above dataframe which will serve as a unique identifier for each chamber in each incubation and will be used to index the joining of the two dataframes
+metab_dat <- read_csv("data/main_analysis/main_rate_data.csv")
+metab_dat <- metab_dat %>%
+  mutate(date = c(rep("2021-03-01", 16), rep("2021-03-15", 16), rep("2021-04-07", 16), rep("2021-04-21", 16), rep("2021-06-13", 32), rep("2021-08-08", 32))) %>% # creating date column
+  unite(chamber_ID, date, chamber, sep = "_", remove = "FALSE") %>%# combining date and chamber columns
+  dplyr::select(chamber_ID, total_AFDW_g, rock_SA_m2, GPP_mg_d, ER_mg_d, NEP_mg_d) # selecting only the columns I need to declutter dataframe a bit
+
+#View(metab_dat)
+
+
+
+# Joining the nutrient and metab data frames
+main <- left_join(dat_long, metab_dat, by = "chamber_ID")
+#View(main)
+
+
+# calculating AFDW-normalized rates
+main <- main %>%
+  mutate(AFDW_rates = rates/total_AFDW_g)
+
+# plotting AFDW_normalized rates
+# plotting nutrient uptake rates
+AFDW <- main %>%
+  ggplot(aes(x = temp_C, y = AFDW_rates)) +
+  facet_grid(cols = vars(uptake_rate_name)) +
+  geom_point(aes(group = date_chamber, color = date_background)) +
+  geom_smooth(aes(color = date_background), method = "lm") +
+  scale_color_viridis_d("Experiment Date") +
+  theme_bw() +
+  theme(legend.position = "bottom") +
+  labs(title = "AFDW-Normalized Periphyton Nutrient Uptake Rates vs. Temperature",
+      x = expression('Temperature (\u00B0C)'),
+      y = expression(Nutrient~Uptake~(ugN/ugP~gAFDW^{-1}~hr^{-1})))
+AFDW
+
+ggsave("plots/nutrient_uptake/AFDW_norm_uptake_rates.png", plot = AFDW, width = 7, height = 4)
 
 ```
 
