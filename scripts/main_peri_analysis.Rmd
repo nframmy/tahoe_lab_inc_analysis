@@ -78,6 +78,7 @@ write_csv(dat, "data/main_analysis/main_rate_data.csv")
 dat_pnld <- dat %>%
   filter(!month == "march")
 #View(dat_pnld)
+glimpse(dat_pnld)
 
 ```
 
@@ -265,35 +266,72 @@ rates_log_log
 ggsave("plots/main_analysis/rates_log_log_main.png", plot = rates_log_log, width = 7, height = 3)
 ```
 
+# Plotting Areal Rates
+```{r}
+# melting dataframe to long format so that metabolic rate columns are combined into one column and values are in a separate column so all can be plotted at once
+dat_long_m2 <- dat_clean %>%
+  rename(GPP = GPP_mgO2_d_m2, ER = ER_mgO2_d_m2, NEP = NEP_mgO2_d_m2) %>% # renaming columns so that facet labels are more tidy
+  pivot_longer(cols = c(NEP, GPP, ER),
+               names_to = "rate_name_m2",
+               values_to = "rates_m2",
+               values_drop_na = TRUE)
+#View(dat_long_m2)
+
+# plotting same as above plots, but facetting by rate_name so that the temperature axis is shared between plots
+
+areal_rates_log_log <- dat_long_m2 %>%
+  ggplot(aes(x = temp_C, y = rates_m2, group = interaction(season, nutrients))) +
+  facet_grid(cols = vars(rate_name_m2)) +
+  scale_y_log10() +
+  scale_x_log10() +
+ geom_point(aes(shape = season, color = nutrient_trt), size = 1.5) +
+  scale_shape_manual(values = c(17, 19)) +
+  geom_smooth(aes(color = nutrient_trt), method = "lm") +
+  scale_color_viridis_d("Nutrient Treatment") + # renaming label of color legend
+  scale_shape_discrete(name = "Season") +# renaming label of point shape legend
+  theme_minimal() +
+  theme(legend.position = "bottom") +
+  labs(title = "Periphyton Areal Metabolic Rates vs. Temperature",
+      x = expression('Temperature (\u00B0C)'),
+      y = expression(Rates~(mgO[2]~day^{-1}~m^{-2})))
+
+areal_rates_log_log
+
+ggsave("plots/main_analysis/areal_rates_log_log_main.png", plot = areal_rates_log_log, width = 7, height = 3)
+```
+
+
 # Random Effects Modeling
 ## GPP
 ```{r}
 # nested random effects model with temp and nutrients as predictors, and season as a random effect (with differing intercept and slope for each season)
 
 # this basically is saying that the effect of increasing temperature varies among seasons, and that each season has different GPP values
-m1 <- lmer(log(GPP_mgO2_d_gAFDW) ~ log(temp_C)*nutrients + (1 + log(temp_C)|season), data = dat_clean)
+m6 <- lmer(log(GPP_mgO2_d_gAFDW) ~ log(temp_C)*nutrients + (1 + log(temp_C)|season), data = dat_clean)
 display(m1)
 summary (m1)
 
 
 # random effects model with random intercept for season only
 
-m2 <- lmer(log(GPP_mgO2_d_gAFDW) ~ log(temp_C)*nutrients + (1|season), data = dat_clean)
+m5 <- lmer(log(GPP_mgO2_d_gAFDW) ~ log(temp_C)*nutrients + (1|season), data = dat_clean)
 display(m2)
 summary(m2)
 
-m3 <- lmer(log(GPP_mgO2_d_gAFDW) ~ log(temp_C)*nutrients + (1 + nutrients|season), data = dat_clean)
+m7 <- lmer(log(GPP_mgO2_d_gAFDW) ~ log(temp_C)*nutrients + (1 + nutrients|season), data = dat_clean)
 
-m4 <- lmer(log(GPP_mgO2_d_gAFDW) ~ log(temp_C)*nutrients + (1 + nutrients|season) + (1 + log(temp_C)|season), data = dat_clean)
+m8 <- lmer(log(GPP_mgO2_d_gAFDW) ~ log(temp_C)*nutrients + (1 + nutrients|season) + (1 + log(temp_C)|season), data = dat_clean)
 
-m5 <- lm(log(GPP_mgO2_d_gAFDW) ~ log(temp_C)*nutrients, data = dat_clean)
+m3 <- lm(log(GPP_mgO2_d_gAFDW) ~ log(temp_C)*nutrients, data = dat_clean)
 
-m6 <- lm(log(GPP_mgO2_d_gAFDW) ~ log(temp_C), data = dat_clean)
+m1 <- lm(log(GPP_mgO2_d_gAFDW) ~ log(temp_C), data = dat_clean)
 
-m7 <- lm(log(GPP_mgO2_d_gAFDW) ~ nutrients, data = dat_clean)
+m2 <- lm(log(GPP_mgO2_d_gAFDW) ~ nutrients, data = dat_clean)
 
-m8 <- lm(log(GPP_mgO2_d_gAFDW) ~ log(temp_C)*nutrients*season, data = dat_clean)
+m4 <- lm(log(GPP_mgO2_d_gAFDW) ~ log(temp_C)*nutrients*season, data = dat_clean)
 summary(m8)
+
+summary(m4)
 
 
 AIC(m1, m2, m3, m4, m5, m6, m7, m8)
@@ -308,3 +346,40 @@ What does this model look like plotted out?
 How to interpret significant 3-way interaction btwn temp, nuts, and season?
 
 Does the interaction between temp and season even meaningful since we already know temp covaries with season?
+
+## ER
+```{r}
+# nested random effects model with temp and nutrients as predictors, and season as a random effect (with differing intercept and slope for each season)
+
+# this basically is saying that the effect of increasing temperature varies among seasons, and that each season has different ER values
+m6 <- lmer(log(ER_mgO2_d_gAFDW) ~ log(temp_C)*nutrients + (1 + log(temp_C)|season), data = dat_clean)
+display(m1)
+summary (m1)
+
+
+# random effects model with random intercept for season only
+
+m5 <- lmer(log(ER_mgO2_d_gAFDW) ~ log(temp_C)*nutrients + (1|season), data = dat_clean)
+display(m2)
+summary(m2)
+
+m7 <- lmer(log(ER_mgO2_d_gAFDW) ~ log(temp_C)*nutrients + (1 + nutrients|season), data = dat_clean)
+
+m8 <- lmer(log(ER_mgO2_d_gAFDW) ~ log(temp_C)*nutrients + (1 + nutrients|season) + (1 + log(temp_C)|season), data = dat_clean)
+
+m3 <- lm(log(ER_mgO2_d_gAFDW) ~ log(temp_C)*nutrients, data = dat_clean)
+
+m1 <- lm(log(ER_mgO2_d_gAFDW) ~ log(temp_C), data = dat_clean)
+
+m2 <- lm(log(ER_mgO2_d_gAFDW) ~ nutrients, data = dat_clean)
+
+m4 <- lm(log(ER_mgO2_d_gAFDW) ~ log(temp_C)*nutrients*season, data = dat_clean)
+summary(m8)
+
+# Best AIC-supported model
+summary(m4)
+
+AIC(m1, m2, m3, m4, m5, m6, m7, m8)
+BIC(m1, m2, m3, m4, m5, m6, m7, m8)
+```
+
