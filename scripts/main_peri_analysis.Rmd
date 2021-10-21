@@ -69,6 +69,38 @@ dat4 <- dat4 %>%
 dat <- bind_rows(dat1, dat2, dat3, dat4)
 head(dat)
 
+# adding in raw nutrient concentrations of ambient and enriched water for each experiment
+dat <- dat %>%
+  mutate(NO3_N_ug_L = case_when(
+    nutrient_trt == "ambient" & month == "march" ~ 1.41,
+    nutrient_trt == "enriched" & month == "march" ~ 534.89,
+    nutrient_trt == "ambient" & month == "april" ~ 7.03,
+    nutrient_trt == "enriched" & month == "april" ~ 45.19,
+    nutrient_trt == "ambient" & month == "june" ~ 11.01,
+    nutrient_trt == "enriched" & month == "june" ~ 374.8,
+    nutrient_trt == "ambient" & month == "august" ~ 7.5,
+    nutrient_trt == "enriched" & month == "august" ~ 387.33
+  ),
+  NH4_N_ug_L = case_when(
+    nutrient_trt == "ambient" & month == "march" ~ 0.39,
+    nutrient_trt == "enriched" & month == "march" ~ 571.52,
+    nutrient_trt == "ambient" & month == "april" ~ 1.22,
+    nutrient_trt == "enriched" & month == "april" ~ 45.31,
+    nutrient_trt == "ambient" & month == "june" ~ 0, # if concentrations were negative, I entered them in as 0
+    nutrient_trt == "enriched" & month == "june" ~ 395.58,
+    nutrient_trt == "ambient" & month == "august" ~ 4.57,
+    nutrient_trt == "enriched" & month == "august" ~ 416.04
+  ),
+  SRP_ug_L = case_when(
+    nutrient_trt == "ambient" & month == "march" ~ 2.77,
+    nutrient_trt == "enriched" & month == "march" ~ 823.85,
+    nutrient_trt == "ambient" & month == "april" ~ 2.53,
+    nutrient_trt == "enriched" & month == "april" ~ 67.91,
+    nutrient_trt == "ambient" & month == "june" ~ 3.17,
+    nutrient_trt == "enriched" & month == "june" ~ 315.47,
+    nutrient_trt == "ambient" & month == "august" ~ 5.43,
+    nutrient_trt == "enriched" & month == "august" ~ 320.3
+  ))
 # exporting combined dataframe as .csv
 write_csv(dat, "data/main_analysis/main_rate_data.csv")
 
