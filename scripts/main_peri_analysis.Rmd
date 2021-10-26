@@ -114,6 +114,7 @@ glimpse(dat_pnld)
 
 ```
 
+
 # Plotting main data
 ## AFDW-normalized metabolic rates
 ### GPP
@@ -331,6 +332,45 @@ areal_rates_log_log
 
 ggsave("plots/main_analysis/areal_rates_log_log_main.png", plot = areal_rates_log_log, width = 7, height = 3)
 ```
+
+# Exploratory Data Analysis
+```{r}
+# histogram of temperature data to check normality
+dat_pnld %>%
+  ggplot(aes(temp_C)) +
+  geom_histogram()
+# looks approximately like a normal distribution
+
+# now checking normality in AFDW-normalized metabolic rates
+dat_pnld %>%
+  ggplot(aes(GPP_mgO2_d_gAFDW)) +
+  geom_histogram()
+
+dat_pnld %>%
+  ggplot(aes(NEP_mgO2_d_gAFDW)) +
+  geom_histogram()
+
+dat_pnld %>%
+  ggplot(aes(ER_mgO2_d_gAFDW)) +
+  geom_histogram()
+# some definite outliers present, also some potential for a right-skewed distn in the ER and GPP rates.
+
+# cleveland plot
+# dotchart(dat_pnld$)
+
+# selecting only the numeric columns for calculating a correlation matrix
+dat_cor <- dat_pnld %>%
+  dplyr::select(temp_C, GPP_mgO2_d_gAFDW, NEP_mgO2_d_gAFDW, ER_mgO2_d_gAFDW, GPP_mgO2_d_m2, NEP_mgO2_d_m2, ER_mgO2_d_m2, NO3_N_ug_L, NH4_N_ug_L, SRP_ug_L)
+
+# standardizing data with mean = 0, sd = 1 for correlation matrix
+dat_cor <- scale(dat_cor)
+View(dat_cor)
+
+# plotting correlation matrix of the data
+cor(dat_cor, use = "complete.obs")
+
+```
+
 
 
 # Random Effects Modeling
