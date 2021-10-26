@@ -1,0 +1,158 @@
+---
+title: "211010_pineland_A_E"
+author: "Nick Framsted"
+date: "10/26/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+library(ggplot2)
+library(tidyverse)
+library(lubridate)
+library(ggpubr)
+library(plotly)
+library(reshape2)
+library(DescTools)
+
+# changing working directory from /scripts to /tahoe_lab_inc_analysis
+knitr::opts_knit$set(root.dir = '..')
+```
+
+# Importing and Processing data
+```{r, include = FALSE}
+dat <- read_csv("data/211010_pineland_a_e/211010_pineland_ambient_O2.csv", skip = 1)
+head(dat)
+#View(dat)
+
+# removing bottom row of NAs from dataframe
+dat <- dat[-45713,]
+#View(dat)
+
+# Creating tank_channel column to assign chambers to individual data points in DO data by concatenating Device Serial and Channel columns. Keeping original columns as well. 
+dat <- dat %>%
+ unite(tank_channel, Device_Serial, Channel, sep = "_", remove = FALSE)
+
+
+#View(dat)
+#head(dat)
+
+
+
+# filtering out rows with error codes, and adding in chamber numbers based the tank and channel number cross referenced against incubation notes
+## double checked for correctness on 10/26/21 NTF
+
+dat_2 <- dat %>%
+  filter(Error == 0 & !is.na(Value)) %>%
+  mutate(
+    chamber = case_when(
+    tank_channel == "Tank 1_1"  ~ "1",
+    tank_channel == "Tank 1_2"  ~ "2",
+    tank_channel == "Tank 1_3" ~ "5",
+    tank_channel == "Tank 1_4" ~ "12",
+    tank_channel == "Tank 2_1" ~ "4",
+    tank_channel == "Tank 2_2" ~ "6",
+    tank_channel == "Tank 2_3" ~ "9",
+    tank_channel == "Tank 2_4" ~ "15",
+    tank_channel == "Tank 3_1" ~ "3",
+    tank_channel == "Tank 3_2" ~ "10",
+    tank_channel == "Tank 3_3" ~ "11",
+    tank_channel == "Tank 3_4" ~ "13",
+    tank_channel == "Tank 4_1" ~ "7",
+    tank_channel == "Tank 4_2" ~ "8",
+    tank_channel == "Tank 4_3" ~ "14",
+    tank_channel == "Tank 4_4" ~ "16",
+  )) %>%
+   mutate(treatment = case_when(
+     Device_Serial == "Tank 1" ~ "18C",
+     Device_Serial == "Tank 2" ~ "15C",
+     Device_Serial == "Tank 3" ~ "21C",
+     Device_Serial == "Tank 4" ~ "24C"))
+ 
+#View(dat_2)
+head(dat_2)
+
+# renaming oxygen data column and the delta_T columns to include units
+dat_2 <- dat_2 %>%
+  rename(oxygen = Value, time = Time, date = Date, temp = Temp, delta_T_min = delta_t)
+head(dat_2)
+
+### Merging DO data with chamber data ###
+
+# selecting only columns I need, and changing chamber column from a factor to a double
+dat_subset <- dat_2 %>%
+  select(date, time, delta_T_min, oxygen, temp, chamber, treatment)
+#View(dat_subset)
+  dat_subset$chamber <- as.numeric(dat_subset$chamber)
+
+# importing in other complementary data associated with chambers
+dat_chambers <- read_csv("data/211010_pineland_a_e/211010_pineland_A_E_datasheet.csv")
+#str(dat_chambers)
+dat_chambers$chamber <- as.numeric(dat_chambers$chamber)
+#View(dat_chambers)
+
+# joining DO data and chamber data by "chamber" column
+dat_full <- full_join(dat_subset, dat_chambers, by = "chamber")
+#View(dat_full)
+
+# converting oxygen concentration (mg/L) to oxygen mass (mg) by multipying by water volumes in chambers
+dat_full <- dat_full %>%
+  mutate(oxygen_mass_mg = oxygen * water_volume_L) %>%
+  filter(!is.na(oxygen_mass_mg)) # filtering out rows with NAs for DO data
+#View(dat_full)
+```
+
+# Plotting temp and DO in chambers
+```{r echo = FALSE}
+# making treatment a factor variable and re-ordering it for plots
+dat_full$treatment <- factor(dat_full$treatment, levels = c("15C", "18C", "21C", "24C"))
+# making chamber a factor so that it's a discrete value for coloring datapoints in plot
+dat_full$chamber <- as.factor(dat_full$chamber)
+
+# plotting Do concentrations in each chamber
+DO_conc_plot <- dat_full %>%
+  ggplot(aes(x = delta_T_min, y = oxygen, color = chamber)) +
+  geom_line(size = 1.5) +
+  scale_color_viridis_d() +
+  facet_wrap(~treatment) +
+  labs(y = expression(Oxygen~Concentration~(mg~L^{-1})), x = "Elapsed Time (min)", title = "Pineland Ambient Incubation DO") +
+  theme_bw(base_size = 20)
+
+DO_conc_plot
+
+ggsave("plots/211010_pineland_ambient_enriched/211010_pineland_ambient_DO_conc_plot.png", plot = DO_conc_plot, width = 10, height = 7)
+
+# plotting temperature for each chamber
+temp_plot <- dat_full %>%
+  ggplot(aes(x = delta_T_min, y = temp, color = chamber)) +
+  geom_line(size = 1.5) +
+  scale_color_viridis_d() +
+  facet_wrap(~treatment) +
+  labs(y = expression('Temperature (\u00B0C)'), x = "Elapsed Time (min)", title = "Pineland Ambient Incubation Temperature") +
+  theme_bw(base_size = 20) +
+  theme(legend.position = "none")
+
+temp_plot
+
+ggsave("plots/211010_pineland_ambient_enriched/211010_pineland_ambient_temp_plot.png", plot = temp_plot, width = 10, height = 7)
+
+# plotting DO mass (mg) for each chamber
+DO_mass_plot <- dat_full %>%
+  ggplot(aes(x = delta_T_min, y = oxygen_mass_mg, color = chamber)) +
+  geom_line(size = 1.5) +
+  scale_color_viridis_d() +
+  facet_wrap(~treatment) +
+  labs(y = expression(Oxygen~Mass~(mg)), x = "Elapsed Time (min)", title = "Pineland Ambient Incubation DO Mass") +
+  theme_bw(base_size = 20) +
+  theme(legend.position = "none")
+
+  DO_mass_plot
+  
+ggsave("plots/211010_pineland_ambient_enriched/211010_pineland_ambient_DO_mass_plot.png", plot = DO_mass_plot, width = 10, height = 7)
+
+# making interactive plot with plotly to help identity data points for rate calculations below
+p<- plotly::ggplotly(DO_mass_plot)
+p
+# exporting interactive plot to html
+htmlwidgets::saveWidget(as_widget(p), "plots/211010_pineland_ambient_enriched/211010_pineland_ambient_DO_mass_plot.html")
+
+```
