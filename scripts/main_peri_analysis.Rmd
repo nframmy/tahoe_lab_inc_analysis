@@ -46,6 +46,11 @@ dat3 <- read_csv("data/main_analysis/210613_pnld_A_E_rates.csv")
 dat4 <- read_csv("data/main_analysis/210808_pnld_A_E_rates.csv")
 
 
+### 211010 Pineland A & E data
+
+dat5 <- read_csv("data/main_analysis/211010_pnld_A_E_rates.csv")
+
+
 
 ########## Data Formatting #############
 
@@ -65,8 +70,11 @@ dat3 <- dat3 %>%
 dat4 <- dat4 %>%
   mutate(season = "summer", month = "august")
 
+dat5 <- dat5 %>%
+  mutate(season = "fall", month = "october")
+
 ######### Combining dataframes #########
-dat <- bind_rows(dat1, dat2, dat3, dat4)
+dat <- bind_rows(dat1, dat2, dat3, dat4, dat5)
 head(dat)
 
 # adding in raw nutrient concentrations of ambient and enriched water for each experiment
@@ -79,7 +87,9 @@ dat <- dat %>%
     nutrient_trt == "ambient" & month == "june" ~ 11.01,
     nutrient_trt == "enriched" & month == "june" ~ 374.8,
     nutrient_trt == "ambient" & month == "august" ~ 7.5,
-    nutrient_trt == "enriched" & month == "august" ~ 387.33
+    nutrient_trt == "enriched" & month == "august" ~ 387.33,
+    nutrient_trt == "ambient" & month == "october" ~ 4.53,
+    nutrient_trt == "enriched" & month == "october" ~ 376.76
   ),
   NH4_N_ug_L = case_when(
     nutrient_trt == "ambient" & month == "march" ~ 0.39,
@@ -89,7 +99,9 @@ dat <- dat %>%
     nutrient_trt == "ambient" & month == "june" ~ 0, # if concentrations were negative, I entered them in as 0
     nutrient_trt == "enriched" & month == "june" ~ 395.58,
     nutrient_trt == "ambient" & month == "august" ~ 4.57,
-    nutrient_trt == "enriched" & month == "august" ~ 416.04
+    nutrient_trt == "enriched" & month == "august" ~ 416.04,
+    nutrient_trt == "ambient" & month == "october" ~ 5.03,
+    nutrient_trt == "enriched" & month == "october" ~ 438.69
   ),
   SRP_ug_L = case_when(
     nutrient_trt == "ambient" & month == "march" ~ 2.77,
@@ -99,8 +111,29 @@ dat <- dat %>%
     nutrient_trt == "ambient" & month == "june" ~ 3.17,
     nutrient_trt == "enriched" & month == "june" ~ 315.47,
     nutrient_trt == "ambient" & month == "august" ~ 5.43,
-    nutrient_trt == "enriched" & month == "august" ~ 320.3
+    nutrient_trt == "enriched" & month == "august" ~ 320.3,
+    nutrient_trt == "ambient" & month == "october" ~ 3.41,
+    nutrient_trt == "enriched" & month == "october" ~ 325.74
   ))
+
+
+####### Adding in Unique Chamber ID for each Experiment #########
+dat <- dat %>%
+  mutate(experiment_ID = case_when(
+    nutrients == 0 & month == "march" ~ 1,
+    nutrients == 1 & month == "march" ~ 2, # since these were separate experiments on different periphyton samples, they get unique experiment IDs
+    nutrients == 0 & month == "april" ~ 3,
+    nutrients == 1 & month == "april" ~ 4,
+    month == "june" ~ 5, # june, aug, and oct experiments used same rocks and chamber assignments for ambient and enriched runs, so it gets the same experiment ID
+    month == "august" ~ 6,
+    month == "october" ~ 7
+  ))
+
+# Creating rock_ID column
+# uniting chamber and experiment # columns (this will indicate some sort of chamber or rock effect from repeated measures during the ambient and enriched nutrient runs)
+dat <- dat %>%
+  unite(rock_ID, experiment_ID, chamber, sep = "_", remove = FALSE)
+
 # exporting combined dataframe as .csv
 write_csv(dat, "data/main_analysis/main_rate_data.csv")
 
@@ -183,7 +216,7 @@ GPP_log_log <- dat_clean %>%
   scale_y_log10() +
   scale_x_log10() +
   geom_point(aes(shape = season, color = nutrient_trt), size = 1.5) +
-  scale_shape_manual(values = c(17, 19)) +
+  scale_shape_manual(values = c(17, 19, 15)) +
   geom_smooth(aes(color = nutrient_trt), method = "lm") +
   #scale_color_discrete(name = "Nutrient Treatment")+
   theme_classic() +
@@ -216,7 +249,7 @@ ER_log_log <- dat_clean %>%
   scale_y_log10() +
   scale_x_log10() +
   geom_point(aes(shape = season, color = nutrient_trt), size = 1.5) +
-  scale_shape_manual(values = c(17, 19)) +
+  scale_shape_manual(values = c(17, 19, 15)) +
   geom_smooth(aes(color = nutrient_trt), method = "lm") +
   #scale_color_discrete(name = "Nutrient Treatment")+
   theme_classic() +
@@ -250,7 +283,7 @@ NEP_log_log <- dat_clean %>%
   scale_y_log10() +
   scale_x_log10() +
  geom_point(aes(shape = season, color = nutrient_trt), size = 1.5) +
-  scale_shape_manual(values = c(17, 19)) +
+  scale_shape_manual(values = c(17, 19, 15)) +
   geom_smooth(aes(color = nutrient_trt), method = "lm") +
   #scale_color_discrete(name = "Nutrient Treatment")+
   theme_classic() +
@@ -284,7 +317,7 @@ rates_log_log <- dat_long %>%
   scale_y_log10() +
   scale_x_log10() +
  geom_point(aes(shape = season, color = nutrient_trt), size = 1.5) +
-  scale_shape_manual(values = c(17, 19)) +
+  scale_shape_manual(values = c(17, 19, 15)) +
   geom_smooth(aes(color = nutrient_trt), method = "lm") +
   scale_color_viridis_d("Nutrient Treatment") + # renaming label of color legend
   scale_shape_discrete(name = "Season") +# renaming label of point shape legend
@@ -318,7 +351,7 @@ areal_rates_log_log <- dat_long_m2 %>%
   scale_y_log10() +
   scale_x_log10() +
  geom_point(aes(shape = season, color = nutrient_trt), size = 1.5) +
-  scale_shape_manual(values = c(17, 19)) +
+  scale_shape_manual(values = c(17, 19, 15)) +
   geom_smooth(aes(color = nutrient_trt), method = "lm") +
   scale_color_viridis_d("Nutrient Treatment") + # renaming label of color legend
   scale_shape_discrete(name = "Season") +# renaming label of point shape legend
@@ -380,15 +413,15 @@ cor(dat_cor, use = "complete.obs")
 
 # this basically is saying that the effect of increasing temperature varies among seasons, and that each season has different GPP values
 m6 <- lmer(log(GPP_mgO2_d_gAFDW) ~ log(temp_C)*nutrients + (1 + log(temp_C)|season), data = dat_clean)
-display(m1)
-summary (m1)
+display(m6)
+summary (m6)
 
 
 # random effects model with random intercept for season only
 
 m5 <- lmer(log(GPP_mgO2_d_gAFDW) ~ log(temp_C)*nutrients + (1|season), data = dat_clean)
-display(m2)
-summary(m2)
+display(m5)
+summary(m5)
 
 m7 <- lmer(log(GPP_mgO2_d_gAFDW) ~ log(temp_C)*nutrients + (1 + nutrients|season), data = dat_clean)
 
@@ -425,15 +458,15 @@ Does the interaction between temp and season even meaningful since we already kn
 
 # this basically is saying that the effect of increasing temperature varies among seasons, and that each season has different ER values
 m6 <- lmer(log(ER_mgO2_d_gAFDW) ~ log(temp_C)*nutrients + (1 + log(temp_C)|season), data = dat_clean)
-display(m1)
-summary (m1)
+display(m6)
+summary (m6)
 
 
 # random effects model with random intercept for season only
 
 m5 <- lmer(log(ER_mgO2_d_gAFDW) ~ log(temp_C)*nutrients + (1|season), data = dat_clean)
-display(m2)
-summary(m2)
+display(m5)
+summary(m5)
 
 m7 <- lmer(log(ER_mgO2_d_gAFDW) ~ log(temp_C)*nutrients + (1 + nutrients|season), data = dat_clean)
 
@@ -446,12 +479,67 @@ m1 <- lm(log(ER_mgO2_d_gAFDW) ~ log(temp_C), data = dat_clean)
 m2 <- lm(log(ER_mgO2_d_gAFDW) ~ nutrients, data = dat_clean)
 
 m4 <- lm(log(ER_mgO2_d_gAFDW) ~ log(temp_C)*nutrients*season, data = dat_clean)
-summary(m8)
+summary(m4)
 
 # Best AIC-supported model
 summary(m4)
 
 AIC(m1, m2, m3, m4, m5, m6, m7, m8)
 BIC(m1, m2, m3, m4, m5, m6, m7, m8)
+```
+
+# Random Effects W/o season
+## GPP
+```{r}
+m1 <- lm(log(GPP_mgO2_d_gAFDW) ~ log(temp_C), data = dat_clean)
+
+m2 <- lm(log(GPP_mgO2_d_gAFDW) ~ nutrients, data = dat_clean)
+
+m3 <- lmer(log(GPP_mgO2_d_gAFDW) ~ log(temp_C) + (1|rock_ID), data = dat_clean)
+
+m4 <- lmer(log(GPP_mgO2_d_gAFDW) ~ nutrients + (1|rock_ID), data = dat_clean)
+
+m5 <- lmer(log(GPP_mgO2_d_gAFDW) ~ log(temp_C)*nutrients + (1|rock_ID), data = dat_clean)
+display(m5)
+summary (m5)
+
+AIC(m1, m2, m3, m4, m5)
+BIC(m1, m2, m3, m4, m5)
+```
+
+## ER
+```{r}
+m1 <- lm(log(ER_mgO2_d_gAFDW) ~ log(temp_C), data = dat_clean)
+
+m2 <- lm(log(ER_mgO2_d_gAFDW) ~ nutrients, data = dat_clean)
+
+m3 <- lmer(log(ER_mgO2_d_gAFDW) ~ log(temp_C) + (1|rock_ID), data = dat_clean)
+
+m4 <- lmer(log(ER_mgO2_d_gAFDW) ~ nutrients + (1|rock_ID), data = dat_clean)
+
+m5 <- lmer(log(ER_mgO2_d_gAFDW) ~ log(temp_C)*nutrients + (1|rock_ID), data = dat_clean)
+display(m5)
+summary (m5)
+
+AIC(m1, m2, m3, m4, m5)
+BIC(m1, m2, m3, m4, m5)
+```
+
+## NEP
+```{r}
+m1 <- lm(log(NEP_mgO2_d_gAFDW) ~ log(temp_C), data = dat_clean)
+
+m2 <- lm(log(NEP_mgO2_d_gAFDW) ~ nutrients, data = dat_clean)
+
+m3 <- lmer(log(NEP_mgO2_d_gAFDW) ~ log(temp_C) + (1|rock_ID), data = dat_clean)
+
+m4 <- lmer(log(NEP_mgO2_d_gAFDW) ~ nutrients + (1|rock_ID), data = dat_clean)
+
+m5 <- lmer(log(NEP_mgO2_d_gAFDW) ~ log(temp_C)*nutrients + (1|rock_ID), data = dat_clean)
+display(m5)
+summary (m5)
+
+AIC(m1, m2, m3, m4, m5)
+BIC(m1, m2, m3, m4, m5)
 ```
 
