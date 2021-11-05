@@ -19,7 +19,7 @@ library(plotly)
 library(reshape2)
 library(DescTools)
 library(arm)
-library(lme4)
+library(nlme)
 library(lattice)
 
 # changing working directory from /scripts to /tahoe_lab_inc_analysis
@@ -541,5 +541,120 @@ summary (m5)
 
 AIC(m1, m2, m3, m4, m5)
 BIC(m1, m2, m3, m4, m5)
+```
+
+# nlme models
+## GPP
+```{r}
+# making new dataset for lme models to remove NAs
+dat_lme <- dat_clean %>%
+  filter(!is.na(GPP_mgO2_d_gAFDW))
+glimpse(dat_lme)
+
+m1 <- lm(log(GPP_mgO2_d_gAFDW) ~ log(temp_C), data = dat_lme)
+
+m2 <- lm(log(GPP_mgO2_d_gAFDW) ~ nutrients, data = dat_lme)
+
+m3 <- lme(log(GPP_mgO2_d_gAFDW) ~ log(temp_C), random = ~ 1 | rock_ID, data = dat_lme)
+
+m4 <- lme(log(GPP_mgO2_d_gAFDW) ~ nutrients, random = ~ 1 | rock_ID, data = dat_lme)
+
+m5 <- lme(log(GPP_mgO2_d_gAFDW) ~ log(temp_C) * nutrients, random = ~ 1 | rock_ID, data = dat_lme)
+
+#m6 <- lme(log(GPP_mgO2_d_gAFDW) ~ log(temp_C) * nutrients, random = ~ 1 + log(temp_C) | rock_ID, data = dat_lme)
+# error message for this model saying it never converged
+
+m7 <- lme(log(GPP_mgO2_d_gAFDW) ~ log(temp_C) * nutrients, random = ~ 1 + nutrients | rock_ID, data = dat_lme)
+
+#m8 <- lme(log(GPP_mgO2_d_gAFDW) ~ log(temp_C) * nutrients, random = list(~ 1 + nutrients | rock_ID, ~ 1 + log(temp_C) | rock_ID), data = dat_lme)
+# error message for this model saying it did not converge
+
+# incorporating weights to account for heteroscedasticity within and btwn different experiments
+m9 <- lme(log(GPP_mgO2_d_gAFDW) ~ log(temp_C), random = ~ 1 | rock_ID, weights = varIdent(form = ~1|experiment_ID), data = dat_lme)
+
+m10 <- lme(log(GPP_mgO2_d_gAFDW) ~ log(temp_C) * nutrients, random = ~ 1 | rock_ID, weights = varIdent(form = ~1|experiment_ID), data = dat_lme)
+
+#m11 <- lme(log(GPP_mgO2_d_gAFDW) ~ log(temp_C) * nutrients, random = ~ 1 + nutrients | rock_ID, weights = varIdent(form = ~1|experiment_ID), data = dat_lme)
+# would not converge
+
+AIC(m1, m2, m3, m4, m5, m7, m9, m10)
+BIC(m1, m2, m3, m4, m5, m7, m9, m10)
+
+m5
+
+m7
+
+m10
+```
+
+## ER
+```{r}
+# making new dataset for lme models to remove NAs
+dat_lme <- dat_clean %>%
+  filter(!is.na(ER_mgO2_d_gAFDW))
+glimpse(dat_lme)
+
+m1 <- lm(log(ER_mgO2_d_gAFDW) ~ log(temp_C), data = dat_lme)
+
+m2 <- lm(log(ER_mgO2_d_gAFDW) ~ nutrients, data = dat_lme)
+
+m3 <- lme(log(ER_mgO2_d_gAFDW) ~ log(temp_C), random = ~ 1 | rock_ID, data = dat_lme)
+
+m4 <- lme(log(ER_mgO2_d_gAFDW) ~ nutrients, random = ~ 1 | rock_ID, data = dat_lme)
+
+m5 <- lme(log(ER_mgO2_d_gAFDW) ~ log(temp_C) * nutrients, random = ~ 1 | rock_ID, data = dat_lme)
+
+#m6 <- lme(log(ER_mgO2_d_gAFDW) ~ log(temp_C) * nutrients, random = ~ 1 + log(temp_C) | rock_ID, data = dat_lme)
+# error message for this model saying it never converged
+
+m7 <- lme(log(ER_mgO2_d_gAFDW) ~ log(temp_C) * nutrients, random = ~ 1 + nutrients | rock_ID, data = dat_lme)
+
+#m8 <- lme(log(ER_mgO2_d_gAFDW) ~ log(temp_C) * nutrients, random = list(~ 1 +  nutrients | rock_ID, ~ 1 + log(temp_C) | rock_ID), data = dat_lme)
+# error message for this model saying it did not converge
+
+# incorporating weights to account for heteroscedasticity within and btwn different experiments
+m9 <- lme(log(ER_mgO2_d_gAFDW) ~ log(temp_C) * nutrients, random = ~ 1 | rock_ID, weights = varIdent(form = ~1|experiment_ID), data = dat_lme)
+
+#m10 <- lme(log(ER_mgO2_d_gAFDW) ~ log(temp_C) * nutrients, random = ~ 1 + nutrients | rock_ID, weights = varIdent(form = ~1|experiment_ID), data = dat_lme)
+# would not converge
+
+AIC(m1, m2, m3, m4, m5, m7, m9)
+BIC(m1, m2, m3, m4, m5, m7, m9)
+
+m5
+```
+
+## NEP
+```{r}
+# making new dataset for lme models to remove NAs
+dat_lme <- dat_clean %>%
+  filter(!is.na(NEP_mgO2_d_gAFDW))
+glimpse(dat_lme)
+
+m1 <- lm(log(NEP_mgO2_d_gAFDW) ~ log(temp_C), data = dat_lme)
+
+m2 <- lm(log(NEP_mgO2_d_gAFDW) ~ nutrients, data = dat_lme)
+
+m3 <- lme(log(NEP_mgO2_d_gAFDW) ~ log(temp_C), random = ~ 1 | rock_ID, data = dat_lme)
+
+m4 <- lme(log(NEP_mgO2_d_gAFDW) ~ nutrients, random = ~ 1 | rock_ID, data = dat_lme)
+
+m5 <- lme(log(NEP_mgO2_d_gAFDW) ~ log(temp_C) * nutrients, random = ~ 1 | rock_ID, data = dat_lme)
+
+#m6 <- lme(log(NEP_mgO2_d_gAFDW) ~ log(temp_C) * nutrients, random = ~ 1 + log(temp_C) | rock_ID, data = dat_lme)
+# error message for this model saying it never converged
+
+m7 <- lme(log(NEP_mgO2_d_gAFDW) ~ log(temp_C) * nutrients, random = ~ 1 + nutrients | rock_ID, data = dat_lme)
+
+m8 <- lme(log(NEP_mgO2_d_gAFDW) ~ log(temp_C) * nutrients, random = list(~1 + nutrients | rock_ID, ~1 + log(temp_C) | rock_ID), data = dat_lme)
+
+# incorporating weights to account for heteroscedasticity within and btwn experiments
+m9 <- 
+
+
+AIC(m1, m2, m3, m4, m5, m7, m8)
+BIC(m1, m2, m3, m4, m5, m7, m8)
+
+m3
 ```
 
