@@ -168,10 +168,10 @@ htmlwidgets::saveWidget(as_widget(p), "plots/211010_pineland_ambient_enriched/21
 ```{r}
 ######################## NEP rate calculations
 
-## the linear portion of the NEP curve is roughly from minute 37 to minute 123 ##
+## the linear portion of the NEP curve is roughly from minute 37 to minute 117 ##
 
 pnld_e_5 <- dat_full %>%
-  filter(chamber == "5" & delta_T_min >= 37 & delta_T_min <= 123)
+  filter(chamber == "5" & delta_T_min >= 37 & delta_T_min <= 117)
 
 pnld_e_5_NEP_mod <- lm(oxygen_mass_mg~delta_T_min, pnld_e_5)
 summary(pnld_e_5_NEP_mod)
@@ -216,10 +216,10 @@ pnld_e_5_plot
 ```{r}
 ######################## NEP rate calculations
 
-## the linear portion of the NEP curve is roughly from minute 37 to minute 123 ##
+## the linear portion of the NEP curve is roughly from minute 37 to minute 117 ##
 
 pnld_e_10 <- dat_full %>%
-  filter(chamber == "10" & delta_T_min >= 37 & delta_T_min <= 123)
+  filter(chamber == "10" & delta_T_min >= 37 & delta_T_min <= 117)
 
 pnld_e_10_NEP_mod <- lm(oxygen_mass_mg~delta_T_min, pnld_e_10)
 summary(pnld_e_10_NEP_mod)
@@ -264,10 +264,10 @@ pnld_e_10_plot
 ```{r}
 ######################## NEP rate calculations
 
-## the linear portion of the NEP curve is roughly from minute 37 to minute 123 ##
+## the linear portion of the NEP curve is roughly from minute 37 to minute 117 ##
 
 pnld_e_12 <- dat_full %>%
-  filter(chamber == "12" & delta_T_min >= 37 & delta_T_min <= 123)
+  filter(chamber == "12" & delta_T_min >= 37 & delta_T_min <= 117)
 
 pnld_e_12_NEP_mod <- lm(oxygen_mass_mg~delta_T_min, pnld_e_12)
 summary(pnld_e_12_NEP_mod)
@@ -315,7 +315,7 @@ pnld_e_12_plot
 ## the linear portion of the NEP curve is roughly from minute 37 to minute 123 ##
 
 pnld_e_15 <- dat_full %>%
-  filter(chamber == "15" & delta_T_min >= 37 & delta_T_min <= 123)
+  filter(chamber == "15" & delta_T_min >= 37 & delta_T_min <= 117)
 
 pnld_e_15_NEP_mod <- lm(oxygen_mass_mg~delta_T_min, pnld_e_15)
 summary(pnld_e_15_NEP_mod)
@@ -361,10 +361,10 @@ pnld_e_15_plot
 ```{r}
 ######################## NEP rate calculations
 
-## the linear portion of the NEP curve is roughly from minute 37 to minute 119 ##
+## the linear portion of the NEP curve is roughly from minute 37 to minute 117 ##
 
 pnld_e_1 <- dat_full %>%
-  filter(chamber == "1" & delta_T_min >= 37 & delta_T_min <= 119)
+  filter(chamber == "1" & delta_T_min >= 37 & delta_T_min <= 117)
 
 pnld_e_1_NEP_mod <- lm(oxygen_mass_mg~delta_T_min, pnld_e_1)
 summary(pnld_e_1_NEP_mod)
@@ -409,10 +409,10 @@ pnld_e_1_plot
 ```{r}
 ######################## NEP rate calculations
 
-## the linear portion of the NEP curve is roughly from minute 37 to minute 119 ##
+## the linear portion of the NEP curve is roughly from minute 37 to minute 117 ##
 
 pnld_e_3 <- dat_full %>%
-  filter(chamber == "3" & delta_T_min >= 37 & delta_T_min <= 119)
+  filter(chamber == "3" & delta_T_min >= 37 & delta_T_min <= 117)
 
 pnld_e_3_NEP_mod <- lm(oxygen_mass_mg~delta_T_min, pnld_e_3)
 summary(pnld_e_3_NEP_mod)
@@ -457,10 +457,10 @@ pnld_e_3_plot
 ```{r}
 ######################## NEP rate calculations
 
-## the linear portion of the NEP curve is roughly from minute 37 to minute 119 ##
+## the linear portion of the NEP curve is roughly from minute 37 to minute 117 ##
 
 pnld_e_7 <- dat_full %>%
-  filter(chamber == "7" & delta_T_min >= 37 & delta_T_min <= 119)
+  filter(chamber == "7" & delta_T_min >= 37 & delta_T_min <= 117)
 
 pnld_e_7_NEP_mod <- lm(oxygen_mass_mg~delta_T_min, pnld_e_7)
 summary(pnld_e_7_NEP_mod)
@@ -505,10 +505,10 @@ pnld_e_7_plot
 ```{r}
 ######################## NEP rate calculations
 
-## the linear portion of the NEP curve is roughly from minute 37 to minute 119 ##
+## the linear portion of the NEP curve is roughly from minute 37 to minute 117 ##
 
 pnld_e_8 <- dat_full %>%
-  filter(chamber == "8" & delta_T_min >= 37 & delta_T_min <= 119)
+  filter(chamber == "8" & delta_T_min >= 37 & delta_T_min <= 117)
 
 pnld_e_8_NEP_mod <- lm(oxygen_mass_mg~delta_T_min, pnld_e_8)
 summary(pnld_e_8_NEP_mod)
@@ -554,10 +554,10 @@ pnld_e_8_plot
 ```{r}
 ######################## NEP rate calculations
 
-## the linear portion of the NEP curve is roughly from minute 37 to minute 119 ##
+## the linear portion of the NEP curve is roughly from minute 37 to minute 117 ##
 
 pnld_e_2 <- dat_full %>%
-  filter(chamber == "2" & delta_T_min >= 37 & delta_T_min <= 119)
+  filter(chamber == "2" & delta_T_min >= 37 & delta_T_min <= 117)
 
 pnld_e_2_NEP_mod <- lm(oxygen_mass_mg~delta_T_min, pnld_e_2)
 summary(pnld_e_2_NEP_mod)
@@ -602,10 +602,10 @@ pnld_e_2_plot
 ```{r}
 ######################## NEP rate calculations
 
-## the linear portion of the NEP curve is roughly from minute 37 to minute 119 ##
+## the linear portion of the NEP curve is roughly from minute 37 to minute 117 ##
 
 pnld_e_11 <- dat_full %>%
-  filter(chamber == "11" & delta_T_min >= 37 & delta_T_min <= 119)
+  filter(chamber == "11" & delta_T_min >= 37 & delta_T_min <= 117)
 
 pnld_e_11_NEP_mod <- lm(oxygen_mass_mg~delta_T_min, pnld_e_11)
 summary(pnld_e_11_NEP_mod)
@@ -650,10 +650,10 @@ pnld_e_11_plot
 ```{r}
 ######################## NEP rate calculations
 
-## the linear portion of the NEP curve is roughly from minute 37 to minute 119 ##
+## the linear portion of the NEP curve is roughly from minute 37 to minute 117 ##
 
 pnld_e_13 <- dat_full %>%
-  filter(chamber == "13" & delta_T_min >= 37 & delta_T_min <= 119)
+  filter(chamber == "13" & delta_T_min >= 37 & delta_T_min <= 117)
 
 pnld_e_13_NEP_mod <- lm(oxygen_mass_mg~delta_T_min, pnld_e_13)
 summary(pnld_e_13_NEP_mod)
@@ -698,10 +698,10 @@ pnld_e_13_plot
 ```{r}
 ######################## NEP rate calculations
 
-## the linear portion of the NEP curve is roughly from minute 37 to minute 119 ##
+## the linear portion of the NEP curve is roughly from minute 37 to minute 117 ##
 
 pnld_e_14 <- dat_full %>%
-  filter(chamber == "14" & delta_T_min >= 37 & delta_T_min <= 119)
+  filter(chamber == "14" & delta_T_min >= 37 & delta_T_min <= 117)
 
 pnld_e_14_NEP_mod <- lm(oxygen_mass_mg~delta_T_min, pnld_e_14)
 summary(pnld_e_14_NEP_mod)
@@ -747,10 +747,10 @@ pnld_e_14_plot
 ```{r}
 ######################## NEP rate calculations
 
-## the linear portion of the NEP curve is roughly from minute 37 to minute 118 ##
+## the linear portion of the NEP curve is roughly from minute 37 to minute 117 ##
 
 pnld_e_4 <- dat_full %>%
-  filter(chamber == "4" & delta_T_min >= 37 & delta_T_min <= 118)
+  filter(chamber == "4" & delta_T_min >= 37 & delta_T_min <= 117)
 
 pnld_e_4_NEP_mod <- lm(oxygen_mass_mg~delta_T_min, pnld_e_4)
 summary(pnld_e_4_NEP_mod)
@@ -765,7 +765,7 @@ pnld_e_4_NEP
 ######################## ER rate calculations
 
 pnld_e_4 <- dat_full %>%
-  filter(chamber == "4" & delta_T_min >= 118)
+  filter(chamber == "4" & delta_T_min >= 119)
 
 pnld_e_4_ER_mod <- lm(oxygen_mass_mg~delta_T_min, pnld_e_4)
 summary(pnld_e_4_ER_mod)
@@ -795,10 +795,10 @@ pnld_e_4_plot
 ```{r}
 ######################## NEP rate calculations
 
-## the linear portion of the NEP curve is roughly from minute 37 to minute 118 ##
+## the linear portion of the NEP curve is roughly from minute 37 to minute 117 ##
 
 pnld_e_6 <- dat_full %>%
-  filter(chamber == "6" & delta_T_min >= 37 & delta_T_min <= 118)
+  filter(chamber == "6" & delta_T_min >= 37 & delta_T_min <= 117)
 
 pnld_e_6_NEP_mod <- lm(oxygen_mass_mg~delta_T_min, pnld_e_6)
 summary(pnld_e_6_NEP_mod)
@@ -813,7 +813,7 @@ pnld_e_6_NEP
 ######################## ER rate calculations
 
 pnld_e_6 <- dat_full %>%
-  filter(chamber == "6" & delta_T_min >= 118)
+  filter(chamber == "6" & delta_T_min >= 119)
 
 pnld_e_6_ER_mod <- lm(oxygen_mass_mg~delta_T_min, pnld_e_6)
 summary(pnld_e_6_ER_mod)
@@ -843,10 +843,10 @@ pnld_e_6_plot
 ```{r}
 ######################## NEP rate calculations
 
-## the linear portion of the NEP curve is roughly from minute 37 to minute 118 ##
+## the linear portion of the NEP curve is roughly from minute 37 to minute 117 ##
 
 pnld_e_9 <- dat_full %>%
-  filter(chamber == "9" & delta_T_min >= 37 & delta_T_min <= 118)
+  filter(chamber == "9" & delta_T_min >= 37 & delta_T_min <= 117)
 
 pnld_e_9_NEP_mod <- lm(oxygen_mass_mg~delta_T_min, pnld_e_9)
 summary(pnld_e_9_NEP_mod)
@@ -861,7 +861,7 @@ pnld_e_9_NEP
 ######################## ER rate calculations
 
 pnld_e_9 <- dat_full %>%
-  filter(chamber == "9" & delta_T_min >= 118)
+  filter(chamber == "9" & delta_T_min >= 119)
 
 pnld_e_9_ER_mod <- lm(oxygen_mass_mg~delta_T_min, pnld_e_9)
 summary(pnld_e_9_ER_mod)
@@ -891,10 +891,10 @@ pnld_e_9_plot
 ```{r}
 ######################## NEP rate calculations
 
-## the linear portion of the NEP curve is roughly from minute 37 to minute 118 ##
+## the linear portion of the NEP curve is roughly from minute 37 to minute 117 ##
 
 pnld_e_16 <- dat_full %>%
-  filter(chamber == "16" & delta_T_min >= 37 & delta_T_min <= 118)
+  filter(chamber == "16" & delta_T_min >= 37 & delta_T_min <= 117)
 
 pnld_e_16_NEP_mod <- lm(oxygen_mass_mg~delta_T_min, pnld_e_16)
 summary(pnld_e_16_NEP_mod)
@@ -909,7 +909,7 @@ pnld_e_16_NEP
 ######################## ER rate calculations
 
 pnld_e_16 <- dat_full %>%
-  filter(chamber == "16" & delta_T_min >= 118)
+  filter(chamber == "16" & delta_T_min >= 119)
 
 pnld_e_16_ER_mod <- lm(oxygen_mass_mg~delta_T_min, pnld_e_16)
 summary(pnld_e_16_ER_mod)
