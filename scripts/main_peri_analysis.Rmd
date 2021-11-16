@@ -577,8 +577,26 @@ m10 <- lme(log(GPP_mgO2_d_gAFDW) ~ log(temp_C) * nutrients, random = ~ 1 | rock_
 #m11 <- lme(log(GPP_mgO2_d_gAFDW) ~ log(temp_C) * nutrients, random = ~ 1 + nutrients | rock_ID, weights = varIdent(form = ~1|experiment_ID), data = dat_lme)
 # would not converge
 
-AIC(m1, m2, m3, m4, m5, m7, m9, m10)
-BIC(m1, m2, m3, m4, m5, m7, m9, m10)
+#m12 <- lme(log(GPP_mgO2_d_gAFDW) ~ log(temp_C) * nutrients, random = list(~ 1 | rock_ID, ~ 1 + temp_C | experiment_ID), weights = varIdent(form = ~1|experiment_ID), data = dat_lme)
+# does not converge
+
+#m13 <- lme(log(GPP_mgO2_d_gAFDW) ~ log(temp_C) * nutrients, random = list(~ 1 | rock_ID, ~ 1 + nutrients | experiment_ID), weights = varIdent(form = ~1|experiment_ID), data = dat_lme)
+# does not converge
+
+#m14 <- lme(log(GPP_mgO2_d_gAFDW) ~ log(temp_C) * nutrients, random = list(~ 1 | rock_ID, ~ 1 + temp_C | experiment_ID, ~ 1 + nutrients | experiment_ID), weights = varIdent(form = ~1|experiment_ID), data = dat_lme)
+# does not converge
+
+m15 <- lme(log(GPP_mgO2_d_gAFDW) ~ log(temp_C), random = ~ 1 | rock_ID, weights = varIdent(form = ~1|experiment_ID), data = dat_lme)
+
+m16 <- lme(log(GPP_mgO2_d_gAFDW) ~ log(temp_C) * nutrients, random = ~ 1 | rock_ID, weights = varIdent(form = ~1|experiment_ID * nutrients), data = dat_lme)
+
+m17 <- lme(log(GPP_mgO2_d_gAFDW) ~ log(temp_C), random = ~ 1 | rock_ID, weights = varIdent(form = ~1|experiment_ID * temp_C), data = dat_lme)
+
+#m18 <- lme(log(GPP_mgO2_d_gAFDW) ~ log(temp_C) * nutrients, random = ~ 1 | rock_ID, weights = varIdent(form = ~1|experiment_ID * temp_C), data = dat_lme)
+# false convergence
+
+AIC(m1, m2, m3, m4, m5, m7, m9, m10, m15, m16, m17)
+BIC(m1, m2, m3, m4, m5, m7, m9, m10, m15, m16, m17)
 
 m5
 
