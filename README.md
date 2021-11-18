@@ -55,3 +55,8 @@ rock_SA_m2: rock surface area covered by periphyton in sq. meters approximated a
     -Enriched chambers to the correct nutrient concentrations of 400ug/L NO3-N and NH4-N and 318ug/L SRP.
     -Data was lost from first ambient incubation, thus it was performed again later that evening.
     -Data from one presens 4-channel device quit recording during the dark portion of the enriched incubation, but the issue was fixed and data was recorded in a different file and added to the main data file later.
+    
+  QA/QC methods:
+      -11/16/21: went through all experiments (up to 211010 experiment) and made sure timings of NEP and ER portions of DO curves matched with notes and DO data spreadsheets.
+                  - also went through and flagged chambers with R^2 values of metabolic rates below 0.9
+                  - made sure that if pre- and post-NEP ER curves were averaged to get ER rates that they both agreed and matched up, and if not I picked one that had more data points and had a higher R^2 value
