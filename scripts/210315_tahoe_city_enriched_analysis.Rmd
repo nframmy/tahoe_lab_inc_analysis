@@ -402,6 +402,7 @@ tc_e_7_ER
 ################# GPP
 tc_e_7_GPP <- tc_e_7_NEP - tc_e_7_ER
 ```
+##### has low R^2 for second half of ER rate
 
 #### Chamber 6
 ```{r}
@@ -512,6 +513,8 @@ tc_e_5_ER
 ################# GPP
 tc_e_5_GPP <- tc_e_5_NEP - tc_e_5_ER
 ```
+###### has low R^2 for second half of the ER rate
+
 
 ### Tank 3; 13C
 #### Chamber 3

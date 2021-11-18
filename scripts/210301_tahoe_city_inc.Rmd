@@ -44,7 +44,7 @@ dat_2$chamber <- as.numeric(dat_2$chamber)
 
 # selecting only columns I need
 dat_subset <- dat_2 %>%
-  select(date, delta_T_min, oxygen, temp, chamber, date_time_PST, treatment)
+  dplyr::select(date, delta_T_min, oxygen, temp, chamber, date_time_PST, treatment)
 
 # loading in chamber water weight data
 dat_chambers <- read_csv("data/210301_tahoecity_ambient_inc/chamber_wts_ambient.csv", skip = 1)
@@ -1074,7 +1074,7 @@ dat_final <- dat_final %>%
 
 # subsetting only the columns I need
 metab_subset <- dat_final %>%
-  select(chamber, treatment, GPP_mgO2_d_gAFDW, NEP_mgO2_d_gAFDW, ER_mgO2_d_gAFDW)
+  dplyr::select(chamber, treatment, GPP_mgO2_d_gAFDW, NEP_mgO2_d_gAFDW, ER_mgO2_d_gAFDW)
 #View(metab_subset)
 
 # averaging and taking st.dev. of metabolic rates by temperature treatment (I multiplied ER by -1 to make it positive)
@@ -1114,7 +1114,7 @@ Looks like the AFDW-normalized metabolic rates are much higher (~1.5x) for the a
 # plotting non-normalized metabolic rates to check source of variance
 ```{r}
 subset2 <- dat_final %>%
-  select(chamber, treatment, GPP_mg_d, NEP_mg_d, ER_mg_d)
+  dplyr::select(chamber, treatment, GPP_mg_d, NEP_mg_d, ER_mg_d)
 #View(subset2)
 
 # averaging and taking std of metabolic rates by temperature treatment (I multiplied ER by -1 to make it positive)
@@ -1155,7 +1155,7 @@ ggsave("plots/210301_tahoecity_ambient/210301_tahoecity_non_norm_rate_plot.png",
 
 # subsetting only the columns I need
 SA_metab_subset <- dat_final %>%
-  select(chamber, treatment, GPP_mgO2_d_m2, NEP_mgO2_d_m2, ER_mgO2_d_m2)
+  dplyr::select(chamber, treatment, GPP_mgO2_d_m2, NEP_mgO2_d_m2, ER_mgO2_d_m2)
 #View(SA_metab_subset)
 
 # averaging and taking std of metabolic rates by temperature treatment (I multiplied ER by -1 to make it positive)

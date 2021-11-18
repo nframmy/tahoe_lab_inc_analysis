@@ -75,7 +75,7 @@ head(dat_2)
 
 # selecting only columns I need, and changing chamber column from a factor to a double
 dat_subset <- dat_2 %>%
-  select(date, time, delta_T_min, oxygen, temp, chamber, treatment)
+  dplyr::select(date, time, delta_T_min, oxygen, temp, chamber, treatment)
 
   dat_subset$chamber <- as.numeric(dat_subset$chamber)
 
@@ -154,6 +154,8 @@ Chamber 1 in the 7C treatment had issues with the fiber optic cable during NEP i
 
 ## Metabolic Rate Calculations
 ### Tank 2; 7C
+### Issues in this tank: some of the different ER rates based on different portions of the curve vary by up to 52%. For example, in chamber 15 the variation of rates derived from different portions of the ER curve produce ER rates that vary from 7.028 to 11.144 (differing by 37%)
+
 #### Chamber 2
 ```{r}
 ######################## NEP rate calculations
@@ -175,10 +177,11 @@ pnld_e_2_NEP
 
 ######################## ER rate calculations
 
-## The linear portion of the ER curve has a very small signal, thus I measured ER from the dark period preceding the NEP portion of the incubation (roughly from minute 0 to minute 29) and averaged this with the ER signal post-NEP period.
+## The linear portion of the ER curve is only clean after the NEP portion of the incubation, thus I only used this portion of the DO curve in the analysis.
+
 
 pnld_e_2 <- dat_full %>%
-  filter(chamber == "2" & delta_T_min <= 29)
+  filter(chamber == "2" & delta_T_min >= 132 & delta_T_min <= 167)
 
 pnld_e_2_ER_mod <- lm(oxygen_mass_mg~delta_T_min, pnld_e_2)
 summary(pnld_e_2_ER_mod)
@@ -189,12 +192,40 @@ pnld_e_2_ER_slope <- unname(pnld_e_2_ER_mod$coefficients[2])
 
 ## now measuring ER from the period after the NEP portion of the incubation (oxygen curve starting at minute 131).
 pnld_e_2 <- dat_full %>%
-  filter(chamber == "2" & delta_T_min >= 131)
+  filter(chamber == "2" & delta_T_min >= 174 & delta_T_min <= 214)
 
 pnld_e_2_ER_mod2 <- lm(oxygen_mass_mg~delta_T_min, pnld_e_2)
 summary(pnld_e_2_ER_mod2)
 pnld_e_2_ER_mod2$coefficients[2]
 pnld_e_2_ER_slope2 <- unname(pnld_e_2_ER_mod2$coefficients[2])
+
+### model of entire ER curve
+
+pnld_e_2 <- dat_full %>%
+  filter(chamber == "2" & delta_T_min >= 132 & delta_T_min <= 214)
+
+pnld_e_2_ER_mod3 <- lm(oxygen_mass_mg~delta_T_min, pnld_e_2)
+summary(pnld_e_2_ER_mod3)
+pnld_e_2_ER_mod3$coefficients[2]
+pnld_e_2_ER_slope3 <- unname(pnld_e_2_ER_mod3$coefficients[2])
+
+### model of pre-NEP ER curve
+pnld_e_2 <- dat_full %>%
+  filter(chamber == "2" & delta_T_min <= 29)
+
+pnld_e_2_ER_mod4 <- lm(oxygen_mass_mg~delta_T_min, pnld_e_2)
+summary(pnld_e_2_ER_mod4)
+pnld_e_2_ER_mod4$coefficients[2]
+pnld_e_2_ER_slope4 <- unname(pnld_e_2_ER_mod4$coefficients[2])
+
+### model of ER curve with artificial DO spike spliced out
+pnld_e_2 <- dat_full %>%
+  filter(chamber == "2" & delta_T_min >= 134 & delta_T_min <= 167 | chamber == "2" & delta_T_min >= 183)
+
+pnld_e_2_ER_mod5 <- lm(oxygen_mass_mg~delta_T_min, pnld_e_2)
+summary(pnld_e_2_ER_mod5)
+pnld_e_2_ER_mod5$coefficients[2]
+pnld_e_2_ER_slope5 <- unname(pnld_e_2_ER_mod5$coefficients[2])
 
 
 # calculate average of the two ER slopes
@@ -214,15 +245,25 @@ pnld_e_2_plot <- dat_full %>%
   ggplot(aes(x = delta_T_min, y = oxygen_mass_mg)) +
   geom_point(shape = 1, size = 2) +
   geom_abline(aes(intercept = pnld_e_2_NEP_mod$coefficients[1], slope = pnld_e_2_NEP_mod$coefficients[2])) +
-  geom_abline(aes(intercept = pnld_e_2_ER_mod$coefficients[1], slope = pnld_e_2_ER_mod$coefficients[2])) +
-  geom_abline(aes(intercept = pnld_e_2_ER_mod2$coefficients[1], slope = pnld_e_2_ER_mod2$coefficients[2])) +
+  geom_abline(aes(intercept = pnld_e_2_ER_mod$coefficients[1], slope = pnld_e_2_ER_mod$coefficients[2], color = "post-1")) +
+  geom_abline(aes(intercept = pnld_e_2_ER_mod2$coefficients[1], slope = pnld_e_2_ER_mod2$coefficients[2], color = "post-2")) +
+  geom_abline(aes(intercept = pnld_e_2_ER_mod3$coefficients[1], slope = pnld_e_2_ER_mod3$coefficients[2], color = "post_whole")) +
+  geom_abline(aes(intercept = pnld_e_2_ER_mod4$coefficients[1], slope = pnld_e_2_ER_mod4$coefficients[2], color = "pre")) +
+  geom_abline(aes(intercept = pnld_e_2_ER_mod5$coefficients[1], slope = pnld_e_2_ER_mod5$coefficients[2], color = "spliced")) +
   theme_classic()
 pnld_e_2_plot
 
 # plotting in plotly to find what time DO signals stabilize for ER incubation
 pnld_e_2_plotly<- plotly::ggplotly(pnld_e_2_plot)
 pnld_e_2_plotly
+
+pnld_e_2_ER_mod$coefficients[2]
+pnld_e_2_ER_mod2$coefficients[2]
+pnld_e_2_ER_mod3$coefficients[2]
+pnld_e_2_ER_mod4$coefficients[2]
+pnld_e_2_ER_mod5$coefficients[2]
 ```
+##### slopes based off models 1&2 (both have R^2 values below 0.9)
 
 #### Chamber 5
 ```{r}
@@ -245,10 +286,10 @@ pnld_e_5_NEP
 
 ######################## ER rate calculations
 
-## The linear portion of the ER curve has a very small signal, thus I measured ER from the dark period preceding the NEP portion of the incubation (roughly from minute 0 to minute 29) and averaged this with the ER signal post-NEP period.
+## The linear portion of the ER curve is only clean after the NEP portion of the incubation, thus I only used this portion of the DO curve in the analysis.
 
 pnld_e_5 <- dat_full %>%
-  filter(chamber == "5" & delta_T_min <= 29)
+  filter(chamber == "5" & delta_T_min >= 132 & delta_T_min <= 167)
 
 pnld_e_5_ER_mod <- lm(oxygen_mass_mg~delta_T_min, pnld_e_5)
 summary(pnld_e_5_ER_mod)
@@ -259,12 +300,31 @@ pnld_e_5_ER_slope <- unname(pnld_e_5_ER_mod$coefficients[2])
 
 ## now measuring ER from the period after the NEP portion of the incubation (oxygen curve starting at minute 131).
 pnld_e_5 <- dat_full %>%
-  filter(chamber == "5" & delta_T_min >= 131)
+  filter(chamber == "5" & delta_T_min >= 174 & delta_T_min <= 214)
 
 pnld_e_5_ER_mod2 <- lm(oxygen_mass_mg~delta_T_min, pnld_e_5)
 summary(pnld_e_5_ER_mod2)
 pnld_e_5_ER_mod2$coefficients[2]
 pnld_e_5_ER_slope2 <- unname(pnld_e_5_ER_mod2$coefficients[2])
+
+### model of entire ER curve
+
+pnld_e_5 <- dat_full %>%
+  filter(chamber == "5" & delta_T_min >= 132 & delta_T_min <= 214)
+
+pnld_e_5_ER_mod3 <- lm(oxygen_mass_mg~delta_T_min, pnld_e_5)
+summary(pnld_e_5_ER_mod3)
+pnld_e_5_ER_mod3$coefficients[2]
+pnld_e_5_ER_slope3 <- unname(pnld_e_5_ER_mod3$coefficients[2])
+
+### model of pre-NEP ER curve
+pnld_e_5 <- dat_full %>%
+  filter(chamber == "5" & delta_T_min <= 29)
+
+pnld_e_5_ER_mod4 <- lm(oxygen_mass_mg~delta_T_min, pnld_e_5)
+summary(pnld_e_5_ER_mod4)
+pnld_e_5_ER_mod4$coefficients[2]
+pnld_e_5_ER_slope4 <- unname(pnld_e_5_ER_mod4$coefficients[2])
 
 
 # calculate average of the two ER slopes
@@ -284,15 +344,24 @@ pnld_e_5_plot <- dat_full %>%
   ggplot(aes(x = delta_T_min, y = oxygen_mass_mg)) +
   geom_point(shape = 1, size = 2) +
   geom_abline(aes(intercept = pnld_e_5_NEP_mod$coefficients[1], slope = pnld_e_5_NEP_mod$coefficients[2])) +
-  geom_abline(aes(intercept = pnld_e_5_ER_mod$coefficients[1], slope = pnld_e_5_ER_mod$coefficients[2])) +
-  geom_abline(aes(intercept = pnld_e_5_ER_mod2$coefficients[1], slope = pnld_e_5_ER_mod2$coefficients[2])) +
+  geom_abline(aes(intercept = pnld_e_5_ER_mod$coefficients[1], slope = pnld_e_5_ER_mod$coefficients[2], color = "post-1")) +
+  geom_abline(aes(intercept = pnld_e_5_ER_mod2$coefficients[1], slope = pnld_e_5_ER_mod2$coefficients[2], color = "post-2")) +
+  geom_abline(aes(intercept = pnld_e_5_ER_mod3$coefficients[1], slope = pnld_e_5_ER_mod3$coefficients[2], color = "post_whole")) +
+  geom_abline(aes(intercept = pnld_e_5_ER_mod4$coefficients[1], slope = pnld_e_5_ER_mod4$coefficients[2], color = "pre")) +
   theme_classic()
 pnld_e_5_plot
 
 # plotting in plotly to find what time DO signals stabilize for ER incubation
 pnld_e_5_plotly<- plotly::ggplotly(pnld_e_5_plot)
 pnld_e_5_plotly
+
+pnld_e_5_ER_mod$coefficients[2]
+pnld_e_5_ER_mod2$coefficients[2]
+pnld_e_5_ER_mod3$coefficients[2]
+pnld_e_5_ER_mod4$coefficients[2]
 ```
+##### slopes based off models 1&2 (both have R^2 values below 0.9)
+
 
 #### Chamber 15
 ```{r}
@@ -315,10 +384,10 @@ pnld_e_15_NEP
 
 ######################## ER rate calculations
 
-## The linear portion of the ER curve has a very small signal, thus I measured ER from the dark period preceding the NEP portion of the incubation (roughly from minute 0 to minute 29) and averaged this with the ER signal post-NEP period.
+## The linear portion of the ER curve is only clean after the NEP portion of the incubation, thus I only used this portion of the DO curve in the analysis.
 
 pnld_e_15 <- dat_full %>%
-  filter(chamber == "15" & delta_T_min <= 29)
+  filter(chamber == "15" & delta_T_min >= 132 & delta_T_min <= 167)
 
 pnld_e_15_ER_mod <- lm(oxygen_mass_mg~delta_T_min, pnld_e_15)
 summary(pnld_e_15_ER_mod)
@@ -329,12 +398,32 @@ pnld_e_15_ER_slope <- unname(pnld_e_15_ER_mod$coefficients[2])
 
 ## now measuring ER from the period after the NEP portion of the incubation (oxygen curve starting at minute 131).
 pnld_e_15 <- dat_full %>%
-  filter(chamber == "15" & delta_T_min >= 131)
+  filter(chamber == "15" & delta_T_min >= 174 & delta_T_min <= 214)
 
 pnld_e_15_ER_mod2 <- lm(oxygen_mass_mg~delta_T_min, pnld_e_15)
 summary(pnld_e_15_ER_mod2)
 pnld_e_15_ER_mod2$coefficients[2]
 pnld_e_15_ER_slope2 <- unname(pnld_e_15_ER_mod2$coefficients[2])
+
+### model of entire ER curve
+
+pnld_e_15 <- dat_full %>%
+  filter(chamber == "15" & delta_T_min >= 132 & delta_T_min <= 214)
+
+pnld_e_15_ER_mod3 <- lm(oxygen_mass_mg~delta_T_min, pnld_e_15)
+summary(pnld_e_15_ER_mod3)
+pnld_e_15_ER_mod3$coefficients[2]
+pnld_e_15_ER_slope3 <- unname(pnld_e_15_ER_mod3$coefficients[2])
+
+### model of pre-NEP ER curve
+pnld_e_15 <- dat_full %>%
+  filter(chamber == "15" & delta_T_min <= 29)
+
+pnld_e_15_ER_mod4 <- lm(oxygen_mass_mg~delta_T_min, pnld_e_15)
+summary(pnld_e_15_ER_mod4)
+pnld_e_15_ER_mod4$coefficients[2]
+pnld_e_15_ER_slope4 <- unname(pnld_e_15_ER_mod4$coefficients[2])
+
 
 
 # calculate average of the two ER slopes
@@ -354,15 +443,24 @@ pnld_e_15_plot <- dat_full %>%
   ggplot(aes(x = delta_T_min, y = oxygen_mass_mg)) +
   geom_point(shape = 1, size = 2) +
   geom_abline(aes(intercept = pnld_e_15_NEP_mod$coefficients[1], slope = pnld_e_15_NEP_mod$coefficients[2])) +
-  geom_abline(aes(intercept = pnld_e_15_ER_mod$coefficients[1], slope = pnld_e_15_ER_mod$coefficients[2])) +
-  geom_abline(aes(intercept = pnld_e_15_ER_mod2$coefficients[1], slope = pnld_e_15_ER_mod2$coefficients[2])) +
+  geom_abline(aes(intercept = pnld_e_15_ER_mod$coefficients[1], slope = pnld_e_15_ER_mod$coefficients[2], color = "post-1")) +
+  geom_abline(aes(intercept = pnld_e_15_ER_mod2$coefficients[1], slope = pnld_e_15_ER_mod2$coefficients[2], color = "post-2")) +
+  geom_abline(aes(intercept = pnld_e_15_ER_mod3$coefficients[1], slope = pnld_e_15_ER_mod3$coefficients[2], color = "post-whole")) +
+  geom_abline(aes(intercept = pnld_e_15_ER_mod4$coefficients[1], slope = pnld_e_15_ER_mod4$coefficients[2], color = "pre")) +
   theme_classic()
 pnld_e_15_plot
 
 # plotting in plotly to find what time DO signals stabilize for ER incubation
 pnld_e_15_plotly<- plotly::ggplotly(pnld_e_15_plot)
 pnld_e_15_plotly
+
+pnld_e_15_ER_mod$coefficients[2]
+pnld_e_15_ER_mod2$coefficients[2]
+pnld_e_15_ER_mod3$coefficients[2]
+pnld_e_15_ER_mod4$coefficients[2]
 ```
+
+##### slopes based off models 1&2 (model 1 has R^2 value below 0.9)
 
 #### Chamber 1
 ```{r}
@@ -389,32 +487,50 @@ pnld_e_15_plotly
 
 # No data available for this chamber
 
-#pnld_e_1 <- dat_full %>%
-  #filter(chamber == "1" & delta_T_min <= 29)
+pnld_e_1 <- dat_full %>%
+  filter(chamber == "1" & delta_T_min >= 132 & delta_T_min <= 167)
 
-#pnld_e_1_ER_mod <- lm(oxygen_mass_mg~delta_T_min, pnld_e_1)
-#summary(pnld_e_1_ER_mod)
-#pnld_e_1_ER_mod$coefficients[2]
-#pnld_e_1_ER_slope <- unname(pnld_e_1_ER_mod$coefficients[2])
+pnld_e_1_ER_mod <- lm(oxygen_mass_mg~delta_T_min, pnld_e_1)
+summary(pnld_e_1_ER_mod)
+pnld_e_1_ER_mod$coefficients[2]
+pnld_e_1_ER_slope <- unname(pnld_e_1_ER_mod$coefficients[2])
 
 
 
 ## now measuring ER from the period after the NEP portion of the incubation (oxygen curve starting at minute 131).
 pnld_e_1 <- dat_full %>%
-  filter(chamber == "1" & delta_T_min >= 131)
+  filter(chamber == "1" & delta_T_min >= 174 & delta_T_min <= 214)
 
 pnld_e_1_ER_mod2 <- lm(oxygen_mass_mg~delta_T_min, pnld_e_1)
 summary(pnld_e_1_ER_mod2)
 pnld_e_1_ER_mod2$coefficients[2]
 pnld_e_1_ER_slope2 <- unname(pnld_e_1_ER_mod2$coefficients[2])
 
+### model of entire ER curve
+
+pnld_e_1 <- dat_full %>%
+  filter(chamber == "1" & delta_T_min >= 132 & delta_T_min <= 214)
+
+pnld_e_1_ER_mod3 <- lm(oxygen_mass_mg~delta_T_min, pnld_e_1)
+summary(pnld_e_1_ER_mod3)
+pnld_e_1_ER_mod3$coefficients[2]
+pnld_e_1_ER_slope3 <- unname(pnld_e_1_ER_mod3$coefficients[2])
+
+### no data available to model of pre-NEP ER curve
+#pnld_e_1 <- dat_full %>%
+  #filter(chamber == "1" & delta_T_min <= 29)
+
+#pnld_e_1_ER_mod4 <- lm(oxygen_mass_mg~delta_T_min, pnld_e_1)
+#summary(pnld_e_1_ER_mod4)
+#pnld_e_1_ER_mod4$coefficients[2]
+#pnld_e_1_ER_slope4 <- unname(pnld_e_1_ER_mod4$coefficients[2])
 
 # calculate average of the two ER slopes
-#pnld_e_1_ER_slope_avg <- (pnld_e_1_ER_slope + pnld_e_1_ER_slope2)/2
+pnld_e_1_ER_slope_avg <- (pnld_e_1_ER_slope + pnld_e_1_ER_slope2)/2
 
 
 ## Now converting this rate from mg O2 per minute to per day by multiplying this rate by 1440 minutes per day. ##
-pnld_e_1_ER <- pnld_e_1_ER_slope2 * 1440
+pnld_e_1_ER <- pnld_e_1_ER_slope_avg * 1440
 pnld_e_1_ER
 
 ######################## GPP
@@ -427,17 +543,25 @@ pnld_e_1_plot <- dat_full %>%
   filter(chamber == "1") %>%
   ggplot(aes(x = delta_T_min, y = oxygen_mass_mg)) +
   geom_point(shape = 1, size = 2) +
-  geom_abline(aes(intercept = pnld_e_1_ER_mod2$coefficients[1], slope = pnld_e_1_ER_mod2$coefficients[2])) +
+  geom_abline(aes(intercept = pnld_e_1_ER_mod$coefficients[1], slope = pnld_e_1_ER_mod$coefficients[2], color = "post-1")) +
+  geom_abline(aes(intercept = pnld_e_1_ER_mod2$coefficients[1], slope = pnld_e_1_ER_mod2$coefficients[2], color = "post-2")) +
+  geom_abline(aes(intercept = pnld_e_1_ER_mod3$coefficients[1], slope = pnld_e_1_ER_mod3$coefficients[2], color = "post-whole")) +
   theme_classic()
 pnld_e_1_plot
 
 # plotting in plotly to find what time DO signals stabilize for ER incubation
 pnld_e_1_plotly<- plotly::ggplotly(pnld_e_1_plot)
 pnld_e_1_plotly
+
+pnld_e_1_ER_mod$coefficients[2]
+pnld_e_1_ER_mod2$coefficients[2]
+pnld_e_1_ER_mod3$coefficients[2]
 ```
 
-### Tank 1; 10C
+##### slopes based off models 1&2 (both have R^2 values below 0.9)
 
+
+### Tank 1; 10C
 #### Chamber 11
 ```{r}
 ######################## NEP rate calculations
@@ -506,7 +630,15 @@ pnld_e_11_plot
 # plotting in plotly to find what time DO signals stabilize for ER incubation
 pnld_e_11_plotly<- plotly::ggplotly(pnld_e_11_plot)
 pnld_e_11_plotly
+
+# checking raw rate values from 2 models that have been averaged
+pnld_e_11_ER_mod$coefficients[2]
+pnld_e_11_ER_mod2$coefficients[2]
+
+
 ```
+
+##### Caution using these values: nearly a 50% difference between model 1 & 2 slopes
 
 #### Chamber 6
 ```{r}
@@ -576,6 +708,10 @@ pnld_e_6_plot
 # plotting in plotly to find what time DO signals stabilize for ER incubation
 pnld_e_6_plotly<- plotly::ggplotly(pnld_e_6_plot)
 pnld_e_6_plotly
+
+# checking slopes of two models that were averaged to get ER rates
+pnld_e_6_ER_mod$coefficients[2]
+pnld_e_6_ER_mod2$coefficients[2]
 ```
 
 #### Chamber 12
@@ -646,6 +782,10 @@ pnld_e_12_plot
 # plotting in plotly to find what time DO signals stabilize for ER incubation
 pnld_e_12_plotly<- plotly::ggplotly(pnld_e_12_plot)
 pnld_e_12_plotly
+
+# checking slopes of 2 models that were averaged to get ER rates
+pnld_e_12_ER_mod$coefficients[2]
+pnld_e_12_ER_mod2$coefficients[2]
 ```
 
 #### Chamber 14
@@ -716,7 +856,13 @@ pnld_e_14_plot
 # plotting in plotly to find what time DO signals stabilize for ER incubation
 pnld_e_14_plotly<- plotly::ggplotly(pnld_e_14_plot)
 pnld_e_14_plotly
+
+# checking slopes of 2 models that were averaged to get ER rates
+pnld_e_14_ER_mod$coefficients[2]
+pnld_e_14_ER_mod2$coefficients[2]
 ```
+
+##### Caution using these values: nearly a 50% difference between model 1 & 2 slopes
 
 ### Tank 3; 13C
 #### Chamber 16
@@ -743,7 +889,7 @@ pnld_e_16_NEP
 
 ## now measuring ER from the period after the NEP portion of the incubation (oxygen curve starting at minute 138).
 pnld_e_16 <- dat_full %>%
-  filter(chamber == "16" & delta_T_min >= 138)
+  filter(chamber == "16" & delta_T_min >= 138 & delta_T_min <= 209)
 
 pnld_e_16_ER_mod2 <- lm(oxygen_mass_mg~delta_T_min, pnld_e_16)
 summary(pnld_e_16_ER_mod2)
@@ -797,7 +943,7 @@ pnld_e_3_NEP
 
 ## now measuring ER from the period after the NEP portion of the incubation (oxygen curve starting at minute 138).
 pnld_e_3 <- dat_full %>%
-  filter(chamber == "3" & delta_T_min >= 138)
+  filter(chamber == "3" & delta_T_min >= 138 & delta_T_min <= 209)
 
 pnld_e_3_ER_mod2 <- lm(oxygen_mass_mg~delta_T_min, pnld_e_3)
 summary(pnld_e_3_ER_mod2)
@@ -851,7 +997,7 @@ pnld_e_10_NEP
 
 ## now measuring ER from the period after the NEP portion of the incubation (oxygen curve starting at minute 138).
 pnld_e_10 <- dat_full %>%
-  filter(chamber == "10" & delta_T_min >= 138)
+  filter(chamber == "10" & delta_T_min >= 138 & delta_T_min <= 209)
 
 pnld_e_10_ER_mod2 <- lm(oxygen_mass_mg~delta_T_min, pnld_e_10)
 summary(pnld_e_10_ER_mod2)
@@ -905,7 +1051,7 @@ pnld_e_9_NEP
 
 ## now measuring ER from the period after the NEP portion of the incubation (oxygen curve starting at minute 138).
 pnld_e_9 <- dat_full %>%
-  filter(chamber == "9" & delta_T_min >= 138)
+  filter(chamber == "9" & delta_T_min >= 138 & delta_T_min <= 209)
 
 pnld_e_9_ER_mod2 <- lm(oxygen_mass_mg~delta_T_min, pnld_e_9)
 summary(pnld_e_9_ER_mod2)
@@ -1004,6 +1150,10 @@ pnld_e_7_plot
 # plotting in plotly to find what time DO signals stabilize for ER incubation
 pnld_e_7_plotly<- plotly::ggplotly(pnld_e_7_plot)
 pnld_e_7_plotly
+
+# checking the slopes of the 2 models that were averaged to get ER rates
+pnld_e_7_ER_mod$coefficients[2]
+pnld_e_7_ER_mod2$coefficients[2]
 ```
 
 #### Chamber 13
@@ -1039,9 +1189,9 @@ pnld_e_13_ER_slope <- unname(pnld_e_13_ER_mod$coefficients[2])
 
 
 
-## now measuring ER from the period after the NEP portion of the incubation (oxygen curve starting at minute 122).
+## now measuring ER from the period after the NEP portion of the incubation (oxygen curve starting at minute 122 to minute 193).
 pnld_e_13 <- dat_full %>%
-  filter(chamber == "13" & delta_T_min >= 122)
+  filter(chamber == "13" & delta_T_min >= 122 & delta_T_min <= 193)
 
 pnld_e_13_ER_mod2 <- lm(oxygen_mass_mg~delta_T_min, pnld_e_13)
 summary(pnld_e_13_ER_mod2)
@@ -1074,7 +1224,13 @@ pnld_e_13_plot
 # plotting in plotly to find what time DO signals stabilize for ER incubation
 pnld_e_13_plotly<- plotly::ggplotly(pnld_e_13_plot)
 pnld_e_13_plotly
+
+# checking slopes of2 models that were averaged to get ER rate
+pnld_e_13_ER_mod$coefficients[2]
+pnld_e_13_ER_mod2$coefficients[2]
 ```
+
+##### Caution: 25% difference between the 2 rates averaged to get NEP rates
 
 #### Chamber 8
 ```{r}
@@ -1109,9 +1265,9 @@ pnld_e_8_ER_slope <- unname(pnld_e_8_ER_mod$coefficients[2])
 
 
 
-## now measuring ER from the period after the NEP portion of the incubation (oxygen curve starting at minute 122).
+## now measuring ER from the period after the NEP portion of the incubation (oxygen curve starting at minute 122 and ending at 193).
 pnld_e_8 <- dat_full %>%
-  filter(chamber == "8" & delta_T_min >= 122)
+  filter(chamber == "8" & delta_T_min >= 122 & delta_T_min <= 193)
 
 pnld_e_8_ER_mod2 <- lm(oxygen_mass_mg~delta_T_min, pnld_e_8)
 summary(pnld_e_8_ER_mod2)
@@ -1144,6 +1300,10 @@ pnld_e_8_plot
 # plotting in plotly to find what time DO signals stabilize for ER incubation
 pnld_e_8_plotly<- plotly::ggplotly(pnld_e_8_plot)
 pnld_e_8_plotly
+
+# comparing slopes of the 2 models averaged to get ER rate
+pnld_e_8_ER_mod$coefficients[2]
+pnld_e_8_ER_mod2$coefficients[2]
 ```
 
 #### Chamber 4
@@ -1179,9 +1339,9 @@ pnld_e_4_ER_slope <- unname(pnld_e_4_ER_mod$coefficients[2])
 
 
 
-## now measuring ER from the period after the NEP portion of the incubation (oxygen curve starting at minute 122).
+## now measuring ER from the period after the NEP portion of the incubation (oxygen curve starting at minute 122 to minute 193).
 pnld_e_4 <- dat_full %>%
-  filter(chamber == "4" & delta_T_min >= 122)
+  filter(chamber == "4" & delta_T_min >= 122 & delta_T_min <= 193)
 
 pnld_e_4_ER_mod2 <- lm(oxygen_mass_mg~delta_T_min, pnld_e_4)
 summary(pnld_e_4_ER_mod2)
@@ -1214,7 +1374,13 @@ pnld_e_4_plot
 # plotting in plotly to find what time DO signals stabilize for ER incubation
 pnld_e_4_plotly<- plotly::ggplotly(pnld_e_4_plot)
 pnld_e_4_plotly
+
+# comparing the slopes of the 2 models that were averaged to get ER rate
+pnld_e_4_ER_mod$coefficients[2]
+pnld_e_4_ER_mod2$coefficients[2]
 ```
+
+# Caution: slopes of two models averaged to get ER rates differ by 20%
 
 ## Creating dataframe with metab rates
 ```{r}

@@ -75,7 +75,7 @@ head(dat_2)
 
 # selecting only columns I need, and changing chamber column from a factor to a double
 dat_subset <- dat_2 %>%
-  select(date, time, delta_T_min, oxygen, temp, chamber, treatment)
+  dplyr::select(date, time, delta_T_min, oxygen, temp, chamber, treatment)
 
   dat_subset$chamber <- as.numeric(dat_subset$chamber)
 
@@ -175,7 +175,7 @@ pnld_a_16_NEP
 
 ######################## ER rate calculations
 
-## The linear portion of the ER curve has a very small signal, thus I measured ER from the dark period preceding the NEP portion of the incubation (roughly from minute 117 to minute 166) and averaged this with the ER signal post-NEP period.
+## The linear portion of the ER curve has a very small signal, thus I measured ER from the dark period preceding the NEP portion of the incubation (roughly from minute 117 to minute 166) and the ER signal post-NEP period. The post-NEP ER curve has a low R^2 value, thus I just used the ER rate from the pre-NEP period alone.
 
 pnld_a_16 <- dat_full %>%
   filter(chamber =="16" & delta_T_min >= 117 & delta_T_min <= 166)
@@ -200,7 +200,7 @@ pnld_a_16_ER_slope2 <- unname(pnld_a_16_ER_mod2$coefficients[2])
 # oxygen mass (mg) = -0.00697 * time(minutes) + 29.41
 
 # calculate average of the two ER slopes
-pnld_a_16_ER_slope_avg <- (pnld_a_16_ER_slope + pnld_a_16_ER_slope2)/2
+pnld_a_16_ER_slope_avg <- pnld_a_16_ER_slope
 
 
 ## Now converting this rate from mg O2 per minute to per day by multiplying this rate by 1440 minutes per day. ##
@@ -245,7 +245,7 @@ pnld_a_15_NEP
 
 ######################## ER rate calculations
 
-## The linear portion of the ER curve has a very small signal, thus I measured ER from the dark period preceding the NEP portion of the incubation (roughly from minute 117 to minute 166) and averaged this with the ER signal post-NEP period.
+## The linear portion of the ER curve has a very small signal, thus I measured ER from the dark period preceding the NEP portion of the incubation (roughly from minute 117 to minute 166) and the ER signal post-NEP period. The post-NEP ER curve has a low R^2 value, thus I just used the ER rate from the pre-NEP period alone.
 
 pnld_a_15 <- dat_full %>%
   filter(chamber =="15" & delta_T_min >= 117 & delta_T_min <= 166)
@@ -270,7 +270,7 @@ pnld_a_15_ER_slope2 <- unname(pnld_a_15_ER_mod2$coefficients[2])
 # oxygen mass (mg) = -0.00697 * time(minutes) + 29.41
 
 # calculate average of the two ER slopes
-pnld_a_15_ER_slope_avg <- (pnld_a_15_ER_slope + pnld_a_15_ER_slope2)/2
+pnld_a_15_ER_slope_avg <- pnld_a_15_ER_slope
 
 
 ## Now converting this rate from mg O2 per minute to per day by multiplying this rate by 1440 minutes per day. ##
@@ -314,7 +314,7 @@ pnld_a_13_NEP
 
 ######################## ER rate calculations
 
-## The linear portion of the ER curve has a very small signal, thus I measured ER from the dark period preceding the NEP portion of the incubation (roughly from minute 117 to minute 166) and averaged this with the ER signal post-NEP period.
+## The linear portion of the ER curve has a very small signal, thus I measured ER from the dark period preceding the NEP portion of the incubation (roughly from minute 117 to minute 166) and the ER signal post-NEP period. The post-NEP ER curve has a low R^2 value, thus I just used the ER rate from the pre-NEP period alone.
 
 pnld_a_13 <- dat_full %>%
   filter(chamber =="13" & delta_T_min >= 117 & delta_T_min <= 166)
@@ -339,7 +339,7 @@ pnld_a_13_ER_slope2 <- unname(pnld_a_13_ER_mod2$coefficients[2])
 # oxygen mass (mg) = -0.00697 * time(minutes) + 29.41
 
 # calculate average of the two ER slopes
-pnld_a_13_ER_slope_avg <- (pnld_a_13_ER_slope + pnld_a_13_ER_slope2)/2
+pnld_a_13_ER_slope_avg <- pnld_a_13_ER_slope
 
 
 ## Now converting this rate from mg O2 per minute to per day by multiplying this rate by 1440 minutes per day. ##
@@ -383,7 +383,7 @@ pnld_a_4_NEP
 
 ######################## ER rate calculations
 
-## The linear portion of the ER curve has a very small signal, thus I measured ER from the dark period preceding the NEP portion of the incubation (roughly from minute 117 to minute 166) and averaged this with the ER signal post-NEP period.
+## The linear portion of the ER curve has a very small signal, thus I measured ER from the dark period preceding the NEP portion of the incubation (roughly from minute 117 to minute 166) and the ER signal post-NEP period. The post-NEP ER curve has a low R^2 value, thus I just used the ER rate from the pre-NEP period alone.
 
 pnld_a_4 <- dat_full %>%
   filter(chamber =="4" & delta_T_min >= 117 & delta_T_min <= 166)
@@ -408,7 +408,7 @@ pnld_a_4_ER_slope2 <- unname(pnld_a_4_ER_mod2$coefficients[2])
 # oxygen mass (mg) = -0.00697 * time(minutes) + 29.41
 
 # calculate average of the two ER slopes
-pnld_a_4_ER_slope_avg <- (pnld_a_4_ER_slope + pnld_a_4_ER_slope2)/2
+pnld_a_4_ER_slope_avg <- pnld_a_4_ER_slope
 
 
 ## Now converting this rate from mg O2 per minute to per day by multiplying this rate by 1440 minutes per day. ##
@@ -1004,7 +1004,7 @@ pnld_a_3_NEP
 
 ######################## ER rate calculations
 
-## The linear portion of the ER curve has a very small signal, thus I measured ER from the dark period preceding the NEP portion of the incubation (roughly from minute 155 to minute 168) and averaged this with the ER signal post-NEP period. Chambers in this tank did not stir properly from minute 117-150 so I did not include this period in the analysis.
+## The linear portion of the ER curve is only clean after the NEP portion of the incubation, thus I only used this portion of the DO curve in the analysis.
 
 pnld_a_3 <- dat_full %>%
   filter(chamber =="3" & delta_T_min >= 155 & delta_T_min <= 168)
@@ -1029,7 +1029,7 @@ pnld_a_3_ER_slope2 <- unname(pnld_a_3_ER_mod2$coefficients[2])
 
 
 # calculate average of the two ER slopes
-pnld_a_3_ER_slope_avg <- (pnld_a_3_ER_slope + pnld_a_3_ER_slope2)/2
+pnld_a_3_ER_slope_avg <- pnld_a_3_ER_slope2
 
 
 ## Now converting this rate from mg O2 per minute to per day by multiplying this rate by 1440 minutes per day. ##
@@ -1073,7 +1073,7 @@ pnld_a_7_NEP
 
 ######################## ER rate calculations
 
-## The linear portion of the ER curve has a very small signal, thus I measured ER from the dark period preceding the NEP portion of the incubation (roughly from minute 155 to minute 168) and averaged this with the ER signal post-NEP period. Chambers in this tank did not stir properly from minute 117-150 so I did not include this period in the analysis.
+## The linear portion of the ER curve is only clean after the NEP portion of the incubation, thus I only used this portion of the DO curve in the analysis.
 
 pnld_a_7 <- dat_full %>%
   filter(chamber =="7" & delta_T_min >= 155 & delta_T_min <= 168)
@@ -1098,7 +1098,7 @@ pnld_a_7_ER_slope2 <- unname(pnld_a_7_ER_mod2$coefficients[2])
 
 
 # calculate average of the two ER slopes
-pnld_a_7_ER_slope_avg <- (pnld_a_7_ER_slope + pnld_a_7_ER_slope2)/2
+pnld_a_7_ER_slope_avg <- pnld_a_7_ER_slope2
 
 
 ## Now converting this rate from mg O2 per minute to per day by multiplying this rate by 1440 minutes per day. ##
@@ -1142,7 +1142,7 @@ pnld_a_10_NEP
 
 ######################## ER rate calculations
 
-## The linear portion of the ER curve has a very small signal, thus I measured ER from the dark period preceding the NEP portion of the incubation (roughly from minute 155 to minute 168) and averaged this with the ER signal post-NEP period. Chambers in this tank did not stir properly from minute 117-150 so I did not include this period in the analysis.
+## The linear portion of the ER curve is only clean after the NEP portion of the incubation, thus I only used this portion of the DO curve in the analysis.
 
 pnld_a_10 <- dat_full %>%
   filter(chamber =="10" & delta_T_min >= 155 & delta_T_min <= 168)
@@ -1167,7 +1167,7 @@ pnld_a_10_ER_slope2 <- unname(pnld_a_10_ER_mod2$coefficients[2])
 
 
 # calculate average of the two ER slopes
-pnld_a_10_ER_slope_avg <- (pnld_a_10_ER_slope + pnld_a_10_ER_slope2)/2
+pnld_a_10_ER_slope_avg <- pnld_a_10_ER_slope2
 
 
 ## Now converting this rate from mg O2 per minute to per day by multiplying this rate by 1440 minutes per day. ##
@@ -1211,7 +1211,7 @@ pnld_a_5_NEP
 
 ######################## ER rate calculations
 
-## The linear portion of the ER curve has a very small signal, thus I measured ER from the dark period preceding the NEP portion of the incubation (roughly from minute 155 to minute 168) and averaged this with the ER signal post-NEP period. Chambers in this tank did not stir properly from minute 117-150 so I did not include this period in the analysis.
+## The linear portion of the ER curve is only clean after the NEP portion of the incubation, thus I only used this portion of the DO curve in the analysis.
 
 pnld_a_5 <- dat_full %>%
   filter(chamber =="5" & delta_T_min >= 155 & delta_T_min <= 168)
@@ -1236,7 +1236,7 @@ pnld_a_5_ER_slope2 <- unname(pnld_a_5_ER_mod2$coefficients[2])
 
 
 # calculate average of the two ER slopes
-pnld_a_5_ER_slope_avg <- (pnld_a_5_ER_slope + pnld_a_5_ER_slope2)/2
+pnld_a_5_ER_slope_avg <- pnld_a_5_ER_slope2
 
 
 ## Now converting this rate from mg O2 per minute to per day by multiplying this rate by 1440 minutes per day. ##
@@ -1329,3 +1329,7 @@ dat_final_a <- dat_final %>%
 # exporting data for final analysis
 write_csv(dat_final_a, "data/210407_pineland_ambient/210407_pnld_ambient_rates.csv")
 ```
+
+11/16/21-- went through script and double-checked timings used to delineate NEP and ER portions of DO curves and cross-checked these with notes and DO datasheets. Tank 2 and Tank 4 seem to have lags in stirring rates during the NEP incubation that may lead to underestimation of NEP rates, and some of the timings were changed to accomodate for the lag in peak DO concentrations.
+
+Changed the ER rates in some of the tanks to only use the post-NEP portion of DO curves for calculating ER instead of averaging pre- and post-NEP portions to get ER. This was done because the R^2 values were low and there was considerable variability in pre-NEP portions of DO curves.
