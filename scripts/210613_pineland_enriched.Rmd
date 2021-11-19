@@ -227,6 +227,10 @@ pnld_e_5_plot
 # plotting in plotly to find what time DO signals stabilize for ER incubation
 pnld_e_5_plotly<- plotly::ggplotly(pnld_e_5_plot)
 pnld_e_5_plotly
+
+# checking slopes of 2 models that were averaged to get ER rate
+pnld_e_5_ER_mod$coefficients[2]
+pnld_e_5_ER_mod2$coefficients[2]
 ```
 
 #### Chamber 9
@@ -289,6 +293,8 @@ pnld_e_9_plot
 # plotting in plotly to find what time DO signals stabilize for ER incubation
 pnld_e_9_plotly<- plotly::ggplotly(pnld_e_9_plot)
 pnld_e_9_plotly
+
+
 ```
 
 #### Chamber 10
@@ -322,7 +328,7 @@ summary(pnld_e_10_ER_mod)
 pnld_e_10_ER_mod$coefficients[2]
 pnld_e_10_ER_slope <- unname(pnld_e_10_ER_mod$coefficients[2])
 
-
+# R^2 value below 0.9, thus I excluded this model from the analysis. The slope was almost identical to the post_NEP model slope and both ER values seemed accurate.
 
 ## now measuring ER from the period after the NEP portion of the incubation (oxygen curve starting at minute 111).
 pnld_e_10 <- dat_full %>%
@@ -335,7 +341,7 @@ pnld_e_10_ER_slope2 <- unname(pnld_e_10_ER_mod2$coefficients[2])
 
 
 # calculate average of the two ER slopes
-pnld_e_10_ER_slope_avg <- (pnld_e_10_ER_slope + pnld_e_10_ER_slope2)/2
+pnld_e_10_ER_slope_avg <-  pnld_e_10_ER_slope2
 
 
 ## Now converting this rate from mg O2 per minute to per day by multiplying this rate by 1440 minutes per day. ##
@@ -359,7 +365,13 @@ pnld_e_10_plot
 # plotting in plotly to find what time DO signals stabilize for ER incubation
 pnld_e_10_plotly<- plotly::ggplotly(pnld_e_10_plot)
 pnld_e_10_plotly
+
+# checking slopes of 2 models that were averaged to get ER rate
+pnld_e_10_ER_mod$coefficients[2]
+pnld_e_10_ER_mod2$coefficients[2]
 ```
+
+##### The R^2 value of ER model 1 is below 0.9, thus I excluded this model from the analysis. The slope was almost identical to the second ER model slope and both ER values seemed accurate.
 
 #### Chamber 16
 ```{r}
@@ -393,7 +405,6 @@ pnld_e_16_ER_mod$coefficients[2]
 pnld_e_16_ER_slope <- unname(pnld_e_16_ER_mod$coefficients[2])
 
 
-
 ## now measuring ER from the period after the NEP portion of the incubation (oxygen curve starting at minute 111).
 pnld_e_16 <- dat_full %>%
   filter(chamber == "16" & delta_T_min >= 111)
@@ -405,7 +416,7 @@ pnld_e_16_ER_slope2 <- unname(pnld_e_16_ER_mod2$coefficients[2])
 
 
 # calculate average of the two ER slopes
-pnld_e_16_ER_slope_avg <- (pnld_e_16_ER_slope + pnld_e_16_ER_slope2)/2
+pnld_e_16_ER_slope_avg <- pnld_e_16_ER_slope2
 
 
 ## Now converting this rate from mg O2 per minute to per day by multiplying this rate by 1440 minutes per day. ##
@@ -429,7 +440,13 @@ pnld_e_16_plot
 # plotting in plotly to find what time DO signals stabilize for ER incubation
 pnld_e_16_plotly<- plotly::ggplotly(pnld_e_16_plot)
 pnld_e_16_plotly
+
+# checking slopes of 2 models that were averaged to get ER rate
+pnld_e_16_ER_mod$coefficients[2]
+pnld_e_16_ER_mod2$coefficients[2]
 ```
+
+##### The R^2 of ER model 1 is below 0.9, thus I exlude this model from the analysis. Despite this, the slope from this model is a very close match to the slope from the following model of ER.
 
 ### Tank 1; 17.5C
 #### Chamber 6
@@ -476,7 +493,7 @@ pnld_e_6_ER_slope2 <- unname(pnld_e_6_ER_mod2$coefficients[2])
 
 
 # calculate average of the two ER slopes
-pnld_e_6_ER_slope_avg <- (pnld_e_6_ER_slope + pnld_e_6_ER_slope2)/2
+pnld_e_6_ER_slope_avg <- pnld_e_6_ER_slope2
 
 
 ## Now converting this rate from mg O2 per minute to per day by multiplying this rate by 1440 minutes per day. ##
@@ -500,8 +517,13 @@ pnld_e_6_plot
 # plotting in plotly to find what time DO signals stabilize for ER incubation
 pnld_e_6_plotly<- plotly::ggplotly(pnld_e_6_plot)
 pnld_e_6_plotly
+
+# checking slopes of 2 models that were averaged to get ER rate
+pnld_e_6_ER_mod$coefficients[2]
+pnld_e_6_ER_mod2$coefficients[2]
 ```
 
+##### The R^2 of ER model 1 is below 0.9, thus I exlude this model from the analysis.
 
 #### Chamber 7
 ```{r}
@@ -547,7 +569,7 @@ pnld_e_7_ER_slope2 <- unname(pnld_e_7_ER_mod2$coefficients[2])
 
 
 # calculate average of the two ER slopes
-pnld_e_7_ER_slope_avg <- (pnld_e_7_ER_slope + pnld_e_7_ER_slope2)/2
+pnld_e_7_ER_slope_avg <- pnld_e_7_ER_slope2
 
 
 ## Now converting this rate from mg O2 per minute to per day by multiplying this rate by 1440 minutes per day. ##
@@ -571,7 +593,12 @@ pnld_e_7_plot
 # plotting in plotly to find what time DO signals stabilize for ER incubation
 pnld_e_7_plotly<- plotly::ggplotly(pnld_e_7_plot)
 pnld_e_7_plotly
+
+# checking slopes of 2 models that were averaged to get ER rate
+pnld_e_7_ER_mod$coefficients[2]
+pnld_e_7_ER_mod2$coefficients[2]
 ```
+##### The R^2 of ER model 1 is below 0.9, thus I exlude this model from the analysis.
 
 #### Chamber 13
 ```{r}
@@ -617,7 +644,7 @@ pnld_e_13_ER_slope2 <- unname(pnld_e_13_ER_mod2$coefficients[2])
 
 
 # calculate average of the two ER slopes
-pnld_e_13_ER_slope_avg <- (pnld_e_13_ER_slope + pnld_e_13_ER_slope2)/2
+pnld_e_13_ER_slope_avg <- pnld_e_13_ER_slope2
 
 
 ## Now converting this rate from mg O2 per minute to per day by multiplying this rate by 1440 minutes per day. ##
@@ -641,7 +668,13 @@ pnld_e_13_plot
 # plotting in plotly to find what time DO signals stabilize for ER incubation
 pnld_e_13_plotly<- plotly::ggplotly(pnld_e_13_plot)
 pnld_e_13_plotly
+
+# checking slopes of 2 models that were averaged to get ER rate
+pnld_e_13_ER_mod$coefficients[2]
+pnld_e_13_ER_mod2$coefficients[2]
 ```
+
+##### The R^2 of ER model 1 is below 0.9, thus I exlude this model from the analysis.
 
 #### Chamber 14
 ```{r}
@@ -711,6 +744,10 @@ pnld_e_14_plot
 # plotting in plotly to find what time DO signals stabilize for ER incubation
 pnld_e_14_plotly<- plotly::ggplotly(pnld_e_14_plot)
 pnld_e_14_plotly
+
+# checking slopes of 2 models that were averaged to get ER rate
+pnld_e_14_ER_mod$coefficients[2]
+pnld_e_14_ER_mod2$coefficients[2]
 ```
 
 ### Tank 3; 20.5C
@@ -782,6 +819,10 @@ pnld_e_3_plot
 # plotting in plotly to find what time DO signals stabilize for ER incubation
 pnld_e_3_plotly<- plotly::ggplotly(pnld_e_3_plot)
 pnld_e_3_plotly
+
+# checking slopes of 2 models that were averaged to get ER rate
+pnld_e_3_ER_mod$coefficients[2]
+pnld_e_3_ER_mod2$coefficients[2]
 ```
 
 
@@ -853,6 +894,10 @@ pnld_e_4_plot
 # plotting in plotly to find what time DO signals stabilize for ER incubation
 pnld_e_4_plotly<- plotly::ggplotly(pnld_e_4_plot)
 pnld_e_4_plotly
+
+# checking slopes of 2 models that were averaged to get ER rate
+pnld_e_4_ER_mod$coefficients[2]
+pnld_e_4_ER_mod2$coefficients[2]
 ```
 
 #### Chamber 11
@@ -923,7 +968,13 @@ pnld_e_11_plot
 # plotting in plotly to find what time DO signals stabilize for ER incubation
 pnld_e_11_plotly<- plotly::ggplotly(pnld_e_11_plot)
 pnld_e_11_plotly
+
+# checking slopes of 2 models that were averaged to get ER rate
+pnld_e_11_ER_mod$coefficients[2]
+pnld_e_11_ER_mod2$coefficients[2]
 ```
+
+##### The R^2 of ER model 1 is below 0.9, thus I exlude this model from the analysis.
 
 #### Chamber 15
 ```{r}
@@ -984,6 +1035,8 @@ pnld_e_15_plot
 # plotting in plotly to find what time DO signals stabilize for ER incubation
 pnld_e_15_plotly<- plotly::ggplotly(pnld_e_15_plot)
 pnld_e_15_plotly
+
+
 ```
 
 ### Tank 4; 23.5C
@@ -1056,6 +1109,10 @@ pnld_e_1_plot
 # plotting in plotly to find what time DO signals stabilize for ER incubation
 pnld_e_1_plotly<- plotly::ggplotly(pnld_e_1_plot)
 pnld_e_1_plotly
+
+# checking slopes of 2 models that were averaged to get ER rate
+pnld_e_1_ER_mod$coefficients[2]
+pnld_e_1_ER_mod2$coefficients[2]
 ```
 
 
@@ -1127,6 +1184,10 @@ pnld_e_2_plot
 # plotting in plotly to find what time DO signals stabilize for ER incubation
 pnld_e_2_plotly<- plotly::ggplotly(pnld_e_2_plot)
 pnld_e_2_plotly
+
+# checking slopes of 2 models that were averaged to get ER rate
+pnld_e_2_ER_mod$coefficients[2]
+pnld_e_2_ER_mod2$coefficients[2]
 ```
 
 #### Chamber 8
@@ -1197,6 +1258,10 @@ pnld_e_8_plot
 # plotting in plotly to find what time DO signals stabilize for ER incubation
 pnld_e_8_plotly<- plotly::ggplotly(pnld_e_8_plot)
 pnld_e_8_plotly
+
+# checking slopes of 2 models that were averaged to get ER rate
+pnld_e_8_ER_mod$coefficients[2]
+pnld_e_8_ER_mod2$coefficients[2]
 ```
 
 #### Chamber 12
@@ -1243,7 +1308,7 @@ pnld_e_12_ER_slope2 <- unname(pnld_e_12_ER_mod2$coefficients[2])
 
 
 # calculate average of the two ER slopes
-pnld_e_12_ER_slope_avg <- (pnld_e_12_ER_slope + pnld_e_12_ER_slope2)/2
+pnld_e_12_ER_slope_avg <- pnld_e_12_ER_slope2
 
 
 ## Now converting this rate from mg O2 per minute to per day by multiplying this rate by 1440 minutes per day. ##
@@ -1267,7 +1332,13 @@ pnld_e_12_plot
 # plotting in plotly to find what time DO signals stabilize for ER incubation
 pnld_e_12_plotly<- plotly::ggplotly(pnld_e_12_plot)
 pnld_e_12_plotly
+
+# checking slopes of 2 models that were averaged to get ER rate
+pnld_e_12_ER_mod$coefficients[2]
+pnld_e_12_ER_mod2$coefficients[2]
 ```
+
+##### The R^2 of ER model 1 is below 0.9, thus I exlude this model from the analysis.
 
 ## Creating dataframe with metab rates
 ```{r}

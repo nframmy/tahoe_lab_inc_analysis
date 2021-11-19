@@ -590,13 +590,14 @@ m15 <- lme(log(GPP_mgO2_d_gAFDW) ~ log(temp_C), random = ~ 1 | rock_ID, weights 
 
 m16 <- lme(log(GPP_mgO2_d_gAFDW) ~ log(temp_C) * nutrients, random = ~ 1 | rock_ID, weights = varIdent(form = ~1|experiment_ID * nutrients), data = dat_lme)
 
-m17 <- lme(log(GPP_mgO2_d_gAFDW) ~ log(temp_C), random = ~ 1 | rock_ID, weights = varIdent(form = ~1|experiment_ID * temp_C), data = dat_lme)
+#m17 <- lme(log(GPP_mgO2_d_gAFDW) ~ log(temp_C), random = ~ 1 | rock_ID, weights = varIdent(form = ~1|experiment_ID * temp_C), data = dat_lme)
+# iteration limit reached without convergence
 
 #m18 <- lme(log(GPP_mgO2_d_gAFDW) ~ log(temp_C) * nutrients, random = ~ 1 | rock_ID, weights = varIdent(form = ~1|experiment_ID * temp_C), data = dat_lme)
 # false convergence
 
-AIC(m1, m2, m3, m4, m5, m7, m9, m10, m15, m16, m17)
-BIC(m1, m2, m3, m4, m5, m7, m9, m10, m15, m16, m17)
+AIC(m1, m2, m3, m4, m5, m7, m9, m10, m15, m16)
+BIC(m1, m2, m3, m4, m5, m7, m9, m10, m15, m16)
 
 m5
 
@@ -667,7 +668,7 @@ m7 <- lme(log(NEP_mgO2_d_gAFDW) ~ log(temp_C) * nutrients, random = ~ 1 + nutrie
 m8 <- lme(log(NEP_mgO2_d_gAFDW) ~ log(temp_C) * nutrients, random = list(~1 + nutrients | rock_ID, ~1 + log(temp_C) | rock_ID), data = dat_lme)
 
 # incorporating weights to account for heteroscedasticity within and btwn experiments
-m9 <- 
+#m9 <- 
 
 
 AIC(m1, m2, m3, m4, m5, m7, m8)
