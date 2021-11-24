@@ -119,7 +119,7 @@ dat <- dat %>%
 
 ####### Adding in Unique Chamber ID for each Experiment #########
 dat <- dat %>%
-  mutate(experiment_ID = case_when(
+  mutate(exp_ID = case_when(
     nutrients == 0 & month == "march" ~ 1,
     nutrients == 1 & month == "march" ~ 2, # since these were separate experiments on different periphyton samples, they get unique experiment IDs
     nutrients == 0 & month == "april" ~ 3,
@@ -130,9 +130,19 @@ dat <- dat %>%
   ))
 
 # Creating rock_ID column
-# uniting chamber and experiment # columns (this will indicate some sort of chamber or rock effect from repeated measures during the ambient and enriched nutrient runs)
+# using chamber and experiment # columns to give a unique code for each individual rock (this will indicate some sort of chamber or rock effect from repeated measures during the ambient and enriched nutrient runs)
+
 dat <- dat %>%
-  unite(rock_ID, experiment_ID, chamber, sep = "_", remove = FALSE)
+  mutate(rock_ID = case_when(
+    exp_ID == 5 & nutrients == 1 ~ row_number() - 16, # accouting for repeated measures on same rocks for the 5,6, and 7th experiments
+    exp_ID == 6 & nutrients == 1 ~ row_number() - 16,
+    exp_ID == 7 & nutrients == 1 ~ row_number() - 16,
+     TRUE ~ as.double(row_number())
+    ))
+#View(dat)
+
+# making rock_ID column a factor instead of numeric for analysis
+dat$rock_ID <- as.factor(dat$rock_ID)
 
 # exporting combined dataframe as .csv
 write_csv(dat, "data/main_analysis/main_rate_data.csv")
@@ -549,6 +559,10 @@ BIC(m1, m2, m3, m4, m5)
 # making new dataset for lme models to remove NAs
 dat_lme <- dat_clean %>%
   filter(!is.na(GPP_mgO2_d_gAFDW))
+
+# converting experiment ID from numberic to a factor
+dat_lme$exp_ID <- as.factor(dat_lme$exp_ID)
+
 glimpse(dat_lme)
 
 m1 <- lm(log(GPP_mgO2_d_gAFDW) ~ log(temp_C), data = dat_lme)
@@ -570,41 +584,61 @@ m7 <- lme(log(GPP_mgO2_d_gAFDW) ~ log(temp_C) * nutrients, random = ~ 1 + nutrie
 # error message for this model saying it did not converge
 
 # incorporating weights to account for heteroscedasticity within and btwn different experiments
-m9 <- lme(log(GPP_mgO2_d_gAFDW) ~ log(temp_C), random = ~ 1 | rock_ID, weights = varIdent(form = ~1|experiment_ID), data = dat_lme)
+m9 <- lme(log(GPP_mgO2_d_gAFDW) ~ log(temp_C), random = ~ 1 | rock_ID, weights = varIdent(form = ~1|exp_ID), data = dat_lme)
 
-m10 <- lme(log(GPP_mgO2_d_gAFDW) ~ log(temp_C) * nutrients, random = ~ 1 | rock_ID, weights = varIdent(form = ~1|experiment_ID), data = dat_lme)
+m10 <- lme(log(GPP_mgO2_d_gAFDW) ~ log(temp_C) * nutrients, random = ~ 1 | rock_ID, weights = varIdent(form = ~1|exp_ID), data = dat_lme)
 
-#m11 <- lme(log(GPP_mgO2_d_gAFDW) ~ log(temp_C) * nutrients, random = ~ 1 + nutrients | rock_ID, weights = varIdent(form = ~1|experiment_ID), data = dat_lme)
+#m11 <- lme(log(GPP_mgO2_d_gAFDW) ~ log(temp_C) * nutrients, random = ~ 1 + nutrients | rock_ID, weights = varIdent(form = ~1|exp_ID), data = dat_lme)
 # would not converge
 
-#m12 <- lme(log(GPP_mgO2_d_gAFDW) ~ log(temp_C) * nutrients, random = list(~ 1 | rock_ID, ~ 1 + temp_C | experiment_ID), weights = varIdent(form = ~1|experiment_ID), data = dat_lme)
+#m12 <- lme(log(GPP_mgO2_d_gAFDW) ~ log(temp_C) * nutrients, random = list(~ 1 | rock_ID, ~ 1 + temp_C | exp_ID), weights = varIdent(form = ~1|exp_ID), data = dat_lme)
 # does not converge
 
-#m13 <- lme(log(GPP_mgO2_d_gAFDW) ~ log(temp_C) * nutrients, random = list(~ 1 | rock_ID, ~ 1 + nutrients | experiment_ID), weights = varIdent(form = ~1|experiment_ID), data = dat_lme)
+#m13 <- lme(log(GPP_mgO2_d_gAFDW) ~ log(temp_C) * nutrients, random = list(~ 1 | rock_ID, ~ 1 + nutrients | exp_ID), weights = varIdent(form = ~1|exp_ID), data = dat_lme)
 # does not converge
 
-#m14 <- lme(log(GPP_mgO2_d_gAFDW) ~ log(temp_C) * nutrients, random = list(~ 1 | rock_ID, ~ 1 + temp_C | experiment_ID, ~ 1 + nutrients | experiment_ID), weights = varIdent(form = ~1|experiment_ID), data = dat_lme)
+#m14 <- lme(log(GPP_mgO2_d_gAFDW) ~ log(temp_C) * nutrients, random = list(~ 1 | rock_ID, ~ 1 + temp_C | exp_ID, ~ 1 + nutrients | exp_ID), weights = varIdent(form = ~1|exp_ID), data = dat_lme)
 # does not converge
 
-m15 <- lme(log(GPP_mgO2_d_gAFDW) ~ log(temp_C), random = ~ 1 | rock_ID, weights = varIdent(form = ~1|experiment_ID), data = dat_lme)
+m15 <- lme(log(GPP_mgO2_d_gAFDW) ~ log(temp_C), random = ~ 1 | rock_ID, weights = varIdent(form = ~1|exp_ID), data = dat_lme)
 
-m16 <- lme(log(GPP_mgO2_d_gAFDW) ~ log(temp_C) * nutrients, random = ~ 1 | rock_ID, weights = varIdent(form = ~1|experiment_ID * nutrients), data = dat_lme)
+# letting the model variance parameter vary by nutrient treatment and letting this vary between experiment ID. Needed to use VarComb so that I could use the VarExp option since the nutrient treatment contains values of "0" and I needed to combine this with letting sigma_sq vary across different experiments.
+m16 <- lme(log(GPP_mgO2_d_gAFDW) ~ log(temp_C) * nutrients, random = ~ 1 | rock_ID, weights = varComb(varIdent(form = ~1|exp_ID), varExp(form = ~ nutrients)), data = dat_lme)
 
-#m17 <- lme(log(GPP_mgO2_d_gAFDW) ~ log(temp_C), random = ~ 1 | rock_ID, weights = varIdent(form = ~1|experiment_ID * temp_C), data = dat_lme)
+m17 <- lme(log(GPP_mgO2_d_gAFDW) ~ log(temp_C), random = ~ 1 | rock_ID, weights = varIdent(form = ~log(temp_C)|exp_ID), data = dat_lme)
 # iteration limit reached without convergence
 
-#m18 <- lme(log(GPP_mgO2_d_gAFDW) ~ log(temp_C) * nutrients, random = ~ 1 | rock_ID, weights = varIdent(form = ~1|experiment_ID * temp_C), data = dat_lme)
+m18 <- lme(log(GPP_mgO2_d_gAFDW) ~ log(temp_C) * nutrients, random = ~ 1 | rock_ID, weights = varIdent(form = ~log(temp_C)|exp_ID), data = dat_lme)
 # false convergence
 
-AIC(m1, m2, m3, m4, m5, m7, m9, m10, m15, m16)
-BIC(m1, m2, m3, m4, m5, m7, m9, m10, m15, m16)
+AIC(m1, m2, m3, m4, m5, m7, m9, m10, m15, m16, m17, m18)
+BIC(m1, m2, m3, m4, m5, m7, m9, m10, m15, m16, m17, m18)
 
 m5
 
 m7
 
 m10
+
+# graphical model validation using standardized residuals vs. fitten values to look for heteroscedasticity
+plot(m10)
 ```
+
+#### Graphical model validation
+```{r}
+# checking ordinary residuals of the best model according to AIC (these are allowed to show heteroscedasticity). Using code from Zuur et al.
+E1 <- resid(m10)
+coplot(E1 ∼ rock_ID|exp_ID,
+ylab = "Ordinary residuals", data = dat_lme)
+
+# now checking standardized residuals of each of the experiments (random effect in the model). These should not show any patterns and should exhibit homogeneous variance.
+E2 <- resid(m10, type = "normalized")
+coplot(E2 ∼ rock_ID|exp_ID,
+ylab = "Normalized residuals", data = dat_lme)
+
+#coplot(resid(m10) ~ fitted(m10) | dat_lme$exp_ID)
+```
+
 
 ## ER
 ```{r}
@@ -632,9 +666,9 @@ m7 <- lme(log(ER_mgO2_d_gAFDW) ~ log(temp_C) * nutrients, random = ~ 1 + nutrien
 # error message for this model saying it did not converge
 
 # incorporating weights to account for heteroscedasticity within and btwn different experiments
-m9 <- lme(log(ER_mgO2_d_gAFDW) ~ log(temp_C) * nutrients, random = ~ 1 | rock_ID, weights = varIdent(form = ~1|experiment_ID), data = dat_lme)
+m9 <- lme(log(ER_mgO2_d_gAFDW) ~ log(temp_C) * nutrients, random = ~ 1 | rock_ID, weights = varIdent(form = ~1|exp_ID), data = dat_lme)
 
-#m10 <- lme(log(ER_mgO2_d_gAFDW) ~ log(temp_C) * nutrients, random = ~ 1 + nutrients | rock_ID, weights = varIdent(form = ~1|experiment_ID), data = dat_lme)
+#m10 <- lme(log(ER_mgO2_d_gAFDW) ~ log(temp_C) * nutrients, random = ~ 1 + nutrients | rock_ID, weights = varIdent(form = ~1|exp_ID), data = dat_lme)
 # would not converge
 
 AIC(m1, m2, m3, m4, m5, m7, m9)
@@ -673,6 +707,121 @@ m8 <- lme(log(NEP_mgO2_d_gAFDW) ~ log(temp_C) * nutrients, random = list(~1 + nu
 
 AIC(m1, m2, m3, m4, m5, m7, m8)
 BIC(m1, m2, m3, m4, m5, m7, m8)
+
+m3
+```
+
+
+# Centering Temp and Nutrient Data by experiment
+```{r}
+# centering temperature variable to "de-seasonalize" it since baseline temperatures change between seasons. This way we get can model the "treatment condition itself" rather than season. - stats consulting dept in UC Davis
+
+# creating a column of average temperatures for each experiment
+dat_centered <- dat_clean %>%
+  group_by(month) %>%
+  summarise(avg_T = mean(temp_C))
+
+# adding avg T column to main dataframe so that we can mutate a new column of centered temps with it
+dat_centered <- left_join(dat_clean, dat_centered, by = "month")
+
+head(dat_centered)
+
+# now subtracting average temp for each incubation from the actual temp to center this variable and remove the "seasonal effect" from temp data
+dat_centered <- dat_centered %>%
+  mutate(temp_centered = temp_C - avg_T)
+
+head(dat_centered)
+#View(dat_centered)
+```
+
+##### Plotting centered temp data
+```{r}
+# first plotting up data to see what it looks like
+
+# melting dataframe to long format so that metabolic rate columns are combined into one column and values are in a separate column so all can be plotted at once
+dat_long <- dat_centered %>%
+  rename(GPP = GPP_mgO2_d_gAFDW, ER = ER_mgO2_d_gAFDW, NEP = NEP_mgO2_d_gAFDW) %>% # renaming columns so that facet labels are more tidy
+  pivot_longer(cols = c(NEP, GPP, ER),
+               names_to = "rate_name_AFDW",
+               values_to = "rates_AFDW",
+               values_drop_na = TRUE)
+#View(dat_long)
+rates_log_log <- dat_long %>%
+  ggplot(aes(x = temp_centered, y = rates_AFDW, group = interaction(season, nutrients))) +
+  facet_grid(cols = vars(rate_name_AFDW)) +
+  scale_y_log10() +
+ geom_point(aes(shape = season, color = nutrient_trt), size = 1.5) +
+  scale_shape_manual(values = c(17, 19, 15)) +
+  geom_smooth(aes(color = nutrient_trt), method = "lm") +
+  scale_color_viridis_d("Nutrient Treatment") + # renaming label of color legend
+  scale_shape_discrete(name = "Season") +# renaming label of point shape legend
+  theme_minimal() +
+  theme(legend.position = "bottom") +
+  labs(title = "Periphyton Metabolic Rates vs. Temperature",
+      x = expression('Temperature (\u00B0C)'),
+      y = expression(Rates~(mgO[2]~day^{-1}~gAFDW^{-1})))
+
+rates_log_log
+
+```
+
+##### Modeling rates with centered temp data
+```{r}
+# making new dataset for lme models to remove NAs
+dat_lme <- dat_centered %>%
+  filter(!is.na(GPP_mgO2_d_gAFDW))
+glimpse(dat_lme)
+
+m1 <- lm(log(GPP_mgO2_d_gAFDW) ~ temp_centered, data = dat_lme)
+
+m2 <- lm(log(GPP_mgO2_d_gAFDW) ~ nutrients, data = dat_lme)
+
+m3 <- lme(log(GPP_mgO2_d_gAFDW) ~ temp_centered, random = ~ 1 | rock_ID, data = dat_lme)
+
+m4 <- lme(log(GPP_mgO2_d_gAFDW) ~ nutrients, random = ~ 1 | rock_ID, data = dat_lme)
+
+m5 <- lme(log(GPP_mgO2_d_gAFDW) ~ temp_centered * nutrients, random = ~ 1 | rock_ID, data = dat_lme)
+
+#m6 <- lme(log(GPP_mgO2_d_gAFDW) ~ temp_centered * nutrients, random = ~ 1 + temp_centered | rock_ID, data = dat_lme)
+# error message for this model saying it never converged
+
+m7 <- lme(log(GPP_mgO2_d_gAFDW) ~ temp_centered * nutrients, random = ~ 1 + nutrients | rock_ID, data = dat_lme)
+
+#m8 <- lme(log(GPP_mgO2_d_gAFDW) ~ temp_centered * nutrients, random = list(~ 1 + nutrients | rock_ID, ~ 1 + temp_centered | rock_ID), data = dat_lme)
+# error message for this model saying it did not converge
+
+# incorporating weights to account for heteroscedasticity within and btwn different experiments
+m9 <- lme(log(GPP_mgO2_d_gAFDW) ~ temp_centered, random = ~ 1 | rock_ID, weights = varIdent(form = ~1|exp_ID), data = dat_lme)
+
+m10 <- lme(log(GPP_mgO2_d_gAFDW) ~ temp_centered * nutrients, random = ~ 1 | rock_ID, weights = varIdent(form = ~1|exp_ID), data = dat_lme)
+
+#m11 <- lme(log(GPP_mgO2_d_gAFDW) ~ temp_centered * nutrients, random = ~ 1 + nutrients | rock_ID, weights = varIdent(form = ~1|exp_ID), data = dat_lme)
+# would not converge
+
+#m12 <- lme(log(GPP_mgO2_d_gAFDW) ~ temp_centered * nutrients, random = list(~ 1 | rock_ID, ~ 1 + temp_centered | exp_ID), weights = varIdent(form = ~1|exp_ID), data = dat_lme)
+# does not converge
+
+#m13 <- lme(log(GPP_mgO2_d_gAFDW) ~ temp_centered * nutrients, random = list(~ 1 | rock_ID, ~ 1 + nutrients | exp_ID), weights = varIdent(form = ~1|exp_ID), data = dat_lme)
+# does not converge
+
+#m14 <- lme(log(GPP_mgO2_d_gAFDW) ~ temp_centered * nutrients, random = list(~ 1 | rock_ID, ~ 1 + temp_centered | exp_ID, ~ 1 + nutrients | exp_ID), weights = varIdent(form = ~1|exp_ID), data = dat_lme)
+# does not converge
+
+m15 <- lme(log(GPP_mgO2_d_gAFDW) ~ temp_centered, random = ~ 1 | rock_ID, weights = varIdent(form = ~1|exp_ID), data = dat_lme)
+
+# letting the model variance parameter vary by nutrient treatment and letting this vary between experiment ID. Needed to use VarComb so that I could use the VarExp option since the nutrient treatment contains values of "0" and I needed to combine this with letting sigma_sq vary across different experiments.
+m16 <- lme(log(GPP_mgO2_d_gAFDW) ~ temp_centered * nutrients, random = ~ 1 | rock_ID, weights = varComb(varIdent(form = ~1|exp_ID), varExp(form = ~ nutrients)), data = dat_lme)
+
+
+# letting the model variance parameter vary by temperature treatment and letting this vary between experiment ID
+m17 <- lme(log(GPP_mgO2_d_gAFDW) ~ temp_centered, random = ~ 1 | rock_ID, weights = varIdent(form = ~temp_centered|exp_ID), data = dat_lme)
+
+
+m18 <- lme(log(GPP_mgO2_d_gAFDW) ~ temp_centered * nutrients, random = ~ 1 | rock_ID, weights = varIdent(form = ~temp_centered|exp_ID), data = dat_lme)
+
+
+AIC(m1, m2, m3, m4, m5, m7, m9, m10, m15, m16, m17, m18)
+BIC(m1, m2, m3, m4, m5, m7, m9, m10, m15, m16, m17, m18)
 
 m3
 ```
