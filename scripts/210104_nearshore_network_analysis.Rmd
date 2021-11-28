@@ -243,3 +243,49 @@ Sept-Oct temps in 2019 show that this is a period of rapid cooling in the nearsh
 Average October water temp is ~12.5C, but tends to be a degree or two warmer during the first few weeks of the month. Average daily max temp is ~13.5C.
 
 Expect temps in the field to be ~12.5-15.5C and temp treatments to be based in that range.
+
+# November 2020 temp analysis
+```{r}
+# loading in new .csv file provided by Sergio Valbuena on 9/17/21 of 2019 Tahoe City water temps for july-oct to make up for data gap for this period in 2020 data
+dat_2019 <- read_csv("C:/Users/ntframst/Documents/Tahoe_nearshore_network_data/NS_TahoeCity_2019_07_01_to_2019_11_01_editedNTF.csv", skip = 1)
+
+head(dat_2019)
+View(dat_2019)
+
+# plot of nov-mid-dec temps
+dat_2019 %>%
+  filter(TahoeTime > "2019-11-01 00:00:00" & TahoeTime < "2019-12-15 00:00:00" & !is.na(Temp_C)) %>%
+  ggplot(aes(x = TahoeTime, y = Temp_C)) +
+  geom_point() +
+  geom_smooth()
+
+# calculating average november-mid-Dec temperatures for planning November 2021 incubation
+nov_T <- dat_2019 %>%
+  filter(TahoeTime > "2019-10-01 00:00:00" & TahoeTime < "2019-11-01 00:00:00") %>%
+  summarize(avg_T = mean(Temp_C))
+#View(nov_T)
+
+# plotting Nov temperatures with average Nov temperature overlayed
+dat_2019 %>%
+  filter(TahoeTime >= "2019-11-01 00:00:00" & TahoeTime < "2019-12-15 00:00:00") %>%
+  ggplot(aes(x = TahoeTime, y = Temp_C)) +
+  geom_point() +
+  geom_hline(aes(yintercept = avg_T), data = nov_T, color = "red") +
+  labs(title = "Average November 2019 Water Temp")
+
+# plotting daily max temps for nov 2019
+dat_nov <- dat_2019 %>%
+  filter(!is.na(Temp_C) & TahoeTime >= "2019-11-01 00:00:00" & TahoeTime < "2019-12-01 00:00:00") %>%
+  mutate(day = day(TahoeTime)) %>%
+  group_by(day) %>%
+  summarize(maxT = max(Temp_C))
+
+avg_max_nov_T <- mean(dat_nov$maxT)
+
+dat_nov %>%
+  ggplot(aes(x = day, y = maxT)) +
+  geom_point() +
+  geom_hline(aes(yintercept = avg_max_nov_T), color = "red") +
+  labs(title = "Daily Nov 2019 Max Water Temp")
+```
+
