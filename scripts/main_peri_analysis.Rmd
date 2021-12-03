@@ -205,10 +205,10 @@ GPP_plotly <- dat_pnld %>%
 p <- plotly::ggplotly(GPP_plotly)
 p
 
-# Chambers 1 and 3 appear to be outliers for the june ambient incubations, and will be removed in subsequent analyses.
+# Chambers 1 appears to be outliers for the june ambient incubations, and will be removed in subsequent analyses.
 
 # removing outliers
-dat_clean <- dat_pnld[-c(33,35),]
+dat_clean <- dat_pnld[-33,]
 
 # linear model of GPP (AFDW-normalized)
 log_GPP_AFDW_mod <- lm(log(GPP_mgO2_d_gAFDW) ~ log(temp_C)*nutrients*season, dat_clean)
@@ -340,6 +340,31 @@ rates_log_log <- dat_long %>%
 rates_log_log
 
 ggsave("plots/main_analysis/rates_log_log_main.png", plot = rates_log_log, width = 7, height = 3)
+
+
+# simplified plot for AGU 2021 poster
+# making experiment ID column a factor instead of numeric since it is treated as discrete rather than continuous in the plot
+dat_long$exp_ID <- as.factor(dat_long$exp_ID)
+
+# now replotting the above plot with the title removed and exp_ID replacing season as a random effect in the model
+rates_log_log_AGU <- dat_long %>%
+  ggplot(aes(x = temp_C, y = rates_AFDW, group = interaction(exp_ID, nutrients))) +
+  facet_grid(cols = vars(rate_name_AFDW)) +
+  scale_y_log10() +
+  scale_x_log10() +
+ geom_point(aes(shape = exp_ID, color = nutrient_trt), size = 1.5) +
+  scale_shape_manual(values = c(17, 19, 15)) +
+  geom_smooth(aes(color = nutrient_trt), method = "lm") +
+  scale_color_viridis_d("Nutrient Treatment") + # renaming label of color legend
+  scale_shape_discrete(name = "Experiment ID") +# renaming label of point shape legend
+  theme_minimal() +
+  theme(legend.position = "bottom") +
+  labs(x = expression('Temperature (\u00B0C)'),
+      y = expression(Rates~(mgO[2]~day^{-1}~gAFDW^{-1})))
+
+rates_log_log_AGU
+
+ggsave("plots/main_analysis/rates_log_log_AGU.png", plot = rates_log_log_AGU, width = 7, height = 3)
 ```
 
 # Plotting Areal Rates
@@ -374,6 +399,32 @@ areal_rates_log_log <- dat_long_m2 %>%
 areal_rates_log_log
 
 ggsave("plots/main_analysis/areal_rates_log_log_main.png", plot = areal_rates_log_log, width = 7, height = 3)
+
+
+# simplified plot for AGU 2021 poster
+
+# making experiment ID column a factor instead of numeric since it is treated as discrete rather than continuous in the plot
+dat_long_m2$exp_ID <- as.factor(dat_long_m2$exp_ID)
+
+# now replotting the above plot with the title removed and exp_ID replacing season as a random effect in the model
+areal_rates_log_log_AGU <- dat_long_m2 %>%
+  ggplot(aes(x = temp_C, y = rates_m2, group = interaction(exp_ID, nutrients))) +
+  facet_grid(cols = vars(rate_name_m2)) +
+  scale_y_log10() +
+  scale_x_log10() +
+ geom_point(aes(shape = exp_ID, color = nutrient_trt), size = 1.5) +
+  scale_shape_manual(values = c(17, 19, 15)) +
+  geom_smooth(aes(color = nutrient_trt), method = "lm") +
+  scale_color_viridis_d("Nutrient Treatment") + # renaming label of color legend
+  scale_shape_discrete(name = "Experiment ID") +# renaming label of point shape legend
+  theme_minimal() +
+  theme(legend.position = "bottom") +
+  labs(x = expression('Temperature (\u00B0C)'),
+      y = expression(Rates~(mgO[2]~day^{-1}~m^{-2})))
+
+areal_rates_log_log_AGU
+
+ggsave("plots/main_analysis/areal_rates_log_log_AGU.png", plot = areal_rates_log_log_AGU, width = 7, height = 3)
 ```
 
 # Exploratory Data Analysis
