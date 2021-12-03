@@ -208,7 +208,8 @@ p
 # Chambers 1 appears to be outliers for the june ambient incubations, and will be removed in subsequent analyses.
 
 # removing outliers
-dat_clean <- dat_pnld[-33,]
+dat_clean <- dat_pnld[-c(33,35),]
+View(dat_clean)
 
 # linear model of GPP (AFDW-normalized)
 log_GPP_AFDW_mod <- lm(log(GPP_mgO2_d_gAFDW) ~ log(temp_C)*nutrients*season, dat_clean)
@@ -615,6 +616,7 @@ dat_lme <- dat_clean %>%
 dat_lme$exp_ID <- as.factor(dat_lme$exp_ID)
 
 glimpse(dat_lme)
+#View(dat_lme)
 
 m1 <- lm(log(GPP_mgO2_d_gAFDW) ~ log(temp_C), data = dat_lme)
 
