@@ -366,6 +366,9 @@ rates_log_log_AGU <- dat_long %>%
 rates_log_log_AGU
 
 ggsave("plots/main_analysis/rates_log_log_AGU.png", plot = rates_log_log_AGU, width = 7, height = 3)
+
+# high quality dpi plot
+ggsave("plots/main_analysis/rates_log_log_AGU_hr.png", plot = rates_log_log_AGU, width = 7, height = 3, dpi = 300)
 ```
 
 # Plotting Areal Rates
@@ -639,6 +642,7 @@ m7 <- lme(log(GPP_mgO2_d_gAFDW) ~ log(temp_C) * nutrients, random = ~ 1 + nutrie
 # incorporating weights to account for heteroscedasticity within and btwn different experiments
 m9 <- lme(log(GPP_mgO2_d_gAFDW) ~ log(temp_C), random = ~ 1 | rock_ID, weights = varIdent(form = ~1|exp_ID), data = dat_lme)
 
+# random intercept model for rock effect
 m10 <- lme(log(GPP_mgO2_d_gAFDW) ~ log(temp_C) * nutrients, random = ~ 1 | rock_ID, weights = varIdent(form = ~1|exp_ID), data = dat_lme)
 
 #m11 <- lme(log(GPP_mgO2_d_gAFDW) ~ log(temp_C) * nutrients, random = ~ 1 + nutrients | rock_ID, weights = varIdent(form = ~1|exp_ID), data = dat_lme)
@@ -667,14 +671,18 @@ m18 <- lme(log(GPP_mgO2_d_gAFDW) ~ log(temp_C) * nutrients, random = ~ 1 | rock_
 AIC(m1, m2, m3, m4, m5, m7, m9, m10, m15, m16, m17, m18)
 BIC(m1, m2, m3, m4, m5, m7, m9, m10, m15, m16, m17, m18)
 
-m5
+# looks like m10, the random intercept model for the rock effect, is the best model. Now lets look at which fixed effects are signficant
+summary(m10)
+# looks like only log(temp_C) is the only signifcant fixed effect, thus we can drop nutrients and their interaction.
 
-m7
+mfinal <- lme(log(GPP_mgO2_d_gAFDW) ~ log(temp_C), random = ~ 1 | rock_ID, weights = varIdent(form = ~1|exp_ID), data = dat_lme)
 
-m10
+summary(mfinal)
+
 
 # graphical model validation using standardized residuals vs. fitten values to look for heteroscedasticity
 plot(m10)
+
 ```
 
 #### Graphical model validation
@@ -724,10 +732,11 @@ m9 <- lme(log(ER_mgO2_d_gAFDW) ~ log(temp_C) * nutrients, random = ~ 1 | rock_ID
 #m10 <- lme(log(ER_mgO2_d_gAFDW) ~ log(temp_C) * nutrients, random = ~ 1 + nutrients | rock_ID, weights = varIdent(form = ~1|exp_ID), data = dat_lme)
 # would not converge
 
+
 AIC(m1, m2, m3, m4, m5, m7, m9)
 BIC(m1, m2, m3, m4, m5, m7, m9)
 
-m5
+summary(m5)
 ```
 
 ## NEP
