@@ -227,7 +227,9 @@ dat_long <- dat_long %>%
 # prepping AFDW data for joining
 # creating chamber_ID column same as in above dataframe which will serve as a unique identifier for each chamber in each incubation and will be used to index the joining of the two dataframes
 metab_dat <- read_csv("data/main_analysis/main_rate_data.csv")
+
 metab_dat <- metab_dat %>%
+  filter(month != "october") %>% # filtering out october 2021 experiment since nutrient data is not available yet
   mutate(date = c(rep("2021-03-01", 16), rep("2021-03-15", 16), rep("2021-04-07", 16), rep("2021-04-21", 16), rep("2021-06-13", 32), rep("2021-08-08", 32))) %>% # creating date column
   unite(chamber_ID, date, chamber, sep = "_", remove = "FALSE") %>%# combining date and chamber columns
   dplyr::select(chamber_ID, total_AFDW_g, rock_SA_m2, GPP_mg_d, ER_mg_d, NEP_mg_d) # selecting only the columns I need to declutter dataframe a bit
@@ -248,6 +250,7 @@ main <- main %>%
 # plotting AFDW_normalized rates
 # plotting nutrient uptake rates
 AFDW <- main %>%
+  filter(date != "2021-04-21" & uptake_rate_name != "DP_rate") %>% # filtering out april 2021 data since rates were near zero due to error with nutrient enrichment, also filtering out DP data
   ggplot(aes(x = temp_C, y = AFDW_rates)) +
   facet_grid(cols = vars(uptake_rate_name)) +
   geom_point(aes(group = date_chamber, color = date_background)) +
@@ -260,7 +263,37 @@ AFDW <- main %>%
       y = expression(Nutrient~Uptake~(ugN/ugP~gAFDW^{-1}~hr^{-1})))
 AFDW
 
-ggsave("plots/nutrient_uptake/AFDW_norm_uptake_rates.png", plot = AFDW, width = 7, height = 4)
+ggsave("plots/nutrient_uptake/AFDW_norm_uptake_rates.png", plot = AFDW, width = 7, height = 4, dpi = 300)
 
+```
+
+# Molar nutrient uptake plot
+```{r}
+#View(main)
+molar <- main %>%
+  filter(uptake_rate_name != "DP_rate") %>% # filtering out DP uptake rates since chemical there is no single chemical formula for this P species to calculate molar uptake rate with
+  mutate(molar_rate = case_when(
+    uptake_rate_name == "NH4_rate" ~ AFDW_rates/18.039,
+    uptake_rate_name == "SRP_rate" ~ AFDW_rates/94.9714,
+    uptake_rate_name == "NO3_rate" ~ AFDW_rates/62.0049
+  ))
+
+#View(molar_rate)
+
+# plotting molar uptake rates per gAFDW of periphyton
+AFDW_molar <- molar %>%
+  ggplot(aes(x = temp_C, y = molar_rate)) +
+  facet_grid(cols = vars(uptake_rate_name)) +
+  geom_point(aes(group = date_chamber, color = date_background)) +
+  geom_smooth(aes(color = date_background), method = "lm") +
+  scale_color_viridis_d("Experiment Date") +
+  theme_bw() +
+  theme(legend.position = "bottom") +
+  labs(title = "AFDW-Normalized Periphyton Nutrient Uptake Rates vs. Temperature",
+      x = expression('Temperature (\u00B0C)'),
+      y = expression(Nutrient~Uptake~(mol~gAFDW^{-1}~hr^{-1})))
+AFDW_molar
+
+ggsave("plots/nutrient_uptake/molar_AFDW_norm_uptake_rates.png", plot = AFDW_molar, width = 7, height = 4, dpi = 300)
 ```
 
