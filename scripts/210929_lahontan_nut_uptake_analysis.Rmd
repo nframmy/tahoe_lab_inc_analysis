@@ -273,9 +273,9 @@ ggsave("plots/nutrient_uptake/AFDW_norm_uptake_rates.png", plot = AFDW, width = 
 molar <- main %>%
   filter(uptake_rate_name != "DP_rate") %>% # filtering out DP uptake rates since chemical there is no single chemical formula for this P species to calculate molar uptake rate with
   mutate(molar_rate = case_when(
-    uptake_rate_name == "NH4_rate" ~ AFDW_rates/18.039,
-    uptake_rate_name == "SRP_rate" ~ AFDW_rates/94.9714,
-    uptake_rate_name == "NO3_rate" ~ AFDW_rates/62.0049
+    uptake_rate_name == "NH4_rate" ~ AFDW_rates/14.0067e6,
+    uptake_rate_name == "SRP_rate" ~ AFDW_rates/30.9738e6,
+    uptake_rate_name == "NO3_rate" ~ AFDW_rates/14.0067e6
   ))
 
 #View(molar_rate)
@@ -295,5 +295,34 @@ AFDW_molar <- molar %>%
 AFDW_molar
 
 ggsave("plots/nutrient_uptake/molar_AFDW_norm_uptake_rates.png", plot = AFDW_molar, width = 7, height = 4, dpi = 300)
+```
+
+# Molar ratio of nutrient uptake plot
+```{r}
+molar_ratio <- uptake_rates %>%
+  mutate(NO3_uptake_mol_hr = NO3_uptake_ug_N_hr/14.0067e6, NH4_uptake_mol_hr = NH4_uptake_ug_N_hr/14.0067e6, SRP_uptake_mol_hr = SRP_uptake_ug_P_hr/30.9738e6)
+
+molar_ratio <- molar_ratio %>%
+  mutate(uptake_N_P_mol_ratio = (NO3_uptake_mol_hr + NH4_uptake_mol_hr)/SRP_uptake_mol_hr)
+
+head(molar_ratio)
+
+# making date column a factor for plotting with discrete color scale
+class(molar_ratio$date)
+molar_ratio$date <- as.factor(molar_ratio$date)
+
+mol_ratio_plot <- molar_ratio %>%
+  ggplot(aes(x = temp_C, y = uptake_N_P_mol_ratio)) +
+  geom_point(aes(group = date_chamber, color = date)) +
+  geom_smooth(aes(color = date), method = "lm") +
+  scale_color_viridis_d("Experiment Date") +
+  theme_bw() +
+  theme(legend.position = "bottom") +
+  labs(title = "Periphyton Nutrient Uptake Molar Ratio vs. Temperature",
+      x = expression('Temperature (\u00B0C)'),
+      y = expression(Molar~Ratio~of~Nutrient~Uptake~(mol~N:mol~P)))
+mol_ratio_plot
+
+ggsave("plots/nutrient_uptake/uptake_molar_ratio.png", plot = mol_ratio_plot, width = 7, height = 4, dpi = 300)
 ```
 
