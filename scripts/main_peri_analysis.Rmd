@@ -428,7 +428,7 @@ areal_rates_log_log_AGU <- dat_long_m2 %>%
 
 areal_rates_log_log_AGU
 
-ggsave("plots/main_analysis/areal_rates_log_log_AGU.png", plot = areal_rates_log_log_AGU, width = 7, height = 3)
+ggsave("plots/main_analysis/areal_rates_log_log_AGU.png", plot = areal_rates_log_log_AGU, width = 7, height = 3, dpi = 300)
 ```
 
 # Exploratory Data Analysis
