@@ -155,6 +155,12 @@ dat_pnld <- dat %>%
 #View(dat_pnld)
 glimpse(dat_pnld)
 
+# Chambers 1 and 3 appear to be outliers for the june ambient incubations, and will be removed in subsequent analyses.
+
+# removing outliers
+dat_clean <- dat_pnld[-c(33,35),]
+#View(dat_clean)
+
 ```
 
 
@@ -205,11 +211,6 @@ GPP_plotly <- dat_pnld %>%
 p <- plotly::ggplotly(GPP_plotly)
 p
 
-# Chambers 1 appears to be outliers for the june ambient incubations, and will be removed in subsequent analyses.
-
-# removing outliers
-dat_clean <- dat_pnld[-c(33,35),]
-View(dat_clean)
 
 # linear model of GPP (AFDW-normalized)
 log_GPP_AFDW_mod <- lm(log(GPP_mgO2_d_gAFDW) ~ log(temp_C)*nutrients*season, dat_clean)
@@ -609,7 +610,8 @@ BIC(m1, m2, m3, m4, m5)
 ```
 
 # nlme models
-## GPP
+## Initial method
+### GPP
 ```{r}
 # making new dataset for lme models to remove NAs
 dat_lme <- dat_clean %>%
@@ -685,21 +687,6 @@ plot(m10)
 
 ```
 
-#### Graphical model validation
-```{r}
-# checking ordinary residuals of the best model according to AIC (these are allowed to show heteroscedasticity). Using code from Zuur et al.
-E1 <- resid(m10)
-coplot(E1 ∼ rock_ID|exp_ID,
-ylab = "Ordinary residuals", data = dat_lme)
-
-# now checking standardized residuals of each of the experiments (random effect in the model). These should not show any patterns and should exhibit homogeneous variance.
-E2 <- resid(m10, type = "normalized")
-coplot(E2 ∼ rock_ID|exp_ID,
-ylab = "Normalized residuals", data = dat_lme)
-
-#coplot(resid(m10) ~ fitted(m10) | dat_lme$exp_ID)
-```
-
 
 ## ER
 ```{r}
@@ -739,6 +726,8 @@ BIC(m1, m2, m3, m4, m5, m7, m9)
 summary(m5)
 ```
 
+
+
 ## NEP
 ```{r}
 # making new dataset for lme models to remove NAs
@@ -771,6 +760,160 @@ AIC(m1, m2, m3, m4, m5, m7, m8)
 BIC(m1, m2, m3, m4, m5, m7, m8)
 
 m3
+```
+
+# Zuur method
+### GPP
+```{r}
+# making new dataset for lme models to remove NAs
+dat_lme <- dat_clean %>%
+  filter(!is.na(GPP_mgO2_d_gAFDW))
+
+# converting experiment ID from numberic to a factor
+dat_lme$exp_ID <- as.factor(dat_lme$exp_ID)
+
+glimpse(dat_lme)
+#View(dat_lme)
+
+# starting with as many explanatory variables as possible in the fixed component of the models (temp, nutrients, and their interaction)
+m1 <- gls(log(GPP_mgO2_d_gAFDW) ~ log(temp_C) * nutrients, method = "REML", data = dat_lme)
+
+m2 <- lme(log(GPP_mgO2_d_gAFDW) ~ log(temp_C) * nutrients, random = ~ 1 | rock_ID, data = dat_lme) # adding in random intercept for each rock sample
+
+m3 <- lme(log(GPP_mgO2_d_gAFDW) ~ log(temp_C) * nutrients, random = ~ 1 | rock_ID, weights = varIdent(form = ~1|exp_ID), data = dat_lme) # incorporating weights to account for heteroscedasticity within and btwn different experiments
+
+#m4 <- lme(log(GPP_mgO2_d_gAFDW) ~ log(temp_C) * nutrients, random = ~ 1 + log(temp_C) | rock_ID, data = dat_lme, control=(msMaxIter=500)) # adding in random intercept and slope for each rock sample, also increasing the number of iterations to acheive model convergence
+# would not converge
+
+ #m5 <- lme(log(GPP_mgO2_d_gAFDW) ~ log(temp_C) * nutrients, random = ~ 1 + log(temp_C) | rock_ID, weights = varIdent(form = ~1|exp_ID), data = dat_lme, control=(msMaxIter=500)) # incorporating weights to account for heteroscedasticity within and btwn different experiments, also increasing the number of iterations to acheive model convergence
+# would not converge
+
+AIC(m1, m2, m3)
+# model 3 has the lowest AIC
+
+summary(m3)
+# the model summary indicates that the nutrients and temp:nutrients interaction are not significant, thus I will drop them from the model
+
+GPP_final <- lme(log(GPP_mgO2_d_gAFDW) ~ log(temp_C), random = ~ 1 | rock_ID, weights = varIdent(form = ~1|exp_ID), data = dat_lme)
+
+summary(GPP_final)
+```
+
+
+#### Graphical model validation
+```{r}
+# checking ordinary residuals of the final model (these are allowed to show heteroscedasticity). Using code from Zuur et al.
+E1 <- resid(GPP_final)
+coplot(E1 ∼ rock_ID|exp_ID,
+ylab = "Ordinary residuals", data = dat_lme)
+
+# now checking standardized residuals of each of the experiments (random effect in the model). These should not show any patterns and should exhibit homogeneous variance.
+E2 <- resid(GPP_final, type = "normalized")
+coplot(E2 ∼ rock_ID|exp_ID,
+ylab = "Normalized residuals", data = dat_lme)
+
+#coplot(resid(m10) ~ fitted(m10) | dat_lme$exp_ID)
+```
+
+### ER
+```{r}
+# making new dataset for lme models to remove NAs
+dat_lme <- dat_clean %>%
+  filter(!is.na(ER_mgO2_d_gAFDW))
+
+# converting experiment ID from numberic to a factor
+dat_lme$exp_ID <- as.factor(dat_lme$exp_ID)
+
+glimpse(dat_lme)
+#View(dat_lme)
+
+# starting with as many explanatory variables as possible in the fixed component of the models (temp, nutrients, and their interaction)
+m1 <- gls(log(ER_mgO2_d_gAFDW) ~ log(temp_C) * nutrients, method = "REML", data = dat_lme)
+
+m2 <- lme(log(ER_mgO2_d_gAFDW) ~ log(temp_C) * nutrients, random = ~ 1 | rock_ID, data = dat_lme) # adding in random intercept for each rock sample
+
+m3 <- lme(log(ER_mgO2_d_gAFDW) ~ log(temp_C) * nutrients, random = ~ 1 | rock_ID, weights = varIdent(form = ~1|exp_ID), data = dat_lme)
+
+m4 <- lme(log(ER_mgO2_d_gAFDW) ~ log(temp_C) * nutrients, random = ~ 1 + log(temp_C) | rock_ID, data = dat_lme) # adding random intercept for rock and random slope for temperature
+
+m5 <- lme(log(ER_mgO2_d_gAFDW) ~ log(temp_C) * nutrients, random = ~ 1 + log(temp_C) | rock_ID, weights = varIdent(form = ~1|exp_ID), data = dat_lme)
+
+AIC(m1, m2, m3, m4, m5)
+# model 2 has the strongest support according to AIC
+
+summary(m2)
+# looks like all the fixed effects are statistically significant and will be kept in the model
+
+ER_final <- m2
+
+```
+
+#### Graphical model validation
+```{r}
+# checking ordinary residuals of the final model (these are allowed to show heteroscedasticity). Using code from Zuur et al.
+E1 <- resid(ER_final)
+coplot(E1 ∼ rock_ID|exp_ID,
+ylab = "Ordinary residuals", data = dat_lme)
+
+# now checking standardized residuals of each of the experiments (random effect in the model). These should not show any patterns and should exhibit homogeneous variance.
+E2 <- resid(ER_final, type = "normalized")
+coplot(E2 ∼ rock_ID|exp_ID,
+ylab = "Normalized residuals", data = dat_lme)
+
+#coplot(resid(m10) ~ fitted(m10) | dat_lme$exp_ID)
+```
+
+
+### NEP
+```{r}
+# making new dataset for lme models to remove NAs
+dat_lme <- dat_clean %>%
+  filter(!is.na(NEP_mgO2_d_gAFDW))
+
+# converting experiment ID from numberic to a factor
+dat_lme$exp_ID <- as.factor(dat_lme$exp_ID)
+
+glimpse(dat_lme)
+#View(dat_lme)
+
+# starting with as many explanatory variables as possible in the fixed component of the models (temp, nutrients, and their interaction)
+m1 <- gls(log(NEP_mgO2_d_gAFDW) ~ log(temp_C) * nutrients, method = "REML", data = dat_lme)
+
+m2 <-  lme(log(NEP_mgO2_d_gAFDW) ~ log(temp_C) * nutrients, random = ~ 1 | rock_ID, data = dat_lme) # adding random intercept for each rock
+
+m3 <- lme(log(NEP_mgO2_d_gAFDW) ~ log(temp_C) * nutrients, random = ~ 1 | rock_ID, weights = varIdent(form = ~1|exp_ID), data = dat_lme) # accounting for heteroscedasticity within and among different experiments
+
+#m4 <- lme(log(NEP_mgO2_d_gAFDW) ~ log(temp_C) * nutrients, random = ~ 1 + log(temp_C)| rock_ID, data = dat_lme, control=(msMaxIter=500)) # adding random slopes for each rock (i.e. the relationship between temperature and NEP varies for each individual rock)
+# model does not converge
+
+#m5 <- lme(log(NEP_mgO2_d_gAFDW) ~ log(temp_C) * nutrients, random = ~ 1 + log(temp_C)| rock_ID, weights = varIdent(form = ~1|exp_ID), data = dat_lme, control=(msMaxIter=500)) # now adding in variance structure back in to account for heterscedasticity within and between experiments
+# model does not converge
+
+AIC(m1, m2, m3)
+# model 3 has the most support according to AIC
+
+summary(m3)
+# the nutrient and temp:nutrient interaction fixed effects are not statistically significant so they will be dropped from the final model
+
+NEP_final <- lme(log(NEP_mgO2_d_gAFDW) ~ log(temp_C), random = ~ 1 | rock_ID, weights = varIdent(form = ~1|exp_ID), data = dat_lme)
+
+summary(NEP_final)
+
+```
+
+#### Graphical model validation
+```{r}
+# checking ordinary residuals of the final model (these are allowed to show heteroscedasticity). Using code from Zuur et al.
+E1 <- resid(NEP_final)
+coplot(E1 ∼ rock_ID|exp_ID,
+ylab = "Ordinary residuals", data = dat_lme)
+
+# now checking standardized residuals of each of the experiments (random effect in the model). These should not show any patterns and should exhibit homogeneous variance.
+E2 <- resid(NEP_final, type = "normalized")
+coplot(E2 ∼ rock_ID|exp_ID,
+ylab = "Normalized residuals", data = dat_lme)
+
+#coplot(resid(m10) ~ fitted(m10) | dat_lme$exp_ID)
 ```
 
 
