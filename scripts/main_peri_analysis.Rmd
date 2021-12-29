@@ -372,6 +372,29 @@ ggsave("plots/main_analysis/rates_log_log_AGU.png", plot = rates_log_log_AGU, wi
 ggsave("plots/main_analysis/rates_log_log_AGU_hr.png", plot = rates_log_log_AGU, width = 7, height = 3, dpi = 300)
 ```
 
+## Same plot, but this time with un-logged x-axis (temperature)
+```{r}
+rates_log_log_AGU <- dat_long %>%
+  ggplot(aes(x = temp_C, y = rates_AFDW, group = interaction(exp_ID, nutrients))) +
+  facet_grid(cols = vars(rate_name_AFDW)) +
+  scale_y_log10() +
+ geom_point(aes(shape = exp_ID, color = nutrient_trt), size = 1.5) +
+  scale_shape_manual(values = c(17, 19, 15)) +
+  geom_smooth(aes(color = nutrient_trt), method = "lm") +
+  scale_color_viridis_d("Nutrient Treatment") + # renaming label of color legend
+  scale_shape_discrete(name = "Experiment ID") +# renaming label of point shape legend
+  theme_minimal() +
+  theme(legend.position = "bottom") +
+  labs(x = expression('Temperature (\u00B0C)'),
+      y = expression(Rates~(mgO[2]~day^{-1}~gAFDW^{-1})))
+
+rates_log_log_AGU
+
+# high quality dpi plot
+ggsave("plots/main_analysis/rates_unlogged_AGU_hr.png", plot = rates_log_log_AGU, width = 7, height = 3, dpi = 300)
+```
+
+
 # Plotting Areal Rates
 ```{r}
 # melting dataframe to long format so that metabolic rate columns are combined into one column and values are in a separate column so all can be plotted at once
@@ -431,6 +454,28 @@ areal_rates_log_log_AGU
 
 ggsave("plots/main_analysis/areal_rates_log_log_AGU.png", plot = areal_rates_log_log_AGU, width = 7, height = 3, dpi = 300)
 ```
+
+## Same plot with unlogged x-axis (temperature)
+```{r}
+areal_rates_log_log_AGU <- dat_long_m2 %>%
+  ggplot(aes(x = temp_C, y = rates_m2, group = interaction(exp_ID, nutrients))) +
+  facet_grid(cols = vars(rate_name_m2)) +
+  scale_y_log10() +
+ geom_point(aes(shape = exp_ID, color = nutrient_trt), size = 1.5) +
+  scale_shape_manual(values = c(17, 19, 15)) +
+  geom_smooth(aes(color = nutrient_trt), method = "lm") +
+  scale_color_viridis_d("Nutrient Treatment") + # renaming label of color legend
+  scale_shape_discrete(name = "Experiment ID") +# renaming label of point shape legend
+  theme_minimal() +
+  theme(legend.position = "bottom") +
+  labs(x = expression('Temperature (\u00B0C)'),
+      y = expression(Rates~(mgO[2]~day^{-1}~m^{-2})))
+
+areal_rates_log_log_AGU
+
+ggsave("plots/main_analysis/areal_rates_unlogged_AGU.png", plot = areal_rates_log_log_AGU, width = 7, height = 3, dpi = 300)
+```
+
 
 # Exploratory Data Analysis
 ```{r}
@@ -899,6 +944,174 @@ NEP_final <- lme(log(NEP_mgO2_d_gAFDW) ~ log(temp_C), random = ~ 1 | rock_ID, we
 
 summary(NEP_final)
 
+```
+
+#### Graphical model validation
+```{r}
+# checking ordinary residuals of the final model (these are allowed to show heteroscedasticity). Using code from Zuur et al.
+E1 <- resid(NEP_final)
+coplot(E1 ∼ rock_ID|exp_ID,
+ylab = "Ordinary residuals", data = dat_lme)
+
+# now checking standardized residuals of each of the experiments (random effect in the model). These should not show any patterns and should exhibit homogeneous variance.
+E2 <- resid(NEP_final, type = "normalized")
+coplot(E2 ∼ rock_ID|exp_ID,
+ylab = "Normalized residuals", data = dat_lme)
+
+#coplot(resid(m10) ~ fitted(m10) | dat_lme$exp_ID)
+```
+
+
+# Zuur method with un-transformed temp predictor
+## GPP
+```{r}
+# making new dataset for lme models to remove NAs
+dat_lme <- dat_clean %>%
+  filter(!is.na(GPP_mgO2_d_gAFDW))
+
+# converting experiment ID from numberic to a factor
+dat_lme$exp_ID <- as.factor(dat_lme$exp_ID)
+
+glimpse(dat_lme)
+#View(dat_lme)
+
+# starting with as many explanatory variables as possible in the fixed component of the models (temp, nutrients, and their interaction)
+m1 <- gls(log(GPP_mgO2_d_gAFDW) ~ temp_C * nutrients, method = "REML", data = dat_lme)
+
+m2 <- lme(log(GPP_mgO2_d_gAFDW) ~ temp_C * nutrients, random = ~ 1 | rock_ID, data = dat_lme) # adding in random intercept for each rock sample
+
+m3 <- lme(log(GPP_mgO2_d_gAFDW) ~ temp_C * nutrients, random = ~ 1 | rock_ID, weights = varIdent(form = ~1|exp_ID), data = dat_lme) # incorporating weights to account for heteroscedasticity within and btwn different experiments
+
+#m4 <- lme(log(GPP_mgO2_d_gAFDW) ~ temp_C * nutrients, random = ~ 1 + temp_C | rock_ID, data = dat_lme, control=(msMaxIter=500)) # adding in random intercept and slope for each rock sample, also increasing the number of iterations to acheive model convergence
+# would not converge
+
+m5 <- lme(log(GPP_mgO2_d_gAFDW) ~ temp_C * nutrients, random = ~ 1 + temp_C | rock_ID, weights = varIdent(form = ~1|exp_ID), data = dat_lme, control=(msMaxIter=500)) # incorporating weights to account for heteroscedasticity within and btwn different experiments, also increasing the number of iterations to acheive model convergence
+
+AIC(m1, m2, m3, m5)
+# model 5 has the lowest AIC
+
+summary(m5)
+# the model summary indicates that the nutrients and temp:nutrients interaction are not significant, thus I will drop them from the model
+
+GPP_final <- lme(log(GPP_mgO2_d_gAFDW) ~ temp_C, random = ~ 1 + temp_C | rock_ID, weights = varIdent(form = ~1|exp_ID), data = dat_lme, control=(msMaxIter=500))
+
+summary(GPP_final)
+
+# interpreting effect sizes of temp
+exp(0.0341)
+# for every 1C increase in temperature, GPP increases by 3% (a factor of 1.034 mgO2 per day per g AFDW).
+```
+
+#### Graphical model validation
+```{r}
+# checking ordinary residuals of the final model (these are allowed to show heteroscedasticity). Using code from Zuur et al.
+E1 <- resid(GPP_final)
+coplot(E1 ∼ rock_ID|exp_ID,
+ylab = "Ordinary residuals", data = dat_lme)
+
+# now checking standardized residuals of each of the experiments (random effect in the model). These should not show any patterns and should exhibit homogeneous variance.
+E2 <- resid(GPP_final, type = "normalized")
+coplot(E2 ∼ rock_ID|exp_ID,
+ylab = "Normalized residuals", data = dat_lme)
+
+#coplot(resid(m10) ~ fitted(m10) | dat_lme$exp_ID)
+```
+
+## ER
+```{r}
+# making new dataset for lme models to remove NAs
+dat_lme <- dat_clean %>%
+  filter(!is.na(ER_mgO2_d_gAFDW))
+
+# converting experiment ID from numberic to a factor
+dat_lme$exp_ID <- as.factor(dat_lme$exp_ID)
+
+glimpse(dat_lme)
+#View(dat_lme)
+
+# starting with as many explanatory variables as possible in the fixed component of the models (temp, nutrients, and their interaction)
+m1 <- gls(log(ER_mgO2_d_gAFDW) ~ temp_C * nutrients, method = "REML", data = dat_lme)
+
+m2 <- lme(log(ER_mgO2_d_gAFDW) ~ temp_C * nutrients, random = ~ 1 | rock_ID, data = dat_lme) # adding in random intercept for each rock sample
+
+m3 <- lme(log(ER_mgO2_d_gAFDW) ~ temp_C * nutrients, random = ~ 1 | rock_ID, weights = varIdent(form = ~1|exp_ID), data = dat_lme)
+
+#m4 <- lme(log(ER_mgO2_d_gAFDW) ~ temp_C * nutrients, random = ~ 1 + temp_C | rock_ID, data = dat_lme) # adding random intercept for rock and random slope for temperature
+# does not converge
+
+m5 <- lme(log(ER_mgO2_d_gAFDW) ~ temp_C * nutrients, random = ~ 1 + temp_C | rock_ID, weights = varIdent(form = ~1|exp_ID), data = dat_lme)
+
+AIC(m1, m2, m3, m5)
+# model 2 has the strongest support according to AIC
+
+summary(m2)
+# looks like all the fixed effects are statistically significant and will be kept in the model
+
+ER_final <- m2
+
+# interpreting effect size of temp
+exp(0.0646)
+
+# for every 1C increase in temperature, ER increases by 7% (a factor of 1.067 mg O2 per day per g AFDW)
+
+# interpreting effect size of nutrients
+exp(0.67)
+```
+
+#### Graphical model validation
+```{r}
+# checking ordinary residuals of the final model (these are allowed to show heteroscedasticity). Using code from Zuur et al.
+E1 <- resid(ER_final)
+coplot(E1 ∼ rock_ID|exp_ID,
+ylab = "Ordinary residuals", data = dat_lme)
+
+# now checking standardized residuals of each of the experiments (random effect in the model). These should not show any patterns and should exhibit homogeneous variance.
+E2 <- resid(ER_final, type = "normalized")
+coplot(E2 ∼ rock_ID|exp_ID,
+ylab = "Normalized residuals", data = dat_lme)
+
+#coplot(resid(m10) ~ fitted(m10) | dat_lme$exp_ID)
+```
+
+## NEP
+```{r}
+# making new dataset for lme models to remove NAs
+dat_lme <- dat_clean %>%
+  filter(!is.na(NEP_mgO2_d_gAFDW))
+
+# converting experiment ID from numberic to a factor
+dat_lme$exp_ID <- as.factor(dat_lme$exp_ID)
+
+glimpse(dat_lme)
+#View(dat_lme)
+
+# starting with as many explanatory variables as possible in the fixed component of the models (temp, nutrients, and their interaction)
+m1 <- gls(log(NEP_mgO2_d_gAFDW) ~ temp_C * nutrients, method = "REML", data = dat_lme)
+
+m2 <-  lme(log(NEP_mgO2_d_gAFDW) ~ temp_C * nutrients, random = ~ 1 | rock_ID, data = dat_lme) # adding random intercept for each rock
+
+m3 <- lme(log(NEP_mgO2_d_gAFDW) ~ temp_C * nutrients, random = ~ 1 | rock_ID, weights = varIdent(form = ~1|exp_ID), data = dat_lme) # accounting for heteroscedasticity within and among different experiments
+
+m4 <- lme(log(NEP_mgO2_d_gAFDW) ~ temp_C * nutrients, random = ~ 1 + temp_C| rock_ID, data = dat_lme, control=(msMaxIter=500)) # adding random slopes for each rock (i.e. the relationship between temperature and NEP varies for each individual rock)
+# model does not converge
+
+m5 <- lme(log(NEP_mgO2_d_gAFDW) ~ temp_C * nutrients, random = ~ 1 + temp_C| rock_ID, weights = varIdent(form = ~1|exp_ID), data = dat_lme, control=(msMaxIter=500)) # now adding in variance structure back in to account for heterscedasticity within and between experiments
+# model does not converge
+
+AIC(m1, m2, m3, m4, m5)
+# model 5 has the most support according to AIC
+
+summary(m5)
+# the nutrient and temp:nutrient interaction fixed effects are not statistically significant so they will be dropped from the final model
+
+NEP_final <- lme(log(NEP_mgO2_d_gAFDW) ~ temp_C, random = ~ 1 + temp_C| rock_ID, weights = varIdent(form = ~1|exp_ID), data = dat_lme, control=(msMaxIter=500))
+
+summary(NEP_final)
+
+# interpreting effect size of temp
+exp(0.0332)
+
+# for every 1C increase in temperature, ER increases by 3.4% (a factor of 1.067 mg O2 per day per g AFDW)
 ```
 
 #### Graphical model validation
