@@ -51,6 +51,10 @@ dat4 <- read_csv("data/main_analysis/210808_pnld_A_E_rates.csv")
 dat5 <- read_csv("data/main_analysis/211010_pnld_A_E_rates.csv")
 
 
+### 211128 Pineland A & E data
+dat6 <- read_csv("data/main_analysis/211128_pnld_A_E_rates.csv")
+
+
 
 ########## Data Formatting #############
 
@@ -73,8 +77,11 @@ dat4 <- dat4 %>%
 dat5 <- dat5 %>%
   mutate(season = "fall", month = "october")
 
+dat6 <- dat6 %>%
+  mutate(season = "winter", month = "november")
+
 ######### Combining dataframes #########
-dat <- bind_rows(dat1, dat2, dat3, dat4, dat5)
+dat <- bind_rows(dat1, dat2, dat3, dat4, dat5, dat6)
 head(dat)
 
 # adding in raw nutrient concentrations of ambient and enriched water for each experiment
@@ -126,7 +133,8 @@ dat <- dat %>%
     nutrients == 1 & month == "april" ~ 4,
     month == "june" ~ 5, # june, aug, and oct experiments used same rocks and chamber assignments for ambient and enriched runs, so it gets the same experiment ID
     month == "august" ~ 6,
-    month == "october" ~ 7
+    month == "october" ~ 7,
+    month == "november" ~ 8
   ))
 
 # Creating rock_ID column
@@ -137,6 +145,7 @@ dat <- dat %>%
     exp_ID == 5 & nutrients == 1 ~ row_number() - 16, # accouting for repeated measures on same rocks for the 5,6, and 7th experiments
     exp_ID == 6 & nutrients == 1 ~ row_number() - 16,
     exp_ID == 7 & nutrients == 1 ~ row_number() - 16,
+    exp_ID == 8 & nutrients == 1 ~ row_number() - 16,
      TRUE ~ as.double(row_number())
     ))
 #View(dat)
@@ -158,7 +167,8 @@ glimpse(dat_pnld)
 # Chambers 1 and 3 appear to be outliers for the june ambient incubations, and will be removed in subsequent analyses.
 
 # removing outliers
-dat_clean <- dat_pnld[-c(33,35),]
+# chambers 15 and 2 in Nov 2021 experiments had unusually high values for both the ambient and enriched experiments and were thus removed from the analysis
+dat_clean <- dat_pnld[-c(33,35, 130, 143, 146, 159),]
 #View(dat_clean)
 
 ```
@@ -202,7 +212,6 @@ GPP_plotly <- dat_pnld %>%
   ggplot(aes(x = temp_C, y = GPP_mgO2_d_gAFDW, color = season)) +
   facet_wrap(~nutrient_trt) +
   scale_y_log10() +
-  scale_x_log10() +
   geom_point(aes(group = chamber), shape = 19, size = 2) +
   geom_smooth(method = "lm") +
   #scale_color_discrete(name = "Nutrient Treatment")+
@@ -228,7 +237,7 @@ GPP_log_log <- dat_clean %>%
   scale_y_log10() +
   scale_x_log10() +
   geom_point(aes(shape = season, color = nutrient_trt), size = 1.5) +
-  scale_shape_manual(values = c(17, 19, 15)) +
+  scale_shape_manual(values = c(17, 19, 15, 21)) +
   geom_smooth(aes(color = nutrient_trt), method = "lm") +
   #scale_color_discrete(name = "Nutrient Treatment")+
   theme_classic() +
@@ -261,7 +270,7 @@ ER_log_log <- dat_clean %>%
   scale_y_log10() +
   scale_x_log10() +
   geom_point(aes(shape = season, color = nutrient_trt), size = 1.5) +
-  scale_shape_manual(values = c(17, 19, 15)) +
+  scale_shape_manual(values = c(17, 19, 15, 21)) +
   geom_smooth(aes(color = nutrient_trt), method = "lm") +
   #scale_color_discrete(name = "Nutrient Treatment")+
   theme_classic() +
@@ -295,7 +304,7 @@ NEP_log_log <- dat_clean %>%
   scale_y_log10() +
   scale_x_log10() +
  geom_point(aes(shape = season, color = nutrient_trt), size = 1.5) +
-  scale_shape_manual(values = c(17, 19, 15)) +
+  scale_shape_manual(values = c(17, 19, 15, 21)) +
   geom_smooth(aes(color = nutrient_trt), method = "lm") +
   #scale_color_discrete(name = "Nutrient Treatment")+
   theme_classic() +
@@ -379,7 +388,7 @@ rates_log_log_AGU <- dat_long %>%
   facet_grid(cols = vars(rate_name_AFDW)) +
   scale_y_log10() +
  geom_point(aes(shape = exp_ID, color = nutrient_trt), size = 1.5) +
-  scale_shape_manual(values = c(17, 19, 15)) +
+  scale_shape_manual(values = c(17, 19, 15, 21)) +
   geom_smooth(aes(color = nutrient_trt), method = "lm") +
   scale_color_viridis_d("Nutrient Treatment") + # renaming label of color legend
   scale_shape_discrete(name = "Experiment ID") +# renaming label of point shape legend
@@ -414,7 +423,7 @@ areal_rates_log_log <- dat_long_m2 %>%
   scale_y_log10() +
   scale_x_log10() +
  geom_point(aes(shape = season, color = nutrient_trt), size = 1.5) +
-  scale_shape_manual(values = c(17, 19, 15)) +
+  scale_shape_manual(values = c(17, 19, 15, 21)) +
   geom_smooth(aes(color = nutrient_trt), method = "lm") +
   scale_color_viridis_d("Nutrient Treatment") + # renaming label of color legend
   scale_shape_discrete(name = "Season") +# renaming label of point shape legend
@@ -441,7 +450,7 @@ areal_rates_log_log_AGU <- dat_long_m2 %>%
   scale_y_log10() +
   scale_x_log10() +
  geom_point(aes(shape = exp_ID, color = nutrient_trt), size = 1.5) +
-  scale_shape_manual(values = c(17, 19, 15)) +
+  scale_shape_manual(values = c(17, 19, 15, 21)) +
   geom_smooth(aes(color = nutrient_trt), method = "lm") +
   scale_color_viridis_d("Nutrient Treatment") + # renaming label of color legend
   scale_shape_discrete(name = "Experiment ID") +# renaming label of point shape legend
@@ -462,7 +471,7 @@ areal_rates_log_log_AGU <- dat_long_m2 %>%
   facet_grid(cols = vars(rate_name_m2)) +
   scale_y_log10() +
  geom_point(aes(shape = exp_ID, color = nutrient_trt), size = 1.5) +
-  scale_shape_manual(values = c(17, 19, 15)) +
+  scale_shape_manual(values = c(17, 19, 15, 21)) +
   geom_smooth(aes(color = nutrient_trt), method = "lm") +
   scale_color_viridis_d("Nutrient Treatment") + # renaming label of color legend
   scale_shape_discrete(name = "Experiment ID") +# renaming label of point shape legend
@@ -998,8 +1007,8 @@ GPP_final <- lme(log(GPP_mgO2_d_gAFDW) ~ temp_C, random = ~ 1 + temp_C | rock_ID
 summary(GPP_final)
 
 # interpreting effect sizes of temp
-exp(0.0341)
-# for every 1C increase in temperature, GPP increases by 3% (a factor of 1.034 mgO2 per day per g AFDW).
+exp(0.0383)
+# for every 1C increase in temperature, GPP increases by 4% (a factor of 1.039 mgO2 per day per g AFDW).
 ```
 
 #### Graphical model validation
@@ -1039,23 +1048,24 @@ m3 <- lme(log(ER_mgO2_d_gAFDW) ~ temp_C * nutrients, random = ~ 1 | rock_ID, wei
 #m4 <- lme(log(ER_mgO2_d_gAFDW) ~ temp_C * nutrients, random = ~ 1 + temp_C | rock_ID, data = dat_lme) # adding random intercept for rock and random slope for temperature
 # does not converge
 
-m5 <- lme(log(ER_mgO2_d_gAFDW) ~ temp_C * nutrients, random = ~ 1 + temp_C | rock_ID, weights = varIdent(form = ~1|exp_ID), data = dat_lme)
+#m5 <- lme(log(ER_mgO2_d_gAFDW) ~ temp_C * nutrients, random = ~ 1 + temp_C | rock_ID, weights = varIdent(form = ~1|exp_ID), data = dat_lme)
+# does not converge
 
-AIC(m1, m2, m3, m5)
-# model 2 has the strongest support according to AIC
+AIC(m1, m2, m3)
+# model 3 has the strongest support according to AIC
 
-summary(m2)
+summary(m3)
 # looks like all the fixed effects are statistically significant and will be kept in the model
 
-ER_final <- m2
+ER_final <- m3
 
 # interpreting effect size of temp
-exp(0.0646)
+exp(0.0658)
 
-# for every 1C increase in temperature, ER increases by 7% (a factor of 1.067 mg O2 per day per g AFDW)
+# for every 1C increase in temperature, ER increases by 7% (a factor of 1.068 mg O2 per day per g AFDW)
 
 # interpreting effect size of nutrients
-exp(0.67)
+exp(0.52)
 ```
 
 #### Graphical model validation
@@ -1092,13 +1102,13 @@ m2 <-  lme(log(NEP_mgO2_d_gAFDW) ~ temp_C * nutrients, random = ~ 1 | rock_ID, d
 
 m3 <- lme(log(NEP_mgO2_d_gAFDW) ~ temp_C * nutrients, random = ~ 1 | rock_ID, weights = varIdent(form = ~1|exp_ID), data = dat_lme) # accounting for heteroscedasticity within and among different experiments
 
-m4 <- lme(log(NEP_mgO2_d_gAFDW) ~ temp_C * nutrients, random = ~ 1 + temp_C| rock_ID, data = dat_lme, control=(msMaxIter=500)) # adding random slopes for each rock (i.e. the relationship between temperature and NEP varies for each individual rock)
+#m4 <- lme(log(NEP_mgO2_d_gAFDW) ~ temp_C * nutrients, random = ~ 1 + temp_C| rock_ID, data = dat_lme, control=(msMaxIter=500)) # adding random slopes for each rock (i.e. the relationship between temperature and NEP varies for each individual rock)
 # model does not converge
 
 m5 <- lme(log(NEP_mgO2_d_gAFDW) ~ temp_C * nutrients, random = ~ 1 + temp_C| rock_ID, weights = varIdent(form = ~1|exp_ID), data = dat_lme, control=(msMaxIter=500)) # now adding in variance structure back in to account for heterscedasticity within and between experiments
 # model does not converge
 
-AIC(m1, m2, m3, m4, m5)
+AIC(m1, m2, m3, m5)
 # model 5 has the most support according to AIC
 
 summary(m5)
@@ -1109,9 +1119,9 @@ NEP_final <- lme(log(NEP_mgO2_d_gAFDW) ~ temp_C, random = ~ 1 + temp_C| rock_ID,
 summary(NEP_final)
 
 # interpreting effect size of temp
-exp(0.0332)
+exp(0.0376)
 
-# for every 1C increase in temperature, ER increases by 3.4% (a factor of 1.067 mg O2 per day per g AFDW)
+# for every 1C increase in temperature, NEP increases by 3.8% (a factor of 1.038 mg O2 per day per g AFDW)
 ```
 
 #### Graphical model validation
