@@ -80,7 +80,7 @@ head(dat_2)
 
 # selecting only columns I need, and changing chamber column from a factor to a double
 dat_subset <- dat_2 %>%
-  select(date, time, delta_T_min, oxygen, temp, chamber, treatment) %>%
+  dplyr::select(date, time, delta_T_min, oxygen, temp, chamber, treatment) %>%
   filter(delta_T_min > 900) #filtering out NAs and also test DO data from the day before
 #View(dat_subset)
   dat_subset$chamber <- as.numeric(dat_subset$chamber)
@@ -110,6 +110,34 @@ dat_full <- dat_full %>%
   filter(!is.na(oxygen_mass_mg)) # filtering out rows with NAs for DO data
 #View(dat_full)
 ```
+
+# Calculating % water in AFDW samples
+```{r}
+# percent water content of first round of AFDW samples that were ashed at the incorrect temperature. This was used to generate Dry wts for a second round of samples ashed at the correct temperature, but were not weighed for their dry wts before ashing.
+dat_chambers %>%
+  mutate(AFDW_perc_water = (SWW_g - SDW_60C_g)/SWW_g) %>%
+  summarise(avg_perc_water = mean(AFDW_perc_water), sd_perc_water = sd(AFDW_perc_water))
+```
+
+
+# Calculating % difference between ashing temps
+```{r}
+# The UCD muffle furnace in PES building was reporting the incorrect temperature and thus samples were ashed at incorrect temps. These samples were ashed at 270C instead of 500C and then were subsequently ashed at 580C. Below are the calculated percent differences in AFDW between the two ashing temps:
+
+dat_chambers %>%
+  mutate(SCW_diff_270_500 = SCW_270C_g - SCW_500C_g_2, SCW_diff_580_500 = SCW_580C_g - SCW_500C_g_2) %>%
+  summarise(avg_diff_270 = mean(SCW_diff_270_500), sd_diff_270 = sd(SCW_diff_270_500), avg_diff_580C = mean(SCW_diff_580_500), sd_diff_580C = sd(SCW_diff_580_500))
+```
+
+# Calculating % change in AFDW between different ashing temps
+```{r}
+dat_chambers %>%
+  mutate(AFDW_270 = (total_wet_wt_g/SWW_g) * (SDW_60C_g - SCW_270C_g), AFDW_500 = (total_wet_wt_g/SWW_g_2) * (SDW_60C_g_2 - SCW_500C_g_2), AFDW_580 = (total_wet_wt_g/SWW_g) * (SDW_60C_g - SCW_580C_g)) %>%
+  filter(AFDW_500 > 0 & chamber != 2) %>% # filtering out outlying AFDW data points (chamber 2 and 13)
+  mutate(perc_diff_270 = (AFDW_500-AFDW_270)/AFDW_500, perc_diff_580 = (AFDW_500-AFDW_580)/AFDW_500) %>%
+  summarise(avg_perc_diff_270 = mean(perc_diff_270), sd_perc_diff_270 = sd(perc_diff_270), avg_perc_diff_580 = mean(perc_diff_580), sd_perc_diff_580 = sd(perc_diff_580))
+```
+
 
 # Plotting temp and DO in chambers
 ```{r echo = FALSE}
