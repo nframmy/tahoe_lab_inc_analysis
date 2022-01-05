@@ -80,7 +80,7 @@ head(dat_2)
 
 # selecting only columns I need, and changing chamber column from a factor to a double
 dat_subset <- dat_2 %>%
-  select(date, time, delta_T_min, oxygen, temp, chamber, treatment)
+  dplyr::select(date, time, delta_T_min, oxygen, temp, chamber, treatment)
 #View(dat_subset)
   dat_subset$chamber <- as.numeric(dat_subset$chamber)
 
@@ -104,6 +104,14 @@ dat_full <- dat_full %>%
   filter(!is.na(oxygen_mass_mg)) # filtering out rows with NAs for DO data
 #View(dat_full)
 ```
+
+# Calculating % water in AFDW samples
+```{r}
+dat_chambers %>%
+  mutate(AFDW_perc_water = (SWW_g - SDW_60C_g)/SWW_g) %>%
+  summarise(avg_perc_water = mean(AFDW_perc_water), sd_perc_water = sd(AFDW_perc_water))
+```
+
 
 # Plotting temp and DO in chambers
 ```{r echo = FALSE}
