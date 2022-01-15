@@ -54,7 +54,8 @@ The nutrient data for the 3/15/21 experiment at Tahoe City was taken from 0.45um
 bulk <- dat %>%
   filter(site_treatment == "TPI_TC_Bulk" | site_treatment == "TPI_PNLD_bulk" & chamber != "T_bulk_1") %>% #filtering out T_bulk_1 since this nutrient sample was taken too long before the start of the experiment to be accurate
   dplyr::select(date, NO3_N_py, NH4_N, SRP, DP) %>% # selecting only nutrient data columns
-  rename(bulk_NO3_N_py = NO3_N_py, bulk_NH4_N = NH4_N, bulk_SRP = SRP, bulk_DP = DP) # renaming columns to indicate these were the initial concentrations for joining to the uptake dataframe
+  rename(bulk_NO3_N_py = NO3_N_py, bulk_NH4_N = NH4_N, bulk_SRP = SRP, bulk_DP = DP) %>% # renaming columns to indicate these were the initial concentrations for joining to the uptake dataframe
+  slice(-c(6)) # removing 6th row since this was an extra bulk sample taken for the nov 2021 experiment
 
 # added in values for bulk concentrations in excel for 6/13 and 8/8 experiments since these were reported as TNO3, TNH4, TRP, and TP instead of the dissolved concentrations in previous experiments
 
@@ -136,8 +137,48 @@ uptake <- dat %>%
         date_chamber == "2021-08-08_F_6"|
         date_chamber == "2021-08-08_F_10"|
         date_chamber == "2021-08-08_F_16"|
-        date_chamber == "2021-08-08_F_A_13" ~ 28.5
-    )) # values double-checked by NTF on 9/29/21
+        date_chamber == "2021-08-08_F_A_13" ~ 28.5,
+      date_chamber == "2021-10-10_F_1" |
+        date_chamber == "2021-10-10_F_3" |
+        date_chamber == "2021-10-10_F_7" |
+        date_chamber == "2021-10-10_F_8" |
+        date_chamber == "2021-10-10_F_J_45" ~ 18,
+      date_chamber == "2021-10-10_F_5" |
+        date_chamber == "2021-10-10_F_10" |
+        date_chamber == "2021-10-10_F_12" |
+        date_chamber == "2021-10-10_F_15" |
+        date_chamber == "2021-10-10_F_J_13" ~ 15,
+      date_chamber == "2021-10-10_F_2" |
+        date_chamber == "2021-10-10_F_11" |
+        date_chamber == "2021-10-10_F_13" |
+        date_chamber == "2021-10-10_F_14" |
+        date_chamber == "2021-10-10_F_J_28" ~ 21,
+      date_chamber == "2021-10-10_F_4" |
+        date_chamber == "2021-10-10_F_6" |
+        date_chamber == "2021-10-10_F_9" |
+        date_chamber == "2021-10-10_F_16" |
+        date_chamber == "2021-10-10_F_JA_5" ~ 24,
+      date_chamber == "2021-11-28_F_A_13" |
+        date_chamber == "2021-11-28_F_5" |
+        date_chamber == "2021-11-28_F_10" |
+        date_chamber == "2021-11-28_F_12" |
+        date_chamber == "2021-11-28_F_13" ~ 12.5,
+      date_chamber == "2021-11-28_F_A_9" |
+        date_chamber == "2021-11-28_F_3" |
+        date_chamber == "2021-11-28_F_7" |
+        date_chamber == "2021-11-28_F_15" |
+        date_chamber == "2021-11-28_F_16" ~ 9.5,
+      date_chamber == "2021-11-28_F_A_18" |
+        date_chamber == "2021-11-28_F_1" |
+        date_chamber == "2021-11-28_F_2" |
+        date_chamber == "2021-11-28_F_4" |
+        date_chamber == "2021-11-28_F_14" ~ 15.5,
+      date_chamber == "2021-11-28_F_A_38" |
+        date_chamber == "2021-11-28_F_6" |
+        date_chamber == "2021-11-28_F_8" |
+        date_chamber == "2021-11-28_F_9" |
+        date_chamber == "2021-11-28_F_11" ~ 18.5
+    )) # values double-checked by NTF on 1/10/22
 
 #View(uptake)
 
@@ -154,6 +195,8 @@ uptake_rates <- uptake_rates %>%
       date == "2021-04-21" ~ 25.5,
       date == "2021-06-13" ~ 11,
       date == "2021-08-08" ~ 23,
+      date == "2021-10-10" ~ 24,
+      date == "2021-11-28" ~ 24
       )) %>%
   mutate(NO3_uptake_ug_N_hr = (bulk_NO3_N_py - NO3_N_py)/hrs, NH4_uptake_ug_N_hr = (bulk_NH4_N - NH4_N)/hrs, SRP_uptake_ug_P_hr = (bulk_SRP - SRP)/hrs, DP_uptake_ug_P_hr = (bulk_DP - DP)/hrs) %>% # calculating uptake rates per hour
   mutate(NO3_use_ug_N = bulk_NO3_N_py - NO3_N_py, NH4_use_ug_N = bulk_NH4_N - NH4_N, SRP_use_ug_P = bulk_SRP - SRP, DP_use_ug_P = bulk_DP - DP) # calculating drawdown in nutrients
@@ -181,6 +224,14 @@ dat_long <- dat_long %>%
         chamber == "F_A_25" |
         chamber == "F_A_35" |
         chamber == "F_A_37" ~ "2021-08-08_background_rate",
+      chamber == "F_JA_5" |
+        chamber == "F_J_45" |
+        chamber == "F_J_13" |
+        chamber == "F_J_28" ~ "2021-10-10_background_rate",
+      chamber == "F_A_13" |
+        chamber == "F_A_9" |
+        chamber == "F_A_18" |
+        chamber == "F_A_38" ~ "2021-11-28_background_rate",
       TRUE ~ as.character(date)
     )
   )
@@ -229,8 +280,7 @@ dat_long <- dat_long %>%
 metab_dat <- read_csv("data/main_analysis/main_rate_data.csv")
 
 metab_dat <- metab_dat %>%
-  filter(month != "october") %>% # filtering out october 2021 experiment since nutrient data is not available yet
-  mutate(date = c(rep("2021-03-01", 16), rep("2021-03-15", 16), rep("2021-04-07", 16), rep("2021-04-21", 16), rep("2021-06-13", 32), rep("2021-08-08", 32))) %>% # creating date column
+  mutate(date = c(rep("2021-03-01", 16), rep("2021-03-15", 16), rep("2021-04-07", 16), rep("2021-04-21", 16), rep("2021-06-13", 32), rep("2021-08-08", 32), rep("2021-10-10", 32), rep("2021-11-28", 32))) %>% # creating date column
   unite(chamber_ID, date, chamber, sep = "_", remove = "FALSE") %>%# combining date and chamber columns
   dplyr::select(chamber_ID, total_AFDW_g, rock_SA_m2, GPP_mg_d, ER_mg_d, NEP_mg_d) # selecting only the columns I need to declutter dataframe a bit
 
@@ -250,7 +300,7 @@ main <- main %>%
 # plotting AFDW_normalized rates
 # plotting nutrient uptake rates
 AFDW <- main %>%
-  filter(date != "2021-04-21" & uptake_rate_name != "DP_rate") %>% # filtering out april 2021 data since rates were near zero due to error with nutrient enrichment, also filtering out DP data
+  filter(date != "2021-04-21" & uptake_rate_name != "DP_rate" & AFDW_rates < 600) %>% # filtering out april 2021 data since rates were near zero due to error with nutrient enrichment, also filtering out DP data, and filtering out outlier from nov 2021 experiment
   ggplot(aes(x = temp_C, y = AFDW_rates)) +
   facet_grid(cols = vars(uptake_rate_name)) +
   geom_point(aes(group = date_chamber, color = date_background)) +
@@ -271,7 +321,7 @@ ggsave("plots/nutrient_uptake/AFDW_norm_uptake_rates.png", plot = AFDW, width = 
 ```{r}
 #View(main)
 molar <- main %>%
-  filter(uptake_rate_name != "DP_rate") %>% # filtering out DP uptake rates since chemical there is no single chemical formula for this P species to calculate molar uptake rate with
+  filter(uptake_rate_name != "DP_rate" & AFDW_rates <600) %>% # filtering out DP uptake rates since chemical there is no single chemical formula for this P species to calculate molar uptake rate with, also filtering out outlier from nov 2021 experiment
   mutate(molar_rate = case_when(
     uptake_rate_name == "NH4_rate" ~ AFDW_rates/14.0067e6,
     uptake_rate_name == "SRP_rate" ~ AFDW_rates/30.9738e6,
@@ -312,6 +362,7 @@ class(molar_ratio$date)
 molar_ratio$date <- as.factor(molar_ratio$date)
 
 mol_ratio_plot <- molar_ratio %>%
+  filter(uptake_N_P_mol_ratio < 30 & uptake_N_P_mol_ratio > 0) %>% # filtering out 2 outliers from aug 2021 experiment
   ggplot(aes(x = temp_C, y = uptake_N_P_mol_ratio)) +
   geom_point(aes(group = date_chamber, color = date)) +
   geom_smooth(aes(color = date), method = "lm") +
