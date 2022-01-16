@@ -362,7 +362,7 @@ class(molar_ratio$date)
 molar_ratio$date <- as.factor(molar_ratio$date)
 
 mol_ratio_plot <- molar_ratio %>%
-  filter(uptake_N_P_mol_ratio < 30 & uptake_N_P_mol_ratio > 0) %>% # filtering out 2 outliers from aug 2021 experiment
+  filter(uptake_N_P_mol_ratio < 10 & uptake_N_P_mol_ratio > 0) %>% # filtering out outliers from aug 2021 experiment
   ggplot(aes(x = temp_C, y = uptake_N_P_mol_ratio)) +
   geom_point(aes(group = date_chamber, color = date)) +
   geom_smooth(aes(color = date), method = "lm") +
