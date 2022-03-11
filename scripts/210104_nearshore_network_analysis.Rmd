@@ -289,3 +289,43 @@ dat_nov %>%
   labs(title = "Daily Nov 2019 Max Water Temp")
 ```
 
+# Feb 2020 temp analysis
+```{r}
+# calculating average Feb/Mar temperatures for planning February 2022 incubation
+#View(dat_TC)
+# using T variable instead of ProbeT since ProbeT has all NAs for this time period
+feb_T <- dat_TC %>%
+  filter(!is.na(ProbeT) & TimeLocal >= "2020-02-15 00:00:00" & TimeLocal < "2020-03-15 00:00:00") %>%
+  summarize(avg_T = mean(ProbeT))
+#View(feb_T)
+
+# plotting february temperatures with average feb temperature overlayed
+dat_TC %>%
+  filter(TimeLocal >= "2020-02-15 00:00:00" & TimeLocal < "2020-03-15 00:00:00") %>%
+  ggplot(aes(x = TimeLocal, y = ProbeT)) +
+  geom_point() +
+  geom_hline(aes(yintercept = avg_T), data = feb_T, color = "red")
+
+# plotting daily max temps for feb 2020
+dat_feb <- dat_TC %>%
+  filter(!is.na(ProbeT) & TimeLocal >= "2020-02-15 00:00:00" & TimeLocal < "2020-03-15 00:00:00") %>%
+  mutate(day = day(TimeLocal)) %>%
+  group_by(day) %>%
+  summarize(maxT = max(ProbeT))
+
+avg_max_feb_T <- mean(dat_feb$maxT)
+
+dat_feb %>%
+  ggplot(aes(x = day, y = maxT)) +
+  geom_point() +
+  geom_hline(aes(yintercept = avg_max_feb_T), color = "red")
+
+# plot just for February 25-28thth for planning for October 3-14th incubation
+dat_feb %>%
+  filter(day >= 20 & day <= 28) %>%
+  ggplot(aes(x = day, y = maxT)) +
+  geom_point() +
+  geom_hline(aes(yintercept = avg_max_feb_T), color = "red")
+```
+
+Looks like daily max temps range from 6.5-7.5C within feb 20-28th 2020. The average water temp between feb 15-march 15 is ~6C, but temps range mostly between 5-7C with 1.5C temperature swings each day. Nearshore temps for the February 2022 experiment should likely be between 4-7C.
