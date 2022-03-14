@@ -54,6 +54,9 @@ dat5 <- read_csv("data/main_analysis/211010_pnld_A_E_rates.csv")
 ### 211128 Pineland A & E data
 dat6 <- read_csv("data/main_analysis/211128_pnld_A_E_rates.csv")
 
+### 220227 Pineland A & E data
+dat7 <- read_csv("data/main_analysis/220227_pnld_A_E_rates.csv")
+
 
 
 ########## Data Formatting #############
@@ -80,8 +83,11 @@ dat5 <- dat5 %>%
 dat6 <- dat6 %>%
   mutate(season = "winter", month = "november")
 
+dat7 <- dat7 %>%
+  mutate(season = "spring", month = "february")
+
 ######### Combining dataframes #########
-dat <- bind_rows(dat1, dat2, dat3, dat4, dat5, dat6)
+dat <- bind_rows(dat1, dat2, dat3, dat4, dat5, dat6, dat7)
 head(dat)
 
 # adding in raw nutrient concentrations of ambient and enriched water for each experiment
@@ -134,7 +140,8 @@ dat <- dat %>%
     month == "june" ~ 5, # june, aug, and oct experiments used same rocks and chamber assignments for ambient and enriched runs, so it gets the same experiment ID
     month == "august" ~ 6,
     month == "october" ~ 7,
-    month == "november" ~ 8
+    month == "november" ~ 8,
+    month == "february" ~ 9
   ))
 
 # Creating rock_ID column
@@ -149,6 +156,8 @@ dat <- dat %>%
     exp_ID == 7 & nutrients == 1 ~ row_number() - 48,
     exp_ID == 8 & nutrients == 0 ~ row_number() - 48,
     exp_ID == 8 & nutrients == 1 ~ row_number() - 64,
+    exp_ID == 9 & nutrients == 0 ~ row_number() - 64,
+    exp_ID == 9 & nutrients == 1 ~ row_number() - 80,
      TRUE ~ as.double(row_number())
     ))
 #View(dat)
@@ -158,6 +167,11 @@ dat$rock_ID <- as.factor(dat$rock_ID)
 
 
 
+```
+
+
+# Adding in Chla data
+```{r}
 ####### Adding chla data by rock_ID ############
 
 chla_main <- read_csv("data/main_analysis/chla_main_data.csv")
@@ -181,7 +195,66 @@ chla_main <- chla_main %>%
 # combining chla and main data by rock ID
 
 dat <- left_join(dat, chla_main, by = "rock_ID")
+#View(dat)
 
+```
+
+
+# Adding in corrected AFDW data
+```{r}
+######### Calculating Corrected AFDW data ###############
+
+# since PES drying oven was found to be not operating at correct temperatures after the 11/28/21 experiment, all AFDW samples up to this point had to be redone to ensure they were ashed at proper temperatures
+
+# As a result, we remeasured AFDW of all samples using left-over frozen sample; however, wet wts were found to no longer be accurate due to slight decrease in the water content of samples that had been frozen.
+
+# Since we could no longer scale up these re-measured AFDW samples by wet weight, we chose to scale them up by dry weight. We were able to do this because dry weights from the first set of AFDW samples were still accurate, allowing us to calulate total Dry wt of samples by scaling up using the recorded wet wts of the fresh samples.
+
+# We then use these total dry wts calculated by the first set of AFDW samples to scale up the re-measured AFDW samples using their recorded dry wts (SDW_60C_g).
+
+# These corrected AFDW samples will be stored in a column titled "total_AFDW_g" and will replace the previous column of incorrect AFDW data of the same name.
+
+# loading in re-measured AFDW data
+afdw_main <- read_csv("data/main_analysis/AFDW_main_dat.csv", skip = 1)
+
+
+# Creating rock_ID column
+# using chamber and experiment # columns to give a unique code for each individual rock (this will indicate some sort of chamber or rock effect from repeated measures during the ambient and enriched nutrient runs)
+
+afdw_main <- afdw_main %>%
+  mutate(rock_ID = as.double(row_number() + 16)) # adding 16 to rock_ID to account for lack of re-measured afdw data for the 3/1/21 experiment in this dataset
+         
+#View(afdw_main)
+
+# making rock_ID column a factor instead of numeric for analysis
+afdw_main$rock_ID <- as.factor(afdw_main$rock_ID)
+
+# selecting only columns I need
+
+afdw_main <- afdw_main %>%
+  dplyr::select(SDW_60C_g, SCW_500C_g, rock_ID)
+
+# combining afdw and main data by rock ID column
+
+dat <- left_join(dat, afdw_main, by = "rock_ID")
+
+# calculating corrected AFDW data and recalculating AFDW-normalized metabolic rates
+dat <- dat %>%
+  mutate(total_AFDW_g_2 = case_when(
+    exp_ID == 1 ~ total_AFDW_g, # using old AFDW data since there was no leftover sample
+    TRUE ~ (total_DW_g/SDW_60C_g) * (SDW_60C_g - SCW_500C_g)
+    )) %>% # recalculating AFDW using new data and scaling up based on previous estimates of total Dry weight
+  mutate(GPP_mgO2_d_gAFDW_2 = GPP_mg_d/total_AFDW_g_2, NEP_mgO2_d_gAFDW_2 = NEP_mg_d/total_AFDW_g_2, ER_mgO2_d_gAFDW_2 = ER_mg_d/total_AFDW_g_2) # using corrected AFDW data to calculate AFDW-normalized metabolic rates
+
+#View(dat)
+   
+
+
+```
+
+
+# Exporting and Cleaning data
+```{r}
 # exporting combined dataframe as .csv
 write_csv(dat, "data/main_analysis/main_rate_data.csv")
 
@@ -197,13 +270,29 @@ glimpse(dat_pnld)
 
 # removing outliers
 # chambers 15 and 2 in Nov 2021 experiments had unusually high values for both the ambient and enriched experiments and were thus removed from the analysis
-dat_clean <- dat_pnld[-c(33,35, 130, 143, 146, 159),]
-#View(dat_clean)
 
+dat_clean <- dat_pnld %>%
+  filter(month != "june" | nutrients != 0 | chamber != 1) %>%
+  filter(month != "june" | nutrients != 0 | chamber != 3) %>%
+  filter(month != "november" | chamber != 2) %>%
+  filter(month != "november" | chamber != 15)
+#View(dat_clean)
 ```
 
 
 # Plotting main data
+## Comparing AFDW: original vs. corrected
+```{r}
+AFDW_plot <- dat_clean %>%
+  ggplot(aes(x = total_AFDW_g, y = total_AFDW_g_2)) +
+  geom_point() +
+  geom_abline(aes(intercept = 0, slope = 1)) +
+  labs(x = "Old AFDW", y = "Corrected AFDW", title = "Comparison of AFDW") +
+  theme_classic()
+AFDW_plot
+```
+
+
 ## AFDW-normalized metabolic rates
 ### GPP
 ```{r}
@@ -433,6 +522,40 @@ ggsave("plots/main_analysis/rates_unlogged_AGU_hr.png", plot = rates_log_log_AGU
 ```
 
 
+# New AFDW-adjusted rate plot
+```{r}
+# remelting dataframe to long format so that metabolic rate columns are combined into one column and values are in a separate column so all can be plotted at once
+dat_long <- dat_clean %>%
+  rename(GPP = GPP_mgO2_d_gAFDW_2, ER = ER_mgO2_d_gAFDW_2, NEP = NEP_mgO2_d_gAFDW_2) %>% # renaming columns so that facet labels are more tidy
+  pivot_longer(cols = c(NEP, GPP, ER),
+               names_to = "rate_name_AFDW",
+               values_to = "rates_AFDW",
+               values_drop_na = TRUE)
+#View(dat_long)
+
+# making experiment ID column a factor instead of numeric since it is treated as discrete rather than continuous in the plot
+dat_long$exp_ID <- as.factor(dat_long$exp_ID)
+
+AFDW_2_log_rates <- dat_long %>%
+  ggplot(aes(x = temp_C, y = rates_AFDW, group = interaction(exp_ID, nutrients))) +
+  facet_grid(cols = vars(rate_name_AFDW)) +
+  scale_y_log10() +
+ geom_point(aes(shape = exp_ID, color = nutrient_trt), size = 1.5) +
+  geom_smooth(aes(color = nutrient_trt), method = "lm") +
+  scale_color_viridis_d("Nutrient Treatment") + # renaming label of color legend
+  scale_shape_discrete(name = "Experiment ID") +# renaming label of point shape legend
+  scale_shape_manual(values = c(0:6)) +
+  theme_minimal() +
+  theme(legend.position = "bottom") +
+  labs(x = expression('Temperature (\u00B0C)'),
+      y = expression(Rates~(mgO[2]~day^{-1}~gAFDW^{-1})))
+
+AFDW_2_log_rates
+
+# high quality dpi plot
+ggsave("plots/main_analysis/correct_AFDW_norm_rates.png", plot = AFDW_2_log_rates, width = 7, height = 3, dpi = 300)
+```
+
 # Plotting Areal Rates
 ```{r}
 # melting dataframe to long format so that metabolic rate columns are combined into one column and values are in a separate column so all can be plotted at once
@@ -500,10 +623,10 @@ areal_rates_log_log_AGU <- dat_long_m2 %>%
   facet_grid(cols = vars(rate_name_m2)) +
   scale_y_log10() +
  geom_point(aes(shape = exp_ID, color = nutrient_trt), size = 1.5) +
-  scale_shape_manual(values = c(17, 19, 15, 21)) +
   geom_smooth(aes(color = nutrient_trt), method = "lm") +
   scale_color_viridis_d("Nutrient Treatment") + # renaming label of color legend
   scale_shape_discrete(name = "Experiment ID") +# renaming label of point shape legend
+  scale_shape_manual(values = c(0:6)) +
   theme_minimal() +
   theme(legend.position = "bottom") +
   labs(x = expression('Temperature (\u00B0C)'),
@@ -1168,6 +1291,174 @@ ylab = "Normalized residuals", data = dat_lme)
 #coplot(resid(m10) ~ fitted(m10) | dat_lme$exp_ID)
 ```
 
+
+# New AFDW + Zuur method with un-transformed temp predictor
+## GPP
+```{r}
+# making new dataset for lme models to remove NAs
+dat_lme <- dat_clean %>%
+  filter(!is.na(GPP_mgO2_d_gAFDW_2))
+
+# converting experiment ID from numberic to a factor
+dat_lme$exp_ID <- as.factor(dat_lme$exp_ID)
+
+glimpse(dat_lme)
+#View(dat_lme)
+
+# starting with as many explanatory variables as possible in the fixed component of the models (temp, nutrients, and their interaction)
+m1 <- gls(log(GPP_mgO2_d_gAFDW_2) ~ temp_C * nutrients, method = "REML", data = dat_lme)
+
+m2 <- lme(log(GPP_mgO2_d_gAFDW_2) ~ temp_C * nutrients, random = ~ 1 | rock_ID, data = dat_lme) # adding in random intercept for each rock sample
+
+m3 <- lme(log(GPP_mgO2_d_gAFDW_2) ~ temp_C * nutrients, random = ~ 1 | rock_ID, weights = varIdent(form = ~1|exp_ID), data = dat_lme) # incorporating weights to account for heteroscedasticity within and btwn different experiments
+
+#m4 <- lme(log(GPP_mgO2_d_gAFDW_2) ~ temp_C * nutrients, random = ~ 1 + temp_C | rock_ID, data = dat_lme, control=(msMaxIter=500)) # adding in random intercept and slope for each rock sample, also increasing the number of iterations to acheive model convergence
+# would not converge
+
+m5 <- lme(log(GPP_mgO2_d_gAFDW_2) ~ temp_C * nutrients, random = ~ 1 + temp_C | rock_ID, weights = varIdent(form = ~1|exp_ID), data = dat_lme, control=(msMaxIter=500)) # incorporating weights to account for heteroscedasticity within and btwn different experiments, also increasing the number of iterations to acheive model convergence
+
+AIC(m1, m2, m3, m5)
+# model 5 has the lowest AIC
+
+summary(m5)
+# the model summary indicates that the nutrients and temp:nutrients interaction are not significant, thus I will drop them from the model
+
+GPP_final <- lme(log(GPP_mgO2_d_gAFDW_2) ~ temp_C, random = ~ 1 + temp_C | rock_ID, weights = varIdent(form = ~1|exp_ID), data = dat_lme, control=(msMaxIter=500))
+
+summary(GPP_final)
+
+# interpreting effect sizes of temp
+exp(0.0383)
+# for every 1C increase in temperature, GPP increases by 4% (a factor of 1.039 mgO2 per day per g AFDW).
+```
+
+#### Graphical model validation
+```{r}
+# checking ordinary residuals of the final model (these are allowed to show heteroscedasticity). Using code from Zuur et al.
+E1 <- resid(GPP_final)
+coplot(E1 ∼ rock_ID|exp_ID,
+ylab = "Ordinary residuals", data = dat_lme)
+
+# now checking standardized residuals of each of the experiments (random effect in the model). These should not show any patterns and should exhibit homogeneous variance.
+E2 <- resid(GPP_final, type = "normalized")
+coplot(E2 ∼ rock_ID|exp_ID,
+ylab = "Normalized residuals", data = dat_lme)
+
+#coplot(resid(m10) ~ fitted(m10) | dat_lme$exp_ID)
+```
+
+## ER
+```{r}
+# making new dataset for lme models to remove NAs
+dat_lme <- dat_clean %>%
+  filter(!is.na(ER_mgO2_d_gAFDW_2))
+
+# converting experiment ID from numberic to a factor
+dat_lme$exp_ID <- as.factor(dat_lme$exp_ID)
+
+glimpse(dat_lme)
+#View(dat_lme)
+
+# starting with as many explanatory variables as possible in the fixed component of the models (temp, nutrients, and their interaction)
+m1 <- gls(log(ER_mgO2_d_gAFDW_2) ~ temp_C * nutrients, method = "REML", data = dat_lme)
+
+m2 <- lme(log(ER_mgO2_d_gAFDW_2) ~ temp_C * nutrients, random = ~ 1 | rock_ID, data = dat_lme) # adding in random intercept for each rock sample
+
+m3 <- lme(log(ER_mgO2_d_gAFDW_2) ~ temp_C * nutrients, random = ~ 1 | rock_ID, weights = varIdent(form = ~1|exp_ID), data = dat_lme)
+
+#m4 <- lme(log(ER_mgO2_d_gAFDW_2) ~ temp_C * nutrients, random = ~ 1 + temp_C | rock_ID, data = dat_lme) # adding random intercept for rock and random slope for temperature
+# does not converge
+
+#m5 <- lme(log(ER_mgO2_d_gAFDW_2) ~ temp_C * nutrients, random = ~ 1 + temp_C | rock_ID, weights = varIdent(form = ~1|exp_ID), data = dat_lme)
+# does not converge
+
+AIC(m1, m2, m3)
+# model 3 has the strongest support according to AIC
+
+summary(m3)
+# looks like all the fixed effects are statistically significant and will be kept in the model
+
+ER_final <- m3
+
+# interpreting effect size of temp
+exp(0.0658)
+
+# for every 1C increase in temperature, ER increases by 7% (a factor of 1.068 mg O2 per day per g AFDW)
+
+# interpreting effect size of nutrients
+exp(0.52)
+```
+
+#### Graphical model validation
+```{r}
+# checking ordinary residuals of the final model (these are allowed to show heteroscedasticity). Using code from Zuur et al.
+E1 <- resid(ER_final)
+coplot(E1 ∼ rock_ID|exp_ID,
+ylab = "Ordinary residuals", data = dat_lme)
+
+# now checking standardized residuals of each of the experiments (random effect in the model). These should not show any patterns and should exhibit homogeneous variance.
+E2 <- resid(ER_final, type = "normalized")
+coplot(E2 ∼ rock_ID|exp_ID,
+ylab = "Normalized residuals", data = dat_lme)
+
+#coplot(resid(m10) ~ fitted(m10) | dat_lme$exp_ID)
+```
+
+## NEP
+```{r}
+# making new dataset for lme models to remove NAs
+dat_lme <- dat_clean %>%
+  filter(!is.na(NEP_mgO2_d_gAFDW_2))
+
+# converting experiment ID from numberic to a factor
+dat_lme$exp_ID <- as.factor(dat_lme$exp_ID)
+
+glimpse(dat_lme)
+#View(dat_lme)
+
+# starting with as many explanatory variables as possible in the fixed component of the models (temp, nutrients, and their interaction)
+m1 <- gls(log(NEP_mgO2_d_gAFDW_2) ~ temp_C * nutrients, method = "REML", data = dat_lme)
+
+m2 <-  lme(log(NEP_mgO2_d_gAFDW_2) ~ temp_C * nutrients, random = ~ 1 | rock_ID, data = dat_lme) # adding random intercept for each rock
+
+m3 <- lme(log(NEP_mgO2_d_gAFDW_2) ~ temp_C * nutrients, random = ~ 1 | rock_ID, weights = varIdent(form = ~1|exp_ID), data = dat_lme) # accounting for heteroscedasticity within and among different experiments
+
+#m4 <- lme(log(NEP_mgO2_d_gAFDW_2) ~ temp_C * nutrients, random = ~ 1 + temp_C| rock_ID, data = dat_lme, control=(msMaxIter=500)) # adding random slopes for each rock (i.e. the relationship between temperature and NEP varies for each individual rock)
+# model does not converge
+
+m5 <- lme(log(NEP_mgO2_d_gAFDW_2) ~ temp_C * nutrients, random = ~ 1 + temp_C| rock_ID, weights = varIdent(form = ~1|exp_ID), data = dat_lme, control=(msMaxIter=500)) # now adding in variance structure back in to account for heterscedasticity within and between experiments
+# model does not converge
+
+AIC(m1, m2, m3, m5)
+# model 5 has the most support according to AIC
+
+summary(m5)
+# the nutrient and temp:nutrient interaction fixed effects are not statistically significant so they will be dropped from the final model
+
+NEP_final <- lme(log(NEP_mgO2_d_gAFDW_2) ~ temp_C, random = ~ 1 + temp_C| rock_ID, weights = varIdent(form = ~1|exp_ID), data = dat_lme, control=(msMaxIter=500))
+
+summary(NEP_final)
+
+# interpreting effect size of temp
+exp(0.0376)
+
+# for every 1C increase in temperature, NEP increases by 3.8% (a factor of 1.038 mg O2 per day per g AFDW)
+```
+
+#### Graphical model validation
+```{r}
+# checking ordinary residuals of the final model (these are allowed to show heteroscedasticity). Using code from Zuur et al.
+E1 <- resid(NEP_final)
+coplot(E1 ∼ rock_ID|exp_ID,
+ylab = "Ordinary residuals", data = dat_lme)
+
+# now checking standardized residuals of each of the experiments (random effect in the model). These should not show any patterns and should exhibit homogeneous variance.
+E2 <- resid(NEP_final, type = "normalized")
+coplot(E2 ∼ rock_ID|exp_ID,
+ylab = "Normalized residuals", data = dat_lme)
+
+#coplot(resid(m10) ~ fitted(m10) | dat_lme$exp_ID)
+```
 
 # Centering Temp and Nutrient Data by experiment
 ```{r}
