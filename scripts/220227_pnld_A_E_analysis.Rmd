@@ -26,13 +26,13 @@ dat_a <- read_csv("data/220227_pineland_a_e/220227_pnld_ambient_rates.csv")
 
 # selecting only the columns that I need
 dat_a <- dat_a %>%
-  select(chamber, total_DW_g, total_AFDW_g, NEP_mg_d:nutrient_trt)
+  dplyr::select(chamber, total_DW_g, total_AFDW_g, rock_SA_m2:nutrient_trt)
 
 dat_e <- read_csv("data/220227_pineland_a_e/220227_pnld_enriched_rates.csv")
 
 # selecting only the columns that I need
 dat_e <- dat_e %>%
-  select(chamber, total_DW_g, total_AFDW_g, NEP_mg_d:nutrient_trt)
+  dplyr::select(chamber, total_DW_g, total_AFDW_g, rock_SA_m2:nutrient_trt)
 
 
 # binding the rows of the two dataframes together
