@@ -202,28 +202,6 @@ dat_clean <- dat_pnld[-c(33,35, 130, 143, 146, 159),]
 
 ```
 
-# Adding in chla data by rock_ID
-```{r}
-chla_main <- read_csv("data/main_analysis/chla_main_data.csv")
-
-# Creating rock_ID column
-# using chamber and experiment # columns to give a unique code for each individual rock (this will indicate some sort of chamber or rock effect from repeated measures during the ambient and enriched nutrient runs)
-
-dat <- dat %>%
-  mutate(rock_ID = case_when(
-    exp_ID == 5 & nutrients == 1 ~ row_number() - 16, # accouting for repeated measures on same rocks for the 5,6, and 7th experiments
-    exp_ID == 6 & nutrients == 1 ~ row_number() - 16,
-    exp_ID == 7 & nutrients == 1 ~ row_number() - 16,
-    exp_ID == 8 & nutrients == 1 ~ row_number() - 16,
-     TRUE ~ as.double(row_number())
-    ))
-#View(dat)
-
-# making rock_ID column a factor instead of numeric for analysis
-dat$rock_ID <- as.factor(dat$rock_ID)
-
-
-```
 
 # Plotting main data
 ## AFDW-normalized metabolic rates
