@@ -287,9 +287,13 @@ AFDW_plot <- dat_clean %>%
   ggplot(aes(x = total_AFDW_g, y = total_AFDW_g_2)) +
   geom_point() +
   geom_abline(aes(intercept = 0, slope = 1)) +
-  labs(x = "Old AFDW", y = "Corrected AFDW", title = "Comparison of AFDW") +
+  geom_rug(sides = "bl") +
+  labs(x = "Old AFDW", y = "Corrected AFDW", title = "Comparison of AFDW Data") +
+  lims( x = c(0, 1.5), y = c(0, 1.5)) +
   theme_classic()
 AFDW_plot
+
+ggsave("plots/main_analysis/AFDW_comparison.png", plot = AFDW_plot, width = 3, height = 3)
 ```
 
 
@@ -635,6 +639,48 @@ areal_rates_log_log_AGU <- dat_long_m2 %>%
 areal_rates_log_log_AGU
 
 ggsave("plots/main_analysis/areal_rates_unlogged_AGU.png", plot = areal_rates_log_log_AGU, width = 7, height = 3, dpi = 300)
+```
+
+# Chl-a-normalized GPP plot
+```{r}
+# normalizing GPP rates by mass of chla on rocks
+chla_rates <- dat_clean %>%
+  mutate(GPP_mgO2_d_ugChla = GPP_mg_d/(total_chla_ug/1e6)) #converting chla data from ug to g
+
+# making experiment ID column a factor instead of numeric since it is treated as discrete rather than continuous in the plot
+chla_rates$exp_ID <- as.factor(chla_rates$exp_ID)
+
+# now plotting GPP rates vs. temp
+
+GPP_chla <- chla_rates %>%
+  ggplot(aes(x = temp_C, y = GPP_mgO2_d_ugChla, group = interaction(exp_ID, nutrients))) +
+  scale_y_log10() +
+ geom_point(aes(shape = exp_ID, color = nutrient_trt), size = 1.5) +
+  geom_smooth(aes(color = nutrient_trt), method = "lm") +
+  scale_color_viridis_d("Nutrient Treatment") + # renaming label of color legend
+  scale_shape_discrete(name = "Experiment ID") +# renaming label of point shape legend
+  scale_shape_manual(values = c(0:6)) +
+  theme_minimal() +
+  theme(legend.position = "bottom") +
+  labs(x = expression('Temperature (\u00B0C)'),
+      y = expression(GPP~(mgO[2]~day^{-1}~gChla^{-1})))
+
+GPP_chla
+
+ggsave("plots/main_analysis/GPP_chla.png", plot = GPP_chla, height = 4, width = 6)
+
+```
+
+
+# Autotrophic Index
+```{r}
+# calculating the autotrophic index (ratio of AFDW:chl-a) (Biggs & Close 1989)
+
+dat %>%
+  mutate(AI = total_AFDW_g_2/(total_chla_ug/1e6)) %>% # converting chla from ug to g so that the units cancel (g/g) in the AI ratio
+  group_by(date) %>%
+  summarise(AI_avg = mean(AI)) %>%
+  arrange(AI_avg)
 ```
 
 
