@@ -176,6 +176,10 @@ dat$rock_ID <- as.factor(dat$rock_ID)
 
 chla_main <- read_csv("data/main_analysis/chla_main_data.csv")
 
+# formatting date column to be a date instead of a character class
+chla_main$date <- mdy(chla_main$date)
+head(chla_main)
+
 # Creating rock_ID column
 # using chamber and experiment # columns to give a unique code for each individual rock (this will indicate some sort of chamber or rock effect from repeated measures during the ambient and enriched nutrient runs)
 
@@ -676,11 +680,26 @@ ggsave("plots/main_analysis/GPP_chla.png", plot = GPP_chla, height = 4, width = 
 ```{r}
 # calculating the autotrophic index (ratio of AFDW:chl-a) (Biggs & Close 1989)
 
+dat <- dat %>%
+  mutate(AI = total_AFDW_g_2/(total_chla_ug/1e6)) # converting chla from ug to g so that the units cancel (g/g) in the AI ratio
+         
 dat %>%
-  mutate(AI = total_AFDW_g_2/(total_chla_ug/1e6)) %>% # converting chla from ug to g so that the units cancel (g/g) in the AI ratio
   group_by(date) %>%
-  summarise(AI_avg = mean(AI)) %>%
+  summarise(AI_avg = mean(AI), AI_sd = sd(AI)) %>%
   arrange(AI_avg)
+
+# plotting changes in AI over the year
+
+AI_trends <- dat %>%
+  filter(AI < 5000) %>% # filtering out 2 outliers from october and march
+  ggplot(aes(x = date, y = AI, group = date)) +
+  geom_boxplot() +
+  labs(x = "Date", y = "Periphyton Autotrophic Index (gAFDW:gChla)") +
+  theme_classic()
+
+AI_trends
+
+ggsave("plots/main_analysis/AI_timeseries.png", plot = AI_trends, height = 4, width = 8)
 ```
 
 
@@ -1339,7 +1358,7 @@ ylab = "Normalized residuals", data = dat_lme)
 
 
 # New AFDW + Zuur method with un-transformed temp predictor
-## GPP
+### GPP
 ```{r}
 # making new dataset for lme models to remove NAs
 dat_lme <- dat_clean %>%
@@ -1358,24 +1377,25 @@ m2 <- lme(log(GPP_mgO2_d_gAFDW_2) ~ temp_C * nutrients, random = ~ 1 | rock_ID, 
 
 m3 <- lme(log(GPP_mgO2_d_gAFDW_2) ~ temp_C * nutrients, random = ~ 1 | rock_ID, weights = varIdent(form = ~1|exp_ID), data = dat_lme) # incorporating weights to account for heteroscedasticity within and btwn different experiments
 
-#m4 <- lme(log(GPP_mgO2_d_gAFDW_2) ~ temp_C * nutrients, random = ~ 1 + temp_C | rock_ID, data = dat_lme, control=(msMaxIter=500)) # adding in random intercept and slope for each rock sample, also increasing the number of iterations to acheive model convergence
+m4 <- lme(log(GPP_mgO2_d_gAFDW_2) ~ temp_C * nutrients, random = ~ 1 + temp_C | rock_ID, data = dat_lme, control=(msMaxIter=500)) # adding in random intercept and slope for each rock sample, also increasing the number of iterations to acheive model convergence
+
+
+#m5 <- lme(log(GPP_mgO2_d_gAFDW_2) ~ temp_C * nutrients, random = ~ 1 + temp_C | rock_ID, weights = varIdent(form = ~1|exp_ID), data = dat_lme, control=(msMaxIter=1000)) # incorporating weights to account for heteroscedasticity within and btwn different experiments, also increasing the number of iterations to acheive model convergence
 # would not converge
 
-m5 <- lme(log(GPP_mgO2_d_gAFDW_2) ~ temp_C * nutrients, random = ~ 1 + temp_C | rock_ID, weights = varIdent(form = ~1|exp_ID), data = dat_lme, control=(msMaxIter=500)) # incorporating weights to account for heteroscedasticity within and btwn different experiments, also increasing the number of iterations to acheive model convergence
-
-AIC(m1, m2, m3, m5)
+AIC(m1, m2, m3, m4)
 # model 5 has the lowest AIC
 
-summary(m5)
+summary(m3)
 # the model summary indicates that the nutrients and temp:nutrients interaction are not significant, thus I will drop them from the model
 
-GPP_final <- lme(log(GPP_mgO2_d_gAFDW_2) ~ temp_C, random = ~ 1 + temp_C | rock_ID, weights = varIdent(form = ~1|exp_ID), data = dat_lme, control=(msMaxIter=500))
+GPP_final <- lme(log(GPP_mgO2_d_gAFDW_2) ~ temp_C, random = ~ 1 | rock_ID, weights = varIdent(form = ~1|exp_ID), data = dat_lme)
 
 summary(GPP_final)
 
 # interpreting effect sizes of temp
-exp(0.0383)
-# for every 1C increase in temperature, GPP increases by 4% (a factor of 1.039 mgO2 per day per g AFDW).
+exp(0.0422)
+# for every 1C increase in temperature, GPP increases by 4.3% (a factor of 1.043 mgO2 per day per g AFDW).
 ```
 
 #### Graphical model validation
@@ -1393,7 +1413,7 @@ ylab = "Normalized residuals", data = dat_lme)
 #coplot(resid(m10) ~ fitted(m10) | dat_lme$exp_ID)
 ```
 
-## ER
+### ER
 ```{r}
 # making new dataset for lme models to remove NAs
 dat_lme <- dat_clean %>%
@@ -1403,7 +1423,7 @@ dat_lme <- dat_clean %>%
 dat_lme$exp_ID <- as.factor(dat_lme$exp_ID)
 
 glimpse(dat_lme)
-#View(dat_lme)
+View(dat_lme)
 
 # starting with as many explanatory variables as possible in the fixed component of the models (temp, nutrients, and their interaction)
 m1 <- gls(log(ER_mgO2_d_gAFDW_2) ~ temp_C * nutrients, method = "REML", data = dat_lme)
@@ -1412,13 +1432,13 @@ m2 <- lme(log(ER_mgO2_d_gAFDW_2) ~ temp_C * nutrients, random = ~ 1 | rock_ID, d
 
 m3 <- lme(log(ER_mgO2_d_gAFDW_2) ~ temp_C * nutrients, random = ~ 1 | rock_ID, weights = varIdent(form = ~1|exp_ID), data = dat_lme)
 
-#m4 <- lme(log(ER_mgO2_d_gAFDW_2) ~ temp_C * nutrients, random = ~ 1 + temp_C | rock_ID, data = dat_lme) # adding random intercept for rock and random slope for temperature
-# does not converge
+m4 <- lme(log(ER_mgO2_d_gAFDW_2) ~ temp_C * nutrients, random = ~ 1 + temp_C | rock_ID, data = dat_lme) # adding random intercept for rock and random slope for temperature
+
 
 #m5 <- lme(log(ER_mgO2_d_gAFDW_2) ~ temp_C * nutrients, random = ~ 1 + temp_C | rock_ID, weights = varIdent(form = ~1|exp_ID), data = dat_lme)
 # does not converge
 
-AIC(m1, m2, m3)
+AIC(m1, m2, m3, m4)
 # model 3 has the strongest support according to AIC
 
 summary(m3)
@@ -1427,12 +1447,17 @@ summary(m3)
 ER_final <- m3
 
 # interpreting effect size of temp
-exp(0.0658)
+exp(0.0660)
 
 # for every 1C increase in temperature, ER increases by 7% (a factor of 1.068 mg O2 per day per g AFDW)
 
 # interpreting effect size of nutrients
-exp(0.52)
+exp(0.496)
+
+# enriched ER rates were increased by 64% on average relative to ambient rates
+
+# interpreting temp:nutrient interaction effect
+exp(-.0169)
 ```
 
 #### Graphical model validation
@@ -1450,7 +1475,7 @@ ylab = "Normalized residuals", data = dat_lme)
 #coplot(resid(m10) ~ fitted(m10) | dat_lme$exp_ID)
 ```
 
-## NEP
+### NEP
 ```{r}
 # making new dataset for lme models to remove NAs
 dat_lme <- dat_clean %>%
@@ -1460,7 +1485,7 @@ dat_lme <- dat_clean %>%
 dat_lme$exp_ID <- as.factor(dat_lme$exp_ID)
 
 glimpse(dat_lme)
-#View(dat_lme)
+View(dat_lme)
 
 # starting with as many explanatory variables as possible in the fixed component of the models (temp, nutrients, and their interaction)
 m1 <- gls(log(NEP_mgO2_d_gAFDW_2) ~ temp_C * nutrients, method = "REML", data = dat_lme)
@@ -1469,13 +1494,13 @@ m2 <-  lme(log(NEP_mgO2_d_gAFDW_2) ~ temp_C * nutrients, random = ~ 1 | rock_ID,
 
 m3 <- lme(log(NEP_mgO2_d_gAFDW_2) ~ temp_C * nutrients, random = ~ 1 | rock_ID, weights = varIdent(form = ~1|exp_ID), data = dat_lme) # accounting for heteroscedasticity within and among different experiments
 
-#m4 <- lme(log(NEP_mgO2_d_gAFDW_2) ~ temp_C * nutrients, random = ~ 1 + temp_C| rock_ID, data = dat_lme, control=(msMaxIter=500)) # adding random slopes for each rock (i.e. the relationship between temperature and NEP varies for each individual rock)
+m4 <- lme(log(NEP_mgO2_d_gAFDW_2) ~ temp_C * nutrients, random = ~ 1 + temp_C| rock_ID, data = dat_lme, control=(msMaxIter=500)) # adding random slopes for each rock (i.e. the relationship between temperature and NEP varies for each individual rock)
 # model does not converge
 
 m5 <- lme(log(NEP_mgO2_d_gAFDW_2) ~ temp_C * nutrients, random = ~ 1 + temp_C| rock_ID, weights = varIdent(form = ~1|exp_ID), data = dat_lme, control=(msMaxIter=500)) # now adding in variance structure back in to account for heterscedasticity within and between experiments
 # model does not converge
 
-AIC(m1, m2, m3, m5)
+AIC(m1, m2, m3, m4, m5)
 # model 5 has the most support according to AIC
 
 summary(m5)
@@ -1486,9 +1511,9 @@ NEP_final <- lme(log(NEP_mgO2_d_gAFDW_2) ~ temp_C, random = ~ 1 + temp_C| rock_I
 summary(NEP_final)
 
 # interpreting effect size of temp
-exp(0.0376)
+exp(0.0351)
 
-# for every 1C increase in temperature, NEP increases by 3.8% (a factor of 1.038 mg O2 per day per g AFDW)
+# for every 1C increase in temperature, NEP increases by 3.6% (a factor of 1.036 mg O2 per day per g AFDW)
 ```
 
 #### Graphical model validation
@@ -1505,6 +1530,10 @@ ylab = "Normalized residuals", data = dat_lme)
 
 #coplot(resid(m10) ~ fitted(m10) | dat_lme$exp_ID)
 ```
+
+Modeling based on corrected AFDW values did not affect the results or interpretation of the models drastically, and some effect sizes for the fixed effects changed minimally. 
+
+
 
 # Centering Temp and Nutrient Data by experiment
 ```{r}
