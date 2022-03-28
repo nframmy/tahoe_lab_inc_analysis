@@ -24,7 +24,7 @@ knitr::opts_knit$set(root.dir = '..')
 # Loading and formatting dataframe
 ```{r, include = FALSE}
 # importing nutrient data
-dat <- read_csv("data/nutrient_data/210928_nutrientdata_mar_aug_R.csv", skip = 2)
+dat <- read_csv("data/nutrient_data/220328_nutrient_data_main_R.csv", skip = 2)
 head(dat)
 
 
@@ -177,8 +177,28 @@ uptake <- dat %>%
         date_chamber == "2021-11-28_F_6" |
         date_chamber == "2021-11-28_F_8" |
         date_chamber == "2021-11-28_F_9" |
-        date_chamber == "2021-11-28_F_11" ~ 18.5
-    )) # values double-checked by NTF on 1/10/22
+        date_chamber == "2021-11-28_F_11" ~ 18.5,
+      date_chamber == "2022-02-27_F_J_26" |
+        date_chamber == "2022-02-27_F_1" |
+        date_chamber == "2022-02-27_F_7" |
+        date_chamber == "2022-02-27_F_8" |
+        date_chamber == "2022-02-27_F_12" ~ 9,
+      date_chamber == "2022_02-27_F_J_29" |
+        date_chamber == "2022-02-27_F_2" |
+        date_chamber == "2022-02-27_F_3" |
+        date_chamber == "2022-02-27_F_5" |
+        date_chamber == "2022-02-27_F_11" ~ 6,
+      date_chamber == "2022-02-27_F_J_22" |
+        date_chamber == "2022-02-27_F_6" |
+        date_chamber == "2022-02-27_F_9" |
+        date_chamber == "2022-02-27_F_14" |
+        date_chamber == "2022-02-27_F_15" ~ 12,
+      date_chamber == "2022-02-27_F_J_14" |
+        date_chamber == "2022-02-27_F_4" |
+        date_chamber == "2022-02-27_F_10" |
+        date_chamber == "2022-02-27_F_13" |
+        date_chamber == "2022-02-27_F_16" ~ 15
+    )) # values double-checked by NTF on 3/28/22
 
 #View(uptake)
 
@@ -196,7 +216,8 @@ uptake_rates <- uptake_rates %>%
       date == "2021-06-13" ~ 11,
       date == "2021-08-08" ~ 23,
       date == "2021-10-10" ~ 24,
-      date == "2021-11-28" ~ 24
+      date == "2021-11-28" ~ 24,
+      date == "2022-02-27" ~ 23.5
       )) %>%
   mutate(NO3_uptake_ug_N_hr = (bulk_NO3_N_py - NO3_N_py)/hrs, NH4_uptake_ug_N_hr = (bulk_NH4_N - NH4_N)/hrs, SRP_uptake_ug_P_hr = (bulk_SRP - SRP)/hrs, DP_uptake_ug_P_hr = (bulk_DP - DP)/hrs) %>% # calculating uptake rates per hour
   mutate(NO3_use_ug_N = bulk_NO3_N_py - NO3_N_py, NH4_use_ug_N = bulk_NH4_N - NH4_N, SRP_use_ug_P = bulk_SRP - SRP, DP_use_ug_P = bulk_DP - DP) # calculating drawdown in nutrients
@@ -232,6 +253,10 @@ dat_long <- dat_long %>%
         chamber == "F_A_9" |
         chamber == "F_A_18" |
         chamber == "F_A_38" ~ "2021-11-28_background_rate",
+      chamber == "F_J_14" |
+        chamber == "F_J_22" |
+        chamber == "F_J_26" |
+        chamber == "F_J_29" ~ "2022-02-27_background_rate",
       TRUE ~ as.character(date)
     )
   )
@@ -280,7 +305,7 @@ dat_long <- dat_long %>%
 metab_dat <- read_csv("data/main_analysis/main_rate_data.csv")
 
 metab_dat <- metab_dat %>%
-  mutate(date = c(rep("2021-03-01", 16), rep("2021-03-15", 16), rep("2021-04-07", 16), rep("2021-04-21", 16), rep("2021-06-13", 32), rep("2021-08-08", 32), rep("2021-10-10", 32), rep("2021-11-28", 32))) %>% # creating date column
+  mutate(date = c(rep("2021-03-01", 16), rep("2021-03-15", 16), rep("2021-04-07", 16), rep("2021-04-21", 16), rep("2021-06-13", 32), rep("2021-08-08", 32), rep("2021-10-10", 32), rep("2021-11-28", 32), rep("2022-02-27", 32))) %>% # creating date column
   unite(chamber_ID, date, chamber, sep = "_", remove = "FALSE") %>%# combining date and chamber columns
   dplyr::select(chamber_ID, total_AFDW_g, rock_SA_m2, GPP_mg_d, ER_mg_d, NEP_mg_d) # selecting only the columns I need to declutter dataframe a bit
 
