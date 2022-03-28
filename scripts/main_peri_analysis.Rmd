@@ -507,7 +507,7 @@ ggsave("plots/main_analysis/rates_log_log_AGU.png", plot = rates_log_log_AGU, wi
 ggsave("plots/main_analysis/rates_log_log_AGU_hr.png", plot = rates_log_log_AGU, width = 7, height = 3, dpi = 300)
 ```
 
-## Same plot, but this time with un-logged x-axis (temperature)
+## Un-logged x-axis (temperature)
 ```{r}
 rates_log_log_AGU <- dat_long %>%
   ggplot(aes(x = temp_C, y = rates_AFDW, group = interaction(exp_ID, nutrients))) +
@@ -527,6 +527,7 @@ rates_log_log_AGU
 
 # high quality dpi plot
 ggsave("plots/main_analysis/rates_unlogged_AGU_hr.png", plot = rates_log_log_AGU, width = 7, height = 3, dpi = 300)
+
 ```
 
 
@@ -562,6 +563,26 @@ AFDW_2_log_rates
 
 # high quality dpi plot
 ggsave("plots/main_analysis/correct_AFDW_norm_rates.png", plot = AFDW_2_log_rates, width = 7, height = 3, dpi = 300)
+
+
+# same plot, but ungrouping by experiment ID
+
+metab_rates <- dat_long %>%
+  ggplot(aes(x = temp_C, y = rates_AFDW, group = nutrients)) +
+  facet_grid(cols = vars(rate_name_AFDW)) +
+  scale_y_log10() +
+ geom_point(aes(color = nutrient_trt), size = 1.5) +
+  geom_smooth(aes(color = nutrient_trt), method = "lm", se = FALSE) +
+  scale_color_viridis_d("Nutrient Treatment") + # renaming label of color legend
+  theme_minimal() +
+  theme(legend.position = "bottom") +
+  labs(x = expression('Temperature (\u00B0C)'),
+      y = expression(Rates~(mgO[2]~day^{-1}~gAFDW^{-1})))
+
+metab_rates
+
+# high quality dpi plot
+ggsave("plots/main_analysis/AFDW_model_output_plot.png", plot = metab_rates, width = 7, height = 3, dpi = 300)
 ```
 
 # Plotting Areal Rates
@@ -643,6 +664,25 @@ areal_rates_log_log_AGU <- dat_long_m2 %>%
 areal_rates_log_log_AGU
 
 ggsave("plots/main_analysis/areal_rates_unlogged_AGU.png", plot = areal_rates_log_log_AGU, width = 7, height = 3, dpi = 300)
+
+
+# same plot, but ungrouping by experiment ID
+
+areal_rates <- dat_long_m2 %>%
+  ggplot(aes(x = temp_C, y = rates_m2, group = nutrients)) +
+  facet_grid(cols = vars(rate_name_m2)) +
+  scale_y_log10() +
+ geom_point(aes(color = nutrient_trt), size = 1.5) +
+  geom_smooth(aes(color = nutrient_trt), method = "lm", se = FALSE) +
+  scale_color_viridis_d("Nutrient Treatment") + # renaming label of color legend
+  theme_minimal() +
+  theme(legend.position = "bottom") +
+  labs(x = expression('Temperature (\u00B0C)'),
+      y = expression(Rates~(mgO[2]~day^{-1}~m^{-2})))
+
+areal_rates
+
+ggsave("plots/main_analysis/SA_model_output.png", plot = areal_rates, width = 7, height = 3, dpi = 300)
 ```
 
 # Chl-a-normalized GPP plot
@@ -1423,7 +1463,7 @@ dat_lme <- dat_clean %>%
 dat_lme$exp_ID <- as.factor(dat_lme$exp_ID)
 
 glimpse(dat_lme)
-View(dat_lme)
+#View(dat_lme)
 
 # starting with as many explanatory variables as possible in the fixed component of the models (temp, nutrients, and their interaction)
 m1 <- gls(log(ER_mgO2_d_gAFDW_2) ~ temp_C * nutrients, method = "REML", data = dat_lme)
@@ -1485,7 +1525,7 @@ dat_lme <- dat_clean %>%
 dat_lme$exp_ID <- as.factor(dat_lme$exp_ID)
 
 glimpse(dat_lme)
-View(dat_lme)
+#View(dat_lme)
 
 # starting with as many explanatory variables as possible in the fixed component of the models (temp, nutrients, and their interaction)
 m1 <- gls(log(NEP_mgO2_d_gAFDW_2) ~ temp_C * nutrients, method = "REML", data = dat_lme)
@@ -1531,7 +1571,102 @@ ylab = "Normalized residuals", data = dat_lme)
 #coplot(resid(m10) ~ fitted(m10) | dat_lme$exp_ID)
 ```
 
-Modeling based on corrected AFDW values did not affect the results or interpretation of the models drastically, and some effect sizes for the fixed effects changed minimally. 
+Modeling based on corrected AFDW values did not affect the results or interpretation of the models drastically, and some effect sizes for the fixed effects changed minimally.
+
+### Plotting Model Results
+#### GPP
+```{r}
+# making new dataset for lme models to remove NAs
+dat_lme <- dat_clean %>%
+  filter(!is.na(GPP_mgO2_d_gAFDW_2))
+
+# converting experiment ID from numberic to a factor
+dat_lme$exp_ID <- as.factor(dat_lme$exp_ID)
+
+# saving effect size estimates into a dataframe
+library(effects)
+effects_temp <- effects::effect(term = "temp_C", mod = GPP_final)
+summary(effects_temp)
+
+# saving effects in a dataframe
+temp_df <- as.data.frame(effects_temp)
+head(temp_df)
+
+GPP_mod_plot <- ggplot() +
+  scale_y_log10() +
+  geom_point(data = dat_lme, aes(x = temp_C, y = GPP_mgO2_d_gAFDW_2),size = 1.5) +
+  geom_line(data = temp_df, aes(x = temp_C, y = exp(fit))) + # un-logging estimates so that they are plotted with the un-logged data on a log10 axis
+  geom_ribbon(data = temp_df, aes(x = temp_C, ymin = exp(lower), ymax = exp(upper)), alpha = 0.3) +
+  theme_classic() +
+  labs(x = expression('Temperature (\u00B0C)'),
+      y = expression(GPP~(mgO[2]~day^{-1}~gAFDW^{-1})))
+
+GPP_mod_plot
+```
+
+#### ER
+```{r}
+# making new dataset for lme models to remove NAs
+dat_lme <- dat_clean %>%
+  filter(!is.na(ER_mgO2_d_gAFDW_2))
+
+# converting experiment ID from numberic to a factor
+dat_lme$exp_ID <- as.factor(dat_lme$exp_ID)
+
+
+# saving effect size estimates into a dataframe
+library(effects)
+effects_temp <- effects::effect(term = "temp_C", mod = ER_final)
+summary(effects_temp)
+
+# saving effects in a dataframe
+temp_df <- as.data.frame(effects_temp)
+head(temp_df)
+
+ER_mod_plot <- ggplot() +
+  scale_y_log10() +
+  geom_point(data = dat_lme, aes(x = temp_C, y = ER_mgO2_d_gAFDW_2),size = 1.5) +
+  geom_line(data = temp_df, aes(x = temp_C, y = exp(fit))) + # un-logging estimates so that they are plotted with the un-logged data on a log10 axis
+  geom_ribbon(data = temp_df, aes(x = temp_C, ymin = exp(lower), ymax = exp(upper)), alpha = 0.3) +
+  theme_classic() +
+  labs(x = expression('Temperature (\u00B0C)'),
+      y = expression(ER~(mgO[2]~day^{-1}~gAFDW^{-1})))
+
+ER_mod_plot
+```
+
+
+#### NEP
+```{r}
+# making new dataset for lme models to remove NAs
+dat_lme <- dat_clean %>%
+  filter(!is.na(NEP_mgO2_d_gAFDW_2))
+
+# converting experiment ID from numberic to a factor
+dat_lme$exp_ID <- as.factor(dat_lme$exp_ID)
+
+
+# saving effect size estimates into a dataframe
+library(effects)
+effects_temp <- effects::effect(term = "temp_C", mod = NEP_final)
+summary(effects_temp)
+
+# saving effects in a dataframe
+temp_df <- as.data.frame(effects_temp)
+head(temp_df)
+
+NEP_mod_plot <- ggplot() +
+  scale_y_log10() +
+  geom_point(data = dat_lme, aes(x = temp_C, y = NEP_mgO2_d_gAFDW_2),size = 1.5) +
+  geom_line(data = temp_df, aes(x = temp_C, y = exp(fit))) + # un-logging estimates so that they are plotted with the un-logged data on a log10 axis
+  geom_ribbon(data = temp_df, aes(x = temp_C, ymin = exp(lower), ymax = exp(upper)), alpha = 0.3) +
+  theme_classic() +
+  labs(x = expression('Temperature (\u00B0C)'),
+      y = expression(NEP~(mgO[2]~day^{-1}~gAFDW^{-1})))
+
+NEP_mod_plot
+```
+
 
 
 
