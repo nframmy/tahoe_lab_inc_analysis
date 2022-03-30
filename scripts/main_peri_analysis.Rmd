@@ -1424,7 +1424,7 @@ m4 <- lme(log(GPP_mgO2_d_gAFDW_2) ~ temp_C * nutrients, random = ~ 1 + temp_C | 
 # would not converge
 
 AIC(m1, m2, m3, m4)
-# model 5 has the lowest AIC
+# model 3 has the lowest AIC
 
 summary(m3)
 # the model summary indicates that the nutrients and temp:nutrients interaction are not significant, thus I will drop them from the model
@@ -1668,6 +1668,99 @@ NEP_mod_plot
 ```
 
 
+# Final models
+
+Using advice from Andrew Blandino of UCD stats consulting, the following models will keep all fixed effects as these are inherent in the experimental design and thus should not be left out of the model despite statistical insignificance.
+
+## GPP
+```{r}
+# making new dataset for lme models to remove NAs
+dat_lme <- dat_clean %>%
+  filter(!is.na(GPP_mgO2_d_gAFDW_2))
+
+# converting experiment ID from numberic to a factor
+dat_lme$exp_ID <- as.factor(dat_lme$exp_ID)
+
+# model with lowest AIC from GPP analyis above
+m3 <- lme(log(GPP_mgO2_d_gAFDW_2) ~ temp_C * nutrients, random = ~ 1 | rock_ID / exp_ID, weights = varIdent(form = ~1|exp_ID), data = dat_lme) # incorporating weights to account for heteroscedasticity within and btwn different experiments, also allowing random intercepts for each rock and exp_ID combo
+
+summary(m3)
+```
+#### Graphical model validation
+```{r}
+# checking ordinary residuals of the final model (these are allowed to show heteroscedasticity). Using code from Zuur et al.
+E1 <- resid(m3)
+coplot(E1 ∼ rock_ID|exp_ID,
+ylab = "Ordinary residuals", data = dat_lme)
+
+# now checking standardized residuals of each of the experiments (random effect in the model). These should not show any patterns and should exhibit homogeneous variance.
+E2 <- resid(m3, type = "normalized")
+coplot(E2 ∼ rock_ID|exp_ID,
+ylab = "Normalized residuals", data = dat_lme)
+
+#coplot(resid(m10) ~ fitted(m10) | dat_lme$exp_ID)
+```
+
+
+## ER
+```{r}
+# making new dataset for lme models to remove NAs
+dat_lme <- dat_clean %>%
+  filter(!is.na(ER_mgO2_d_gAFDW_2))
+
+# converting experiment ID from numberic to a factor
+dat_lme$exp_ID <- as.factor(dat_lme$exp_ID)
+
+# model 3 has lowest AIC from ER analysis above
+m3 <- lme(log(ER_mgO2_d_gAFDW_2) ~ temp_C * nutrients, random = ~ 1 | rock_ID/exp_ID, weights = varIdent(form = ~1|exp_ID), data = dat_lme) # allowing random slope term to vary by rock IDs and experiment ID (april 2021 experiment did not have repeated measures while subsequent ones did)
+
+summary(m3)
+```
+
+#### Graphical model validation
+```{r}
+# checking ordinary residuals of the final model (these are allowed to show heteroscedasticity). Using code from Zuur et al.
+E1 <- resid(m3)
+coplot(E1 ∼ rock_ID|exp_ID,
+ylab = "Ordinary residuals", data = dat_lme)
+
+# now checking standardized residuals of each of the experiments (random effect in the model). These should not show any patterns and should exhibit homogeneous variance.
+E2 <- resid(m3, type = "normalized")
+coplot(E2 ∼ rock_ID|exp_ID,
+ylab = "Normalized residuals", data = dat_lme)
+
+#coplot(resid(m10) ~ fitted(m10) | dat_lme$exp_ID)
+```
+
+## NEP
+```{r}
+# making new dataset for lme models to remove NAs
+dat_lme <- dat_clean %>%
+  filter(!is.na(NEP_mgO2_d_gAFDW_2))
+
+# converting experiment ID from numberic to a factor
+dat_lme$exp_ID <- as.factor(dat_lme$exp_ID)
+
+# m5 has the lowest AIC from the NEP analysis above
+m5 <- lme(log(NEP_mgO2_d_gAFDW_2) ~ temp_C * nutrients, random = ~ 1 + temp_C| rock_ID/exp_ID, weights = varIdent(form = ~1|exp_ID), data = dat_lme, control=(msMaxIter=500)) # allowing intercept to vary by rock ID and experiment ID
+
+summary(m5)
+```
+
+#### Graphical model validation
+```{r}
+# checking ordinary residuals of the final model (these are allowed to show heteroscedasticity). Using code from Zuur et al.
+E1 <- resid(m5)
+coplot(E1 ∼ rock_ID|exp_ID,
+ylab = "Ordinary residuals", data = dat_lme)
+
+# now checking standardized residuals of each of the experiments (random effect in the model). These should not show any patterns and should exhibit homogeneous variance.
+E2 <- resid(m5, type = "normalized")
+coplot(E2 ∼ rock_ID|exp_ID,
+ylab = "Normalized residuals", data = dat_lme)
+
+#coplot(resid(m10) ~ fitted(m10) | dat_lme$exp_ID)
+```
 
 
 # Centering Temp and Nutrient Data by experiment
