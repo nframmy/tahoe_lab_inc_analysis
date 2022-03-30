@@ -306,7 +306,8 @@ metab_dat <- read_csv("data/main_analysis/main_rate_data.csv")
 
 metab_dat <- metab_dat %>%
   mutate(date = c(rep("2021-03-01", 16), rep("2021-03-15", 16), rep("2021-04-07", 16), rep("2021-04-21", 16), rep("2021-06-13", 32), rep("2021-08-08", 32), rep("2021-10-10", 32), rep("2021-11-28", 32), rep("2022-02-27", 32))) %>% # creating date column
-  unite(chamber_ID, date, chamber, sep = "_", remove = "FALSE") %>%# combining date and chamber columns
+  unite(chamber_ID, date, chamber, sep = "_", remove = "FALSE") %>% # combining date and chamber columns
+  filter(nutrient_trt == "enriched") %>% # selecting only enriched samples to bind to dataframe since ambient samples did not produce the following nutrient uptake rates
   dplyr::select(chamber_ID, total_AFDW_g, rock_SA_m2, GPP_mg_d, ER_mg_d, NEP_mg_d) # selecting only the columns I need to declutter dataframe a bit
 
 #View(metab_dat)
@@ -370,6 +371,40 @@ AFDW_molar <- molar %>%
 AFDW_molar
 
 ggsave("plots/nutrient_uptake/molar_AFDW_norm_uptake_rates.png", plot = AFDW_molar, width = 7, height = 4, dpi = 300)
+
+# plot of log transformed NH4 uptake alone
+
+NH4_molar <- molar %>%
+  filter(uptake_rate_name == "NH4_rate" & date != "2021-04-21") %>%
+  ggplot(aes(x = temp_C, y = molar_rate)) +
+  geom_point(aes(group = date_chamber, color = date_background)) +
+  geom_smooth(aes(color = date_background), method = "lm") +
+  scale_color_viridis_d("Experiment Date") +
+  scale_y_log10() +
+  theme_bw() +
+  theme(legend.position = "bottom") +
+  labs(title = "AFDW-Normalized Periphyton NH4 Uptake Rates vs. Temperature",
+      x = expression('Temperature (\u00B0C)'),
+      y = expression(log(Nutrient~Uptake~(mol~gAFDW^{-1}~hr^{-1}))))
+
+NH4_molar
+
+# plot of log transformed SRP uptake alone
+SRP_molar <- molar %>%
+  filter(uptake_rate_name == "SRP_rate") %>%
+  ggplot(aes(x = temp_C, y = molar_rate)) +
+  geom_point(aes(group = date_chamber, color = date_background)) +
+  geom_smooth(aes(color = date_background), method = "lm") +
+  scale_color_viridis_d("Experiment Date") +
+  scale_y_log10() +
+  theme_bw() +
+  theme(legend.position = "bottom") +
+  labs(title = "AFDW-Normalized Periphyton SRP Uptake Rates vs. Temperature",
+      x = expression('Temperature (\u00B0C)'),
+      y = expression(log(Nutrient~Uptake~(mol~gAFDW^{-1}~hr^{-1}))))
+
+SRP_molar
+
 ```
 
 # Molar ratio of nutrient uptake plot
@@ -402,3 +437,43 @@ mol_ratio_plot
 ggsave("plots/nutrient_uptake/uptake_molar_ratio.png", plot = mol_ratio_plot, width = 7, height = 4, dpi = 300)
 ```
 
+
+# Nutrient Use Efficiency
+```{r}
+UE <- main %>%
+  group_by(chamber_ID) %>%
+  dplyr::select(-AFDW_rates) %>% #removing this column of AFDW normalized rates
+  tidyr::pivot_wider(names_from = "uptake_rate_name",
+             values_from = "rates") %>% # pivoting data from long to wide format so each nutrient uptake rate type has it's own column
+  mutate(NH4_uptake_mol_d = 24 * NH4_rate/14.0067e6,
+    SRP_uptake_mol_d = 24 * SRP_rate/30.9738e6,
+    NO3_uptake_mol_d = 24 * NO3_rate/14.0067e6
+  ) # converting raw nutrient uptake rates from ug per hour to moles per day
+
+UE <- UE %>%
+ mutate(NUE = (GPP_mg_d/1000/(15.999 * 2)) / (NH4_uptake_mol_d + NO3_uptake_mol_d), PUE = (GPP_mg_d/1000/(15.999 * 2)) / SRP_uptake_mol_d) %>% # converting GPP from mg O2 per day to mol O2 per day and then dividing by mol of N/P per day in order to calculate N and P use efficiency
+  filter(!is.na(NUE))
+
+#View(UE)
+
+# plotting NUE vs temperature to assess how temperature affects nutrient use efficiency
+
+UE %>%
+  ggplot(aes(x = temp_C, y = NUE), group = date) +
+  geom_point(aes(shape = date), color = "orange") +
+  geom_smooth(aes(shape = date), method = "lm", color = "orange") +
+  geom_point(aes(x = temp_C, y = PUE, shape = date), color = "purple") +
+  geom_smooth(aes(x = temp_C, y = PUE, shape = date), method = "lm", color = "purple") +
+  labs(x = expression('Temperature (\u00B0C)'),
+       y = expression(Nutrient~Use~Efficiency~(mol~O2:mol~N/P))) +
+  theme_minimal()
+```
+
+Nutrient-use efficiency calculation methods:
+
+I took GPP measurements (in mg O2 per day) of enriched periphyton samples only and converted them to mol O2 per day; I then took NH4, NO3, and SRP uptake rates (in ug N or ug P per hr) and converted them to mol N or mol P per day. I then calculated Nitrogen use efficiency by dividing the GPP of each chamber by the addition of both NH4 and NO3 uptake (in mol N per day). I calculated phosphorus use efficiency by doing the same, except dividing by the SRP uptake rate (in mol P per day). The nutrient uptake rates were mainly dark uptake rates (periphyton samples were only exposed to 1-1.5 hrs of light during the uptake period) and thus may not truly reflect the light nutrient uptake rates needed for proper determination of nutrient use efficiency, but the data can still be used to compare relative changes in order to detect patterns in nutrient use efficiency with temperature.
+
+
+NUE Interpretation: 
+
+Nutrient use efficiency for both N and P looks like it increases with temperature when the data is split up by individual experiments, but this pattern falls apart when data is agregated together as there is actually a negative trend in nutrient use efficiency with temp. The first finding is in agreement with the literature as NUE is expected to increase with temp (Cross et al. 2015 pp. 1036), but it is in disagreement with Oleksy et al. 2021 NUE patterns which show a negative correlation with temperature. N- Use efficiency is mainly driven by NH4 uptake (NO3 was barely used by phytoplankton) and this is a passive transport process into algal cells rather than active and is thus less affected by temperature increases (Reay et al. 1999) which is supported by our data.
