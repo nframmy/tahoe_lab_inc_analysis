@@ -531,7 +531,7 @@ ggsave("plots/main_analysis/rates_unlogged_AGU_hr.png", plot = rates_log_log_AGU
 ```
 
 
-# New AFDW-adjusted rate plot
+## New AFDW-adjusted rate plot
 ```{r}
 # remelting dataframe to long format so that metabolic rate columns are combined into one column and values are in a separate column so all can be plotted at once
 dat_long <- dat_clean %>%
@@ -550,10 +550,10 @@ AFDW_2_log_rates <- dat_long %>%
   facet_grid(cols = vars(rate_name_AFDW)) +
   scale_y_log10() +
  geom_point(aes(shape = exp_ID, color = nutrient_trt), size = 1.5) +
-  geom_smooth(aes(color = nutrient_trt), method = "lm") +
+  geom_smooth(aes(color = nutrient_trt), method = "lm", se = FALSE) +
   scale_color_viridis_d("Nutrient Treatment") + # renaming label of color legend
   scale_shape_discrete(name = "Experiment ID") +# renaming label of point shape legend
-  scale_shape_manual(values = c(0:6)) +
+  scale_shape_manual(values = c(9, 15:20)) +
   theme_minimal() +
   theme(legend.position = "bottom") +
   labs(x = expression('Temperature (\u00B0C)'),
@@ -1695,10 +1695,14 @@ ylab = "Ordinary residuals", data = dat_lme)
 
 # now checking standardized residuals of each of the experiments (random effect in the model). These should not show any patterns and should exhibit homogeneous variance.
 E2 <- resid(m3, type = "normalized")
+plot(E2)
 coplot(E2 ∼ rock_ID|exp_ID,
 ylab = "Normalized residuals", data = dat_lme)
 
 #coplot(resid(m10) ~ fitted(m10) | dat_lme$exp_ID)
+
+dat_lme %>%
+  filter(exp_ID == 4)
 ```
 
 
@@ -1712,7 +1716,7 @@ dat_lme <- dat_clean %>%
 dat_lme$exp_ID <- as.factor(dat_lme$exp_ID)
 
 # model 3 has lowest AIC from ER analysis above
-m3 <- lme(log(ER_mgO2_d_gAFDW_2) ~ temp_C * nutrients, random = ~ 1 | rock_ID/exp_ID, weights = varIdent(form = ~1|exp_ID), data = dat_lme) # allowing random slope term to vary by rock IDs and experiment ID (april 2021 experiment did not have repeated measures while subsequent ones did)
+m3 <- lme(log(ER_mgO2_d_gAFDW_2) ~ temp_C * nutrients, random = ~ 1| rock_ID/exp_ID, weights = varIdent(form = ~1|exp_ID), data = dat_lme) # allowing random slope term to vary by rock IDs and experiment ID (april 2021 experiment did not have repeated measures while subsequent ones did)
 
 summary(m3)
 ```
@@ -1740,12 +1744,15 @@ dat_lme <- dat_clean %>%
 
 # converting experiment ID from numberic to a factor
 dat_lme$exp_ID <- as.factor(dat_lme$exp_ID)
+View(dat_lme)
 
 # m5 has the lowest AIC from the NEP analysis above
 m5 <- lme(log(NEP_mgO2_d_gAFDW_2) ~ temp_C * nutrients, random = ~ 1 + temp_C| rock_ID/exp_ID, weights = varIdent(form = ~1|exp_ID), data = dat_lme, control=(msMaxIter=500)) # allowing intercept to vary by rock ID and experiment ID
 
 summary(m5)
 ```
+
+If I remove temp_C from the random effect (only allow for random intercepts instead for each rock_ID), the the residual plots look more normal and there isn't 1 experiment with uniform residuals of 0.
 
 #### Graphical model validation
 ```{r}
@@ -1760,6 +1767,7 @@ coplot(E2 ∼ rock_ID|exp_ID,
 ylab = "Normalized residuals", data = dat_lme)
 
 #coplot(resid(m10) ~ fitted(m10) | dat_lme$exp_ID)
+plot(E1)
 ```
 
 
