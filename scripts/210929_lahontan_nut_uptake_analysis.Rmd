@@ -454,7 +454,7 @@ UE <- UE %>%
  mutate(NUE = (GPP_mg_d/1000/(15.999 * 2)) / (NH4_uptake_mol_d + NO3_uptake_mol_d), PUE = (GPP_mg_d/1000/(15.999 * 2)) / SRP_uptake_mol_d) %>% # converting GPP from mg O2 per day to mol O2 per day and then dividing by mol of N/P per day in order to calculate N and P use efficiency
   filter(!is.na(NUE))
 
-#View(UE)
+View(UE)
 
 # plotting NUE vs temperature to assess how temperature affects nutrient use efficiency
 
@@ -464,6 +464,33 @@ UE %>%
   geom_smooth(aes(shape = date), method = "lm", color = "orange") +
   geom_point(aes(x = temp_C, y = PUE, shape = date), color = "purple") +
   geom_smooth(aes(x = temp_C, y = PUE, shape = date), method = "lm", color = "purple") +
+  labs(x = expression('Temperature (\u00B0C)'),
+       y = expression(Nutrient~Use~Efficiency~(mol~O2:mol~N/P))) +
+  theme_minimal()
+
+# restructuring data from wide into long format in order to plot NUE and PUE at the same time
+UE_long <- UE %>%
+  tidyr::pivot_longer(cols = c(NUE, PUE),
+                       names_to = "parameter",
+                       values_to = "value")
+
+# regression parsed out by experiment
+UE_plot <- UE_long %>%
+  ggplot(aes(x = temp_C, y = value, color = parameter, group = interaction(date, parameter))) +
+  geom_point(aes(shape = date)) +
+  geom_smooth(aes(color = parameter), method = "lm", se = FALSE) +
+  labs(x = expression('Temperature (\u00B0C)'),
+       y = expression(Nutrient~Use~Efficiency~(mol~O2:mol~N/P))) +
+  scale_color_viridis_d() +
+  theme_minimal()
+
+ggsave("plots/nutrient_uptake/nutrient_use_eff.png", plot = UE_plot, height = 4, width = 6, dpi = 300)
+
+# regression on aggregated data
+UE_long %>%
+  ggplot(aes(x = temp_C, y = value, color = parameter, group = parameter)) +
+  geom_point() +
+  geom_smooth(aes(color = parameter), method = "lm") +
   labs(x = expression('Temperature (\u00B0C)'),
        y = expression(Nutrient~Use~Efficiency~(mol~O2:mol~N/P))) +
   theme_minimal()
