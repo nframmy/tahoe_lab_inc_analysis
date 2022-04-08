@@ -372,6 +372,24 @@ AFDW_molar
 
 ggsave("plots/nutrient_uptake/molar_AFDW_norm_uptake_rates.png", plot = AFDW_molar, width = 7, height = 4, dpi = 300)
 
+
+# log-transformed plot of molar uptake rates per gAFDW of periphyton
+log_AFDW_molar <- molar %>%
+  ggplot(aes(x = temp_C, y = (molar_rate + 0.001))) + # adding a small number to prevent negative values while doing a log-transformation
+  scale_y_log10() +
+  facet_grid(cols = vars(uptake_rate_name)) +
+  geom_point(aes(group = date_chamber, color = date_background)) +
+  geom_smooth(aes(color = date_background), method = "lm") +
+  scale_color_viridis_d("Experiment Date") +
+  theme_bw() +
+  theme(legend.position = "bottom") +
+  labs(title = "AFDW-Normalized Periphyton Nutrient Uptake Rates vs. Temperature",
+      x = expression('Temperature (\u00B0C)'),
+      y = expression(log(Nutrient~Uptake~(mol~gAFDW^{-1}~hr^{-1}))))
+log_AFDW_molar
+
+
+
 # plot of log transformed NH4 uptake alone
 
 NH4_molar <- molar %>%
@@ -483,6 +501,8 @@ UE_plot <- UE_long %>%
        y = expression(Nutrient~Use~Efficiency~(mol~O2:mol~N/P))) +
   scale_color_viridis_d() +
   theme_minimal()
+UE_plot
+
 
 ggsave("plots/nutrient_uptake/nutrient_use_eff.png", plot = UE_plot, height = 4, width = 6, dpi = 300)
 
