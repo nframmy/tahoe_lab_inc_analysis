@@ -22,6 +22,7 @@ library(DescTools)
 library(arm)
 library(nlme)
 library(lattice)
+library(emmeans)
 
 # changing working directory from /scripts to /tahoe_lab_inc_analysis
 knitr::opts_knit$set(root.dir = '..')
@@ -560,7 +561,7 @@ dat_lme <- dat_clean %>%
 # converting experiment ID from numberic to a factor
 dat_lme$exp_ID <- as.factor(dat_lme$exp_ID)
 
-glimpse(dat_lme)
+#glimpse(dat_lme)
 #View(dat_lme)
 
 # starting with as many explanatory variables as possible in the fixed effects component of the models (temp, nutrients, their interaction, and autotrophic index (AI))
@@ -575,19 +576,20 @@ m4 <- lme(log(GPP_mgO2_d_gAFDW_2) ~ temp_C * nutrients + AI + exp_ID, random = ~
 
 m5 <- lme(log(GPP_mgO2_d_gAFDW_2) ~ temp_C * nutrients + AI + exp_ID, random = ~ 1 + temp_C | rock_ID, weights = varIdent(form = ~1|exp_ID), data = dat_lme, control=(msMaxIter=1000)) # incorporating weights to account for heteroscedasticity within and btwn different experiments, also increasing the number of iterations to acheive model convergence
 
-# changing exp_ID from a fixed effect to a random effect in the models
+# changing exp_ID from a fixed effect to a random effect in the models and also nesting rock_ID within exp_ID
 # this allows the temperature and nutrient intercepts to vary by season
 
-m6 <- lme(log(GPP_mgO2_d_gAFDW_2) ~ temp_C * nutrients + AI, random = ~ 1 | rock_ID / exp_ID, data = dat_lme)
+m6 <- lme(log(GPP_mgO2_d_gAFDW_2) ~ temp_C * nutrients + AI, random = ~ 1 | exp_ID / rock_ID, data = dat_lme)
 
-m7 <- lme(log(GPP_mgO2_d_gAFDW_2) ~ temp_C * nutrients + AI, random = ~ 1 | rock_ID / exp_ID, weights = varIdent(form = ~1|exp_ID), data = dat_lme)
+m7 <- lme(log(GPP_mgO2_d_gAFDW_2) ~ temp_C * nutrients + AI, random = ~ 1 | exp_ID / rock_ID, weights = varIdent(form = ~1|exp_ID), data = dat_lme)
 
-m8 <- lme(log(GPP_mgO2_d_gAFDW_2) ~ temp_C * nutrients + AI, random = ~ 1 + temp_C | rock_ID / exp_ID, data = dat_lme, control=(msMaxIter=500))
-
-#m9 <- m5 <- lme(log(GPP_mgO2_d_gAFDW_2) ~ temp_C * nutrients + AI, random = ~ 1 + temp_C | rock_ID / exp_ID, weights = varIdent(form = ~1|exp_ID), data = dat_lme, control=(msMaxIter=1000))
+#m8 <- lme(log(GPP_mgO2_d_gAFDW_2) ~ temp_C * nutrients + AI, random = ~ 1 + temp_C | exp_ID / rock_ID, data = dat_lme, control=(msMaxIter=500))
 # does not converge
 
-AIC(m1, m2, m3, m4, m5, m6, m7, m8)
+m9 <- lme(log(GPP_mgO2_d_gAFDW_2) ~ temp_C * nutrients + AI, random = ~ 1 + temp_C | exp_ID / rock_ID, weights = varIdent(form = ~1|exp_ID), data = dat_lme, control=(msMaxIter=1000))
+# does not converge
+
+AIC(m1, m2, m3, m4, m5, m6, m7, m9)
 # model 5 has the lowest AIC
 
 summary(m5)
@@ -597,30 +599,42 @@ summary(m6)
 
 summary(m7)
 
-summary(m8)
+summary(m9)
 
 
 # interpreting effect sizes of temp from m7
-exp(0.043)
-# for every 1C increase in temperature, GPP increases by 4.4% (a factor of 1.044 mgO2 per day per g AFDW).
+exp(0.045)
+# for every 1C increase in temperature, GPP increases by 4.6% (a factor of 1.046 mgO2 per day per g AFDW).
 ```
 
-#### Graphical model validation
+#### Model validation
 ```{r}
 # checking ordinary residuals of the final model (these are allowed to show heteroscedasticity). Using code from Zuur et al.
-E1 <- resid(m7)
+E1 <- resid(m9)
 coplot(E1 ∼ rock_ID|exp_ID,
 ylab = "Ordinary residuals", data = dat_lme)
 
 # now checking standardized residuals of each of the experiments (random effect in the model). These should not show any patterns and should exhibit homogeneous variance.
-E2 <- resid(m7, type = "normalized")
+E2 <- resid(m9, type = "normalized")
 coplot(E2 ∼ rock_ID|exp_ID,
 ylab = "Normalized residuals", data = dat_lme)
 
 ```
 
 
-#### Visualizing model results
+#### emmeans & emmip: Visualizing model interactions
+```{r}
+# reccommended emmeans analyses from Stats Consulting
+
+emtrends(m9, pairwise ~ nutrients, var = "temp_C")
+
+emmip(m9, nutrients ~ temp_C, cov.reduce = F, CIs = T) +
+  geom_point(aes(x = temp_C, y = log(GPP_mgO2_d_gAFDW_2), color = interaction(temp_C, nutrients)), data = dat_lme)
+
+# why is emmip treating the temp_C variable as a factor instead of numeric??
+
+```
+
 
 ### ER
 ```{r}
@@ -631,7 +645,7 @@ dat_lme <- dat_clean %>%
 # converting experiment ID from numberic to a factor
 dat_lme$exp_ID <- as.factor(dat_lme$exp_ID)
 
-glimpse(dat_lme)
+#glimpse(dat_lme)
 #View(dat_lme)
 
 # starting with as many explanatory variables as possible in the fixed component of the models (temp, nutrients, and their interaction)
@@ -649,19 +663,19 @@ m4 <- lme(log(ER_mgO2_d_gAFDW_2) ~ temp_C * nutrients + AI + exp_ID, random = ~ 
 
 # adding exp_ID as a random effect instead of a fixed effect
 
-m6 <- lme(log(ER_mgO2_d_gAFDW_2) ~ temp_C * nutrients + AI, random = ~ 1 | rock_ID / exp_ID, data = dat_lme)
+m6 <- lme(log(ER_mgO2_d_gAFDW_2) ~ temp_C * nutrients + AI, random = ~ 1 | exp_ID / rock_ID, data = dat_lme)
 
-m7 <- lme(log(ER_mgO2_d_gAFDW_2) ~ temp_C * nutrients + AI, random = ~ 1 | rock_ID / exp_ID, weights = varIdent(form = ~1|exp_ID), data = dat_lme)
+m7 <- lme(log(ER_mgO2_d_gAFDW_2) ~ temp_C * nutrients + AI, random = ~ 1 | exp_ID / rock_ID, weights = varIdent(form = ~1|exp_ID), data = dat_lme)
 
-#m8 <- lme(log(ER_mgO2_d_gAFDW_2) ~ temp_C * nutrients + AI, random = ~ 1 + temp_C | rock_ID / exp_ID, data = dat_lme)
+#m8 <- lme(log(ER_mgO2_d_gAFDW_2) ~ temp_C * nutrients + AI, random = ~ 1 + temp_C | exp_ID / rock_ID, data = dat_lme)
 # does not converge
 
-#m9 <- lme(log(ER_mgO2_d_gAFDW_2) ~ temp_C * nutrients + AI, random = ~ 1 + temp_C | rock_ID / exp_ID, weights = varIdent(form = ~1|exp_ID), data = dat_lme)
+#m9 <- lme(log(ER_mgO2_d_gAFDW_2) ~ temp_C * nutrients + AI, random = ~ 1 + temp_C | exp_ID / rock_ID, weights = varIdent(form = ~1|exp_ID), data = dat_lme)
 # does not converge
 
 
 AIC(m1, m2, m3, m4, m6, m7)
-# model 3 has the strongest support according to AIC
+# model 7 has the strongest support according to AIC
 
 summary(m3)
 # looks like all the fixed effects are statistically significant and will be kept in the model
@@ -678,7 +692,7 @@ exp(0.066)
 # for every 1C increase in temperature, ER increases by 7% (a factor of 1.068 mg O2 per day per g AFDW)
 
 # interpreting effect size of nutrients
-exp(0.463)
+exp(0.462)
 
 # enriched ER rates were increased by 59% on average relative to ambient rates
 
@@ -689,7 +703,7 @@ exp(0.463)
 ```
 
 
-#### Graphical model validation
+#### Model validation
 ```{r}
 # checking ordinary residuals of the final model (these are allowed to show heteroscedasticity). Using code from Zuur et al.
 E1 <- resid(ER_final)
@@ -705,6 +719,15 @@ ylab = "Normalized residuals", data = dat_lme)
 ```
 
 
+#### emmeans and emmip: Visualizing model interactions
+```{r}
+emtrends(m7, pairwise ~ nutrients, var = "temp_C")
+
+emmip(m7, nutrients ~ temp_C, cov.reduce = F, CIs = T) +
+  geom_point(aes(x = temp_C, y = log(ER_mgO2_d_gAFDW_2), color = interaction(temp_C, nutrients)), data = dat_lme)
+```
+
+
 ### NEP
 ```{r}
 # making new dataset for lme models to remove NAs and data from april 2021 experiments
@@ -714,7 +737,7 @@ dat_lme <- dat_clean %>%
 # converting experiment ID from numberic to a factor
 dat_lme$exp_ID <- as.factor(dat_lme$exp_ID)
 
-glimpse(dat_lme)
+#glimpse(dat_lme)
 #View(dat_lme)
 
 # starting with as many explanatory variables as possible in the fixed component of the models (temp, nutrients, and their interaction)
@@ -732,23 +755,29 @@ m5 <- lme(log(NEP_mgO2_d_gAFDW_2) ~ temp_C * nutrients + AI + exp_ID, random = ~
 
 # adding exp_ID as a random effect instead of a fixed effect
 
-m6 <- lme(log(NEP_mgO2_d_gAFDW_2) ~ temp_C * nutrients + AI, random = ~ 1 | rock_ID / exp_ID, data = dat_lme)
+m6 <- lme(log(NEP_mgO2_d_gAFDW_2) ~ temp_C * nutrients + AI, random = ~ 1 | exp_ID / rock_ID, data = dat_lme)
 
-m7 <- lme(log(NEP_mgO2_d_gAFDW_2) ~ temp_C * nutrients + AI, random = ~ 1 | rock_ID / exp_ID, weights = varIdent(form = ~1|exp_ID), data = dat_lme)
+m7 <- lme(log(NEP_mgO2_d_gAFDW_2) ~ temp_C * nutrients + AI, random = ~ 1 | exp_ID / rock_ID, weights = varIdent(form = ~1|exp_ID), data = dat_lme)
 
-m8 <- lme(log(NEP_mgO2_d_gAFDW_2) ~ temp_C * nutrients + AI, random = ~ 1 + temp_C| rock_ID / exp_ID, data = dat_lme, control=(msMaxIter=500))
+m8 <- lme(log(NEP_mgO2_d_gAFDW_2) ~ temp_C * nutrients + AI, random = ~ 1 + temp_C| exp_ID / rock_ID, data = dat_lme, control=(msMaxIter=500))
 
-m9 <- lme(log(NEP_mgO2_d_gAFDW_2) ~ temp_C * nutrients + AI, random = ~ 1 + temp_C| rock_ID / exp_ID, weights = varIdent(form = ~1|exp_ID), data = dat_lme, control=(msMaxIter=500))
+m9 <- lme(log(NEP_mgO2_d_gAFDW_2) ~ temp_C * nutrients + AI, random = ~ 1 + temp_C| exp_ID / rock_ID, weights = varIdent(form = ~1|exp_ID), data = dat_lme, control=(msMaxIter=500))
 
 AIC(m1, m2, m3, m4, m5, m6, m7, m8, m9)
-# model 5 has the most support according to AIC
+# model 9 has the most support according to AIC
 
 summary(m5)
 
+summary(m6)
+
 summary(m7)
 
+summary(m8)
 
-NEP_final <- m7
+summary(m9)
+
+
+NEP_final <- m9
 
 # interpreting effect size of temp in m5
 exp(0.041)
@@ -762,7 +791,7 @@ exp(0.036)
 ```
 
 
-#### Graphical model validation
+#### Model validation
 ```{r}
 # checking ordinary residuals of the final model (these are allowed to show heteroscedasticity). Using code from Zuur et al.
 E1 <- resid(NEP_final)
@@ -776,6 +805,17 @@ ylab = "Normalized residuals", data = dat_lme)
 
 #coplot(resid(m10) ~ fitted(m10) | dat_lme$exp_ID)
 ```
+
+
+
+#### emmeans and emmip: Visualizing model interactions
+```{r}
+emtrends(m9, pairwise ~ nutrients, var = "temp_C")
+
+emmip(m9, nutrients ~ temp_C, cov.reduce = F, CIs = T) +
+  geom_point(aes(x = temp_C, y = log(NEP_mgO2_d_gAFDW_2), color = interaction(temp_C, nutrients)), data = dat_lme)
+```
+
 
 
 # Models for surface area normalized rates
@@ -807,25 +847,24 @@ m5 <- lme(log(GPP_mgO2_d_m2) ~ temp_C * nutrients + AI + exp_ID, random = ~ 1 + 
 # changing exp_ID from a fixed effect to a random effect in the models
 # this allows the temperature and nutrient intercepts to vary by season
 
-m6 <- lme(log(GPP_mgO2_d_m2) ~ temp_C * nutrients + AI, random = ~ 1 | rock_ID / exp_ID, data = dat_lme)
+m6 <- lme(log(GPP_mgO2_d_m2) ~ temp_C * nutrients + AI, random = ~ 1 | exp_ID / rock_ID, data = dat_lme)
 
-m7 <- lme(log(GPP_mgO2_d_m2) ~ temp_C * nutrients + AI, random = ~ 1 | rock_ID / exp_ID, weights = varIdent(form = ~1|exp_ID), data = dat_lme)
+m7 <- lme(log(GPP_mgO2_d_m2) ~ temp_C * nutrients + AI, random = ~ 1 | exp_ID / rock_ID, weights = varIdent(form = ~1|exp_ID), data = dat_lme)
 
-m8 <- lme(log(GPP_mgO2_d_m2) ~ temp_C * nutrients + AI, random = ~ 1 + temp_C | rock_ID / exp_ID, data = dat_lme, control=(msMaxIter=500))
-
-m9 <- lme(log(GPP_mgO2_d_m2) ~ temp_C * nutrients + AI, random = ~ 1 + temp_C | rock_ID / exp_ID, weights = varIdent(form = ~1|exp_ID), data = dat_lme, control=(msMaxIter=1000))
+#m8 <- lme(log(GPP_mgO2_d_m2) ~ temp_C * nutrients + AI, random = ~ 1 + temp_C | exp_ID / rock_ID, data = dat_lme, control=(msMaxIter=500))
 # does not converge
 
-AIC(m1, m2, m3, m4, m5, m6, m7, m8, m9)
-# model 3 has the lowest AIC
+m9 <- lme(log(GPP_mgO2_d_m2) ~ temp_C * nutrients + AI, random = ~ 1 + temp_C | exp_ID / rock_ID, weights = varIdent(form = ~1|exp_ID), data = dat_lme, control=(msMaxIter=1000))
+# does not converge
+
+AIC(m1, m2, m3, m4, m5, m6, m7, m9)
+# model 9 has the lowest AIC
 
 summary(m3)
 
 summary(m6)
 
 summary(m7)
-
-summary(m8)
 
 summary(m9)
 
@@ -839,7 +878,7 @@ exp(0.028)
 #### Graphical model validation
 ```{r}
 # checking ordinary residuals of the final model (these are allowed to show heteroscedasticity). Using code from Zuur et al.
-E1 <- resid(m7)
+E1 <- resid(m9)
 coplot(E1 ∼ rock_ID|exp_ID,
 ylab = "Ordinary residuals", data = dat_lme)
 
@@ -848,6 +887,14 @@ E2 <- resid(m9, type = "normalized")
 coplot(E2 ∼ rock_ID|exp_ID,
 ylab = "Normalized residuals", data = dat_lme)
 
+```
+
+
+#### emmeans and emmip: Visualizing model interactions
+```{r}
+emtrends(m9, pairwise ~ nutrients, var = "temp_C")
+
+emmip(m9, nutrients ~ temp_C, cov.reduce = F, CIs = T)
 ```
 
 
@@ -878,28 +925,28 @@ m5 <- lme(log(ER_mgO2_d_m2) ~ temp_C * nutrients + AI + exp_ID, random = ~ 1 + t
 
 # adding exp_ID as a random effect instead of a fixed effect
 
-m6 <- lme(log(ER_mgO2_d_m2) ~ temp_C * nutrients + AI, random = ~ 1 | rock_ID / exp_ID, data = dat_lme)
+m6 <- lme(log(ER_mgO2_d_m2) ~ temp_C * nutrients + AI, random = ~ 1 | exp_ID / rock_ID, data = dat_lme)
 
-m7 <- lme(log(ER_mgO2_d_m2) ~ temp_C * nutrients + AI, random = ~ 1 | rock_ID / exp_ID, weights = varIdent(form = ~1|exp_ID), data = dat_lme)
+m7 <- lme(log(ER_mgO2_d_m2) ~ temp_C * nutrients + AI, random = ~ 1 | exp_ID / rock_ID, weights = varIdent(form = ~1|exp_ID), data = dat_lme)
 
-m8 <- lme(log(ER_mgO2_d_m2) ~ temp_C * nutrients + AI, random = ~ 1 + temp_C | rock_ID / exp_ID, data = dat_lme)
+m8 <- lme(log(ER_mgO2_d_m2) ~ temp_C * nutrients + AI, random = ~ 1 + temp_C | exp_ID / rock_ID, data = dat_lme)
 # does not converge
 
-m9 <- lme(log(ER_mgO2_d_m2) ~ temp_C * nutrients + AI, random = ~ 1 + temp_C | rock_ID / exp_ID, weights = varIdent(form = ~1|exp_ID), data = dat_lme)
+#m9 <- lme(log(ER_mgO2_d_m2) ~ temp_C * nutrients + AI, random = ~ 1 + temp_C | exp_ID / rock_ID, weights = varIdent(form = ~1|exp_ID), data = dat_lme)
 # does not converge
 
 
 AIC(m1, m2, m3, m4, m5, m6, m7, m8, m9)
-# model 3 has the strongest support according to AIC
+# model 9 has the strongest support according to AIC
 
-summary(m3)
-# looks like all the fixed effects are statistically significant and will be kept in the model
+summary(m9)
+# looks like all the fixed effects except AI are statistically significant and will be kept in the model
 
 summary(m7)
 
 # both models 3 and 7 have the structure I need, but including exp_ID (experiment ID) as a random effect is more accurate to the experiment structure since seasonality is nested within the temp:nutrient effects and we expect a distribution of effect estimates across seasons rather than one "true" temp and nutrient effect for all seasons.
 
-ER_final <- m7
+ER_final <- m9
 
 ```
 
@@ -918,6 +965,15 @@ coplot(E2 ∼ rock_ID|exp_ID,
 ylab = "Normalized residuals", data = dat_lme)
 
 #coplot(resid(m10) ~ fitted(m10) | dat_lme$exp_ID)
+```
+
+
+
+#### emmeans and emmip: Visualizing model interactions
+```{r}
+emtrends(m9, pairwise ~ nutrients, var = "temp_C")
+
+emmip(m9, nutrients ~ temp_C, cov.reduce = F, CIs = T)
 ```
 
 
@@ -949,25 +1005,54 @@ m5 <- lme(log(NEP_mgO2_d_m2) ~ temp_C * nutrients + AI + exp_ID, random = ~ 1 + 
 
 # adding exp_ID as a random effect instead of a fixed effect
 
-m6 <- lme(log(NEP_mgO2_d_m2) ~ temp_C * nutrients + AI, random = ~ 1 | rock_ID / exp_ID, data = dat_lme)
+m6 <- lme(log(NEP_mgO2_d_m2) ~ temp_C * nutrients + AI, random = ~ 1 | exp_ID / rock_ID, data = dat_lme)
 
-m7 <- lme(log(NEP_mgO2_d_m2) ~ temp_C * nutrients + AI, random = ~ 1 | rock_ID / exp_ID, weights = varIdent(form = ~1|exp_ID), data = dat_lme)
+m7 <- lme(log(NEP_mgO2_d_m2) ~ temp_C * nutrients + AI, random = ~ 1 | exp_ID / rock_ID, weights = varIdent(form = ~1|exp_ID), data = dat_lme)
 
-m8 <- lme(log(NEP_mgO2_d_m2) ~ temp_C * nutrients + AI, random = ~ 1 + temp_C| rock_ID / exp_ID, data = dat_lme, control=(msMaxIter=500))
+#m8 <- lme(log(NEP_mgO2_d_m2) ~ temp_C * nutrients + AI, random = ~ 1 + temp_C| exp_ID / rock_ID, data = dat_lme, control=(msMaxIter=500))
+# does not converge
 
-m9 <- lme(log(NEP_mgO2_d_m2) ~ temp_C * nutrients + AI, random = ~ 1 + temp_C| rock_ID / exp_ID, weights = varIdent(form = ~1|exp_ID), data = dat_lme, control=(msMaxIter=500))
+m9 <- lme(log(NEP_mgO2_d_m2) ~ temp_C * nutrients + AI, random = ~ 1 + temp_C| exp_ID / rock_ID, weights = varIdent(form = ~1|exp_ID), data = dat_lme, control=(msMaxIter=500))
 
-AIC(m1, m2, m3, m4, m5, m6, m7, m8, m9)
-# model 5 has the most support according to AIC
+AIC(m1, m2, m3, m4, m5, m6, m7, m9)
+# model 9 has the most support according to AIC
 
 summary(m3)
 
 summary(m5)
 
 summary(m7)
+
+summary(m9)
 # some big differences between models here, some have insignificant temp effect
 
-NEP_final <- m7
+NEP_final <- m9
 
+```
+
+
+
+#### Graphical model validation
+```{r}
+# checking ordinary residuals of the final model (these are allowed to show heteroscedasticity). Using code from Zuur et al.
+E1 <- resid(NEP_final)
+coplot(E1 ∼ rock_ID|exp_ID,
+ylab = "Ordinary residuals", data = dat_lme)
+
+# now checking standardized residuals of each of the experiments (random effect in the model). These should not show any patterns and should exhibit homogeneous variance.
+E2 <- resid(NEP_final, type = "normalized")
+coplot(E2 ∼ rock_ID|exp_ID,
+ylab = "Normalized residuals", data = dat_lme)
+
+#coplot(resid(m10) ~ fitted(m10) | dat_lme$exp_ID)
+```
+
+
+
+#### emmeans and emmip: Visualizing model interactions
+```{r}
+emtrends(m9, pairwise ~ nutrients, var = "temp_C")
+
+emmip(m9, nutrients ~ temp_C, cov.reduce = F, CIs = T)
 ```
 
