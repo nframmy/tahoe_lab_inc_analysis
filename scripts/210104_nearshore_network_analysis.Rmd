@@ -183,13 +183,17 @@ Since there's a gap in data for Tahoe city water temps for the period of mid sep
 
 # Homewood Sept-Oct Water Temps
 ```{r}
-View(dat_HW)
+#View(dat_HW)
 
-dat_HW %>%
+HW_temp <- dat_HW %>%
   filter(!is.na(T)) %>%
   ggplot(aes(x = TimeLocal, y = T)) +
   geom_point() +
-  geom_smooth()
+  geom_smooth() +
+  labs(x = "Date", y = expression('Water Temperature (\u00B0C)')) +
+  theme_classic()
+
+ggsave("plots/nearshore_temp_analysis/homewood_temp_plot.png", plot = HW_temp, height = 4, width = 6, dpi = 300)
 ```
 
 Looks like 15-17.5C range at the beginning of october at Homewood's nearshore station (based on interpolation of the data), with daily fluctuations of 1-2C in mid october.
