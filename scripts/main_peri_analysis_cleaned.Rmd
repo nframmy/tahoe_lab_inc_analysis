@@ -332,7 +332,7 @@ AFDW_2_log_rates <- dat_long %>%
   geom_smooth(aes(color = nutrient_trt), method = "lm", se = FALSE) +
   scale_color_viridis_d("Nutrient Treatment") + # renaming label of color legend
   scale_shape_discrete(name = "Experiment ID") +# renaming label of point shape legend
-  scale_shape_manual(values = c(9, 15:20)) +
+  scale_shape_manual(values = c(15:17, 3:5, 8)) +
   theme_minimal() +
   theme(legend.position = "bottom") +
   labs(x = expression('Temperature (\u00B0C)'),
@@ -344,7 +344,30 @@ AFDW_2_log_rates
 ggsave("plots/main_analysis/correct_AFDW_norm_rates.png", plot = AFDW_2_log_rates, width = 7, height = 3, dpi = 300)
 
 
-# same plot, but ungrouping by experiment ID
+
+# sample plot, but removing april experiments since they were excluded from models (due to different experimental design)
+
+AFDW_2_log_rates_wo_april <- dat_long %>%
+  filter(month != "april") %>%
+  ggplot(aes(x = temp_C, y = rates_AFDW, group = interaction(exp_ID, nutrients))) +
+  facet_grid(cols = vars(rate_name_AFDW)) +
+  scale_y_log10() +
+ geom_point(aes(shape = exp_ID, color = nutrient_trt), size = 1.5) +
+  geom_smooth(aes(color = nutrient_trt), method = "lm", se = FALSE) +
+  scale_color_viridis_d("Nutrient Treatment") + # renaming label of color legend
+  scale_shape_manual(name = "Experiment ID", values = c(15:17, 3:5, 8)) + # renaming label of point shape legend
+  theme_minimal() +
+  theme(legend.position = "bottom") +
+  labs(x = expression('Temperature (\u00B0C)'),
+      y = expression(Rates~(mgO[2]~day^{-1}~gAFDW^{-1})))
+
+AFDW_2_log_rates_wo_april
+
+ggsave("plots/main_analysis/correct_AFDW_rates_wo_april.png", plot = AFDW_2_log_rates_wo_april, width = 8, height = 3, dpi = 300)
+
+
+
+# same plot, but ungrouping by experiment ID and adding back in april 2021 data
 
 metab_rates <- dat_long %>%
   ggplot(aes(x = temp_C, y = rates_AFDW, group = nutrients)) +
@@ -397,8 +420,29 @@ areal_rates_log_log_AGU
 
 ggsave("plots/main_analysis/areal_rates_unlogged_AGU.png", plot = areal_rates_log_log_AGU, width = 7, height = 3, dpi = 300)
 
+# same plot, but removing april experiments since they were excluded from models (due to different experimental design)
 
-# same plot, but ungrouping by experiment ID
+areal_rates_log_wo_april <- dat_long_m2 %>%
+  filter(month != "april") %>%
+  ggplot(aes(x = temp_C, y = rates_m2, group = interaction(exp_ID, nutrients))) +
+  facet_grid(cols = vars(rate_name_m2)) +
+  scale_y_log10() +
+ geom_point(aes(shape = exp_ID, color = nutrient_trt), size = 1.5) +
+  geom_smooth(aes(color = nutrient_trt), method = "lm") +
+  scale_color_viridis_d("Nutrient Treatment") + # renaming label of color legend
+  scale_shape_manual(name = "Experiment ID", values = c(15:17, 3:5, 8)) + # renaming label of point shape legend
+  theme_minimal() +
+  theme(legend.position = "bottom") +
+  labs(x = expression('Temperature (\u00B0C)'),
+      y = expression(Rates~(mgO[2]~day^{-1}~m^{-2})))
+
+areal_rates_log_wo_april
+
+ggsave("plots/main_analysis/areal_rates_unlogged_wo_april.png", plot = areal_rates_log_wo_april, width = 8, height = 3, dpi = 300)
+
+
+
+# same plot, but ungrouping by experiment ID and adding back in april 2021 data
 
 areal_rates <- dat_long_m2 %>%
   ggplot(aes(x = temp_C, y = rates_m2, group = nutrients)) +
@@ -427,16 +471,16 @@ chla_rates <- dat_clean %>%
 # making experiment ID column a factor instead of numeric since it is treated as discrete rather than continuous in the plot
 chla_rates$exp_ID <- as.factor(chla_rates$exp_ID)
 
-# now plotting GPP rates vs. temp
+# now plotting GPP rates vs. temp, and removing april 2021 data
 
 GPP_chla <- chla_rates %>%
+  filter(month != "april") %>%
   ggplot(aes(x = temp_C, y = GPP_mgO2_d_ugChla, group = interaction(exp_ID, nutrients))) +
   scale_y_log10() +
  geom_point(aes(shape = exp_ID, color = nutrient_trt), size = 1.5) +
   geom_smooth(aes(color = nutrient_trt), method = "lm") +
   scale_color_viridis_d("Nutrient Treatment") + # renaming label of color legend
-  scale_shape_discrete(name = "Experiment ID") +# renaming label of point shape legend
-  scale_shape_manual(values = c(0:6)) +
+  scale_shape_manual(name = "Experiment ID", values = c(15:17, 3:5, 8)) + # renaming label of point shape legend
   theme_minimal() +
   theme(legend.position = "bottom") +
   labs(x = expression('Temperature (\u00B0C)'),
@@ -444,7 +488,7 @@ GPP_chla <- chla_rates %>%
 
 GPP_chla
 
-ggsave("plots/main_analysis/GPP_chla.png", plot = GPP_chla, height = 4, width = 6)
+ggsave("plots/main_analysis/GPP_chla.png", plot = GPP_chla, height = 4, width = 8)
 
 
 ```
@@ -619,6 +663,9 @@ E2 <- resid(m9, type = "normalized")
 coplot(E2 ∼ rock_ID|exp_ID,
 ylab = "Normalized residuals", data = dat_lme)
 
+plot(m9)
+
+
 ```
 
 
@@ -716,6 +763,8 @@ coplot(E2 ∼ rock_ID|exp_ID,
 ylab = "Normalized residuals", data = dat_lme)
 
 #coplot(resid(m10) ~ fitted(m10) | dat_lme$exp_ID)
+
+plot(ER_final)
 ```
 
 
@@ -804,6 +853,8 @@ coplot(E2 ∼ rock_ID|exp_ID,
 ylab = "Normalized residuals", data = dat_lme)
 
 #coplot(resid(m10) ~ fitted(m10) | dat_lme$exp_ID)
+
+plot(NEP_final)
 ```
 
 
