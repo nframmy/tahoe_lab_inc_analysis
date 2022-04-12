@@ -472,7 +472,7 @@ UE <- UE %>%
  mutate(NUE = (GPP_mg_d/1000/(15.999 * 2)) / (NH4_uptake_mol_d + NO3_uptake_mol_d), PUE = (GPP_mg_d/1000/(15.999 * 2)) / SRP_uptake_mol_d) %>% # converting GPP from mg O2 per day to mol O2 per day and then dividing by mol of N/P per day in order to calculate N and P use efficiency
   filter(!is.na(NUE))
 
-View(UE)
+#View(UE)
 
 # plotting NUE vs temperature to assess how temperature affects nutrient use efficiency
 
@@ -492,15 +492,22 @@ UE_long <- UE %>%
                        names_to = "parameter",
                        values_to = "value")
 
+UE_long$parameter <- factor(UE_long$parameter, levels = c("NUE", "PUE"), labels = c("Nitrogen Use Efficiency", "Phosphorus Use Efficiency")) # renaming factor levels for graphing purposes
+levels(UE_long$parameter)
+
+#View(UE_long)
+
 # regression parsed out by experiment
 UE_plot <- UE_long %>%
-  ggplot(aes(x = temp_C, y = value, color = parameter, group = interaction(date, parameter))) +
-  geom_point(aes(shape = date)) +
-  geom_smooth(aes(color = parameter), method = "lm", se = FALSE) +
+  ggplot(aes(x = temp_C, y = value, color = date, group = interaction(date, parameter))) +
+  facet_grid(cols = vars(parameter)) +
+  geom_point() +
+  geom_smooth(aes(color = date), method = "lm", se = FALSE) +
   labs(x = expression('Temperature (\u00B0C)'),
-       y = expression(Nutrient~Use~Efficiency~(mol~O2:mol~N/P))) +
+       y = expression(mol~O2:mol~N/P)) +
   scale_color_viridis_d() +
-  theme_minimal()
+  theme_minimal() +
+  theme(legend.position = "bottom")
 UE_plot
 
 
