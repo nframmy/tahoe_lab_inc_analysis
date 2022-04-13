@@ -1,0 +1,29 @@
+---
+title: "TERC_routine_peri_analysis"
+author: "Nick Framsted"
+date: "4/12/2022"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+library(ggplot2)
+library(tidyverse)
+library(lubridate)
+library(ggpubr)
+library(plotly)
+library(reshape2)
+library(DescTools)
+library(arm)
+library(lme4)
+library(lattice)
+
+# changing working directory from /scripts to /tahoe_lab_inc_analysis
+knitr::opts_knit$set(root.dir = '..')
+```
+
+
+# Loading & formatting dataframe
+```{r}
+
+```
+

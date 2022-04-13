@@ -23,6 +23,9 @@ library(arm)
 library(nlme)
 library(lattice)
 library(emmeans)
+library(sjPlot)
+library(sjmisc)
+library(sjlabelled)
 
 # changing working directory from /scripts to /tahoe_lab_inc_analysis
 knitr::opts_knit$set(root.dir = '..')
@@ -636,6 +639,14 @@ m9 <- lme(log(GPP_mgO2_d_gAFDW_2) ~ temp_C * nutrients + AI, random = ~ 1 + temp
 AIC(m1, m2, m3, m4, m5, m6, m7, m9)
 # model 5 has the lowest AIC
 
+summary(m1)
+
+summary(m2)
+
+summary(m3)
+
+summary(m4)
+
 summary(m5)
 # the model summary indicates that temp and exp_ID7 are significant predictors of GPP
 
@@ -649,6 +660,14 @@ summary(m9)
 # interpreting effect sizes of temp from m7
 exp(0.045)
 # for every 1C increase in temperature, GPP increases by 4.6% (a factor of 1.046 mgO2 per day per g AFDW).
+
+
+# comparing model estimates to see if they change drastically with differing model structure
+# produces html file showing models and parameter estimates
+tab_model(m1, m2, m3, m4, m5, m6, m7, m9, dv.labels = c("Model1", "Model2", "Model3", "Model4", "Model5", "Model6", "Model7", "Model9"),
+  show.ci = FALSE, 
+  show.p = FALSE, 
+  transform = NULL)
 ```
 
 #### Model validation
@@ -747,6 +766,16 @@ exp(0.462)
 1-exp(-.0153)
 
 # when nutrients are enriched, the rate of increase of metabolic rate for every degree celsius decreases by 1.5%.
+
+
+
+# comparing model estimates to see if they change drastically with differing model structure
+# produces html file showing models and parameter estimates
+
+tab_model(m1, m2, m3, m4, m6, m7, dv.labels = c("Model1", "Model2", "Model3", "Model4", "Model6", "Model7"),
+  show.ci = FALSE, 
+  show.p = FALSE, 
+  transform = NULL)
 ```
 
 
@@ -837,6 +866,15 @@ exp(0.041)
 exp(0.036)
 
 # for every 1C increase in temperature, NEP increases by 3.7% (a factor of 1.037 mg O2 per day per g AFDW)
+
+
+# comparing model estimates to see if they change drastically with differing model structure
+# produces html file showing models and parameter estimates
+
+tab_model(m1, m2, m3, m4, m5, m6, m7, m8, m9, dv.labels = c("Model1", "Model2", "Model3", "Model4", "Model5", "Model6", "Model7", "Model8", "Model9"),
+  show.ci = FALSE, 
+  show.p = FALSE, 
+  transform = NULL)
 ```
 
 

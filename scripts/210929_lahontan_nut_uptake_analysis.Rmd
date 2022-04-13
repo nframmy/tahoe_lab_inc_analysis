@@ -295,7 +295,8 @@ Important things to keep in mind: 1) The April experiment had much lower initial
 # creating numeric chamber column in nutrient data and removing the "F_" from individual cells
 dat_long <- dat_long %>%
   mutate(chamber_num = as.numeric(gsub("F_", "", chamber))) %>% #removing unwanted characters
-  unite(chamber_ID, date, chamber_num, sep = "_", remove = "FALSE") # combining date and chamber number columns for use in joining AFDW data from previous incubations
+  unite(chamber_ID, date, chamber_num, sep = "_", remove = "FALSE") %>% # combining date and chamber number columns for use in joining AFDW data from previous incubations
+  filter(!grepl("A|J", chamber)) # removing data from background nutrient uptake jars
 
 #View(dat_long)
 
@@ -323,6 +324,12 @@ main <- left_join(dat_long, metab_dat, by = "chamber_ID")
 main <- main %>%
   mutate(AFDW_rates = rates/total_AFDW_g)
 
+
+# renaming factor levels for graphing purposes
+main$uptake_rate_name <- factor(main$uptake_rate_name, levels = c("NH4_rate", "NO3_rate", "SRP_rate"), labels = c("Ammonium", "Nitrate", "Soluble Reactive Phosphorus")) 
+
+levels(main$uptake_rate_name)
+
 # plotting AFDW_normalized rates
 # plotting nutrient uptake rates
 AFDW <- main %>%
@@ -330,12 +337,11 @@ AFDW <- main %>%
   ggplot(aes(x = temp_C, y = AFDW_rates)) +
   facet_grid(cols = vars(uptake_rate_name)) +
   geom_point(aes(group = date_chamber, color = date_background)) +
-  geom_smooth(aes(color = date_background), method = "lm") +
+  geom_smooth(aes(color = date_background), method = "lm", se = F) +
   scale_color_viridis_d("Experiment Date") +
-  theme_bw() +
+  theme_minimal() +
   theme(legend.position = "bottom") +
-  labs(title = "AFDW-Normalized Periphyton Nutrient Uptake Rates vs. Temperature",
-      x = expression('Temperature (\u00B0C)'),
+  labs(x = expression('Temperature (\u00B0C)'),
       y = expression(Nutrient~Uptake~(ugN/ugP~gAFDW^{-1}~hr^{-1})))
 AFDW
 
@@ -349,24 +355,26 @@ ggsave("plots/nutrient_uptake/AFDW_norm_uptake_rates.png", plot = AFDW, width = 
 molar <- main %>%
   filter(uptake_rate_name != "DP_rate" & AFDW_rates <600) %>% # filtering out DP uptake rates since chemical there is no single chemical formula for this P species to calculate molar uptake rate with, also filtering out outlier from nov 2021 experiment
   mutate(molar_rate = case_when(
-    uptake_rate_name == "NH4_rate" ~ AFDW_rates/14.0067e6,
-    uptake_rate_name == "SRP_rate" ~ AFDW_rates/30.9738e6,
-    uptake_rate_name == "NO3_rate" ~ AFDW_rates/14.0067e6
-  ))
+    uptake_rate_name == "Ammonium" ~ AFDW_rates/14.0067e6,
+    uptake_rate_name == "Soluble Reactive Phosphorus" ~ AFDW_rates/30.9738e6,
+    uptake_rate_name == "Nitrate" ~ AFDW_rates/14.0067e6
+  )) %>%
+  mutate(molar_rate_d = molar_rate)
 
-#View(molar_rate)
+
+#View(molar)
 
 # plotting molar uptake rates per gAFDW of periphyton
 AFDW_molar <- molar %>%
-  ggplot(aes(x = temp_C, y = molar_rate)) +
+  filter(date != "2021-04-21") %>% # removing april 2021 experiment data since nutrient enrichment conc. was too low
+  ggplot(aes(x = temp_C, y = molar_rate_d)) +
   facet_grid(cols = vars(uptake_rate_name)) +
   geom_point(aes(group = date_chamber, color = date_background)) +
-  geom_smooth(aes(color = date_background), method = "lm") +
+  geom_smooth(aes(color = date_background), method = "lm", se = F) +
   scale_color_viridis_d("Experiment Date") +
-  theme_bw() +
+  theme_minimal() +
   theme(legend.position = "bottom") +
-  labs(title = "AFDW-Normalized Periphyton Nutrient Uptake Rates vs. Temperature",
-      x = expression('Temperature (\u00B0C)'),
+  labs(x = expression('Temperature (\u00B0C)'),
       y = expression(Nutrient~Uptake~(mol~gAFDW^{-1}~hr^{-1})))
 AFDW_molar
 
@@ -393,7 +401,7 @@ log_AFDW_molar
 # plot of log transformed NH4 uptake alone
 
 NH4_molar <- molar %>%
-  filter(uptake_rate_name == "NH4_rate" & date != "2021-04-21") %>%
+  filter(uptake_rate_name == "Ammonium" & date != "2021-04-21") %>%
   ggplot(aes(x = temp_C, y = molar_rate)) +
   geom_point(aes(group = date_chamber, color = date_background)) +
   geom_smooth(aes(color = date_background), method = "lm") +
@@ -409,7 +417,7 @@ NH4_molar
 
 # plot of log transformed SRP uptake alone
 SRP_molar <- molar %>%
-  filter(uptake_rate_name == "SRP_rate") %>%
+  filter(uptake_rate_name == "Soluble Reactive Phosphorus") %>%
   ggplot(aes(x = temp_C, y = molar_rate)) +
   geom_point(aes(group = date_chamber, color = date_background)) +
   geom_smooth(aes(color = date_background), method = "lm") +
@@ -427,29 +435,31 @@ SRP_molar
 
 # Molar ratio of nutrient uptake plot
 ```{r}
+#View(uptake_rates)
 molar_ratio <- uptake_rates %>%
+  filter(!grepl("A|J", chamber)) %>% # removing data from background nutrient uptake jars
   mutate(NO3_uptake_mol_hr = NO3_uptake_ug_N_hr/14.0067e6, NH4_uptake_mol_hr = NH4_uptake_ug_N_hr/14.0067e6, SRP_uptake_mol_hr = SRP_uptake_ug_P_hr/30.9738e6)
 
 molar_ratio <- molar_ratio %>%
   mutate(uptake_N_P_mol_ratio = (NO3_uptake_mol_hr + NH4_uptake_mol_hr)/SRP_uptake_mol_hr)
 
 head(molar_ratio)
+#View(molar_ratio)
 
 # making date column a factor for plotting with discrete color scale
 class(molar_ratio$date)
 molar_ratio$date <- as.factor(molar_ratio$date)
 
 mol_ratio_plot <- molar_ratio %>%
-  filter(uptake_N_P_mol_ratio < 10 & uptake_N_P_mol_ratio > 0) %>% # filtering out outliers from aug 2021 experiment
+  filter(uptake_N_P_mol_ratio < 10 & uptake_N_P_mol_ratio > 0 & date != "2021-04-21") %>% # filtering out outliers from aug 2021 experiment and april 2021 experiment data (nutrient levels were off)
   ggplot(aes(x = temp_C, y = uptake_N_P_mol_ratio)) +
   geom_point(aes(group = date_chamber, color = date)) +
-  geom_smooth(aes(color = date), method = "lm") +
+  geom_smooth(aes(color = date), method = "lm", se = F) + # removing error ribbons from trendlines
   scale_color_viridis_d("Experiment Date") +
-  theme_bw() +
+  theme_minimal() +
   theme(legend.position = "bottom") +
-  labs(title = "Periphyton Nutrient Uptake Molar Ratio vs. Temperature",
-      x = expression('Temperature (\u00B0C)'),
-      y = expression(Molar~Ratio~of~Nutrient~Uptake~(mol~N:mol~P)))
+  labs(x = expression('Temperature (\u00B0C)'),
+      y = expression(Nutrient~Uptake~Molar~Ratio(mol~N:mol~P)))
 mol_ratio_plot
 
 ggsave("plots/nutrient_uptake/uptake_molar_ratio.png", plot = mol_ratio_plot, width = 7, height = 4, dpi = 300)
