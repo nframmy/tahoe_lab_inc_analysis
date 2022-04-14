@@ -322,7 +322,7 @@ dat_long <- dat_clean %>%
                names_to = "rate_name_AFDW",
                values_to = "rates_AFDW",
                values_drop_na = TRUE)
-#View(dat_long)
+View(dat_long)
 
 # making experiment ID column a factor instead of numeric since it is treated as discrete rather than continuous in the plot
 dat_long$exp_ID <- as.factor(dat_long$exp_ID)
@@ -388,6 +388,36 @@ metab_rates
 
 # high quality dpi plot
 ggsave("plots/main_analysis/AFDW_model_output_plot.png", plot = metab_rates, width = 7, height = 3, dpi = 300)
+
+
+# plot with only march and april experiments to test for carry-over effects between ambient and enriched trials (samples from these experiments were independent between ambient and enriched trials and were incubated immediatelu with no hold-times between; however, samples were collected from the field 2 wks apart which could introduce variation in the periphyton communities being incubated)
+
+AFDW_2_log_rates_april <- dat %>% # data frame with march data included
+  filter(month != "june" | nutrients != 0 | chamber != 1) %>%
+  filter(month != "june" | nutrients != 0 | chamber != 3) %>%
+  filter(month != "november" | chamber != 2) %>%
+  filter(month != "november" | chamber != 15) %>% #filtering out outliers
+  filter(month == "april" | month == "march") %>% # only including data from march and april experiments
+  rename(GPP = GPP_mgO2_d_gAFDW_2, ER = ER_mgO2_d_gAFDW_2, NEP = NEP_mgO2_d_gAFDW_2) %>% # renaming columns so that facet labels are more tidy
+  pivot_longer(cols = c(NEP, GPP, ER),
+               names_to = "rate_name_AFDW",
+               values_to = "rates_AFDW",
+               values_drop_na = TRUE) %>% # melting data so all 3 rates can be plotted at once
+  mutate(exp_ID = as.factor(exp_ID)) %>% # making exp_ID a factor for plotting purposes
+  ggplot(aes(x = temp_C, y = rates_AFDW, group = interaction(exp_ID, nutrients))) +
+  facet_grid(cols = vars(rate_name_AFDW)) +
+  scale_y_log10() +
+ geom_point(aes(shape = exp_ID, color = nutrient_trt), size = 1.5) +
+  geom_smooth(aes(color = nutrient_trt), method = "lm", se = FALSE) +
+  scale_color_viridis_d("Nutrient Treatment") + # renaming label of color legend
+  scale_shape_manual(name = "Experiment ID", values = c(15:17, 3:5, 8)) + # renaming label of point shape legend
+  theme_minimal() +
+  theme(legend.position = "bottom") +
+  labs(x = expression('Temperature (\u00B0C)'),
+      y = expression(Rates~(mgO[2]~day^{-1}~gAFDW^{-1})))
+
+AFDW_2_log_rates_april
+
 ```
 
 
@@ -605,8 +635,10 @@ AFDW_trends
 dat_lme <- dat_clean %>%
   filter(!is.na(GPP_mgO2_d_gAFDW_2) & exp_ID > 4)
 
-# converting experiment ID from numberic to a factor
+# converting experiment ID, nutrient_trt, and month from numeric to a factor so that they are coded as such in the model instead of as a character
 dat_lme$exp_ID <- as.factor(dat_lme$exp_ID)
+dat_lme$nutrient_trt <- as.factor(dat_lme$nutrient_trt)
+dat_lme$month <- as.factor(dat_lme$month)
 
 #glimpse(dat_lme)
 #View(dat_lme)
@@ -621,10 +653,15 @@ m3 <- lme(log(GPP_mgO2_d_gAFDW_2) ~ temp_C * nutrients + AI + exp_ID, random = ~
 m4 <- lme(log(GPP_mgO2_d_gAFDW_2) ~ temp_C * nutrients + AI + exp_ID, random = ~ 1 + temp_C | rock_ID, data = dat_lme, control=(msMaxIter=500)) # adding in random intercept and slope for each rock sample, also increasing the number of iterations to acheive model convergence
 
 
-m5 <- lme(log(GPP_mgO2_d_gAFDW_2) ~ temp_C * nutrients + AI + exp_ID, random = ~ 1 + temp_C | rock_ID, weights = varIdent(form = ~1|exp_ID), data = dat_lme, control=(msMaxIter=1000)) # incorporating weights to account for heteroscedasticity within and btwn different experiments, also increasing the number of iterations to acheive model convergence
+m5 <- lme(log(GPP_mgO2_d_gAFDW_2) ~ temp_C * nutrient_trt*exp_ID + AI, random = ~ 1 + temp_C | rock_ID, weights = varIdent(form = ~1|exp_ID), data = dat_lme, control=(msMaxIter=1000), contrasts = list(exp_ID = contr.sum, nutrient_trt = contr.sum)) # incorporating weights to account for heteroscedasticity within and btwn different experiments, also increasing the number of iterations to acheive model convergence
+# including exp_ID as a fixed effect (interested in interpreting seasonal effects and interactions with temp and nutrient effects)
+# coded in nutrient_trt as a factor instead of nutrients which is of class numeric
+# used contrasts for exp_ID and nutrient_trt so that the coefficients were interpretable as the average of that effect over all the other variable combinations instead of in relation to the first default factor setting (ambient nutrients or the first exp_ID in the data set). This change got rid of covariance structure between temp_C and exp_ID in the model and made interpretations of the coefficients more intuitive.
 
-# changing exp_ID from a fixed effect to a random effect in the models and also nesting rock_ID within exp_ID
-# this allows the temperature and nutrient intercepts to vary by season
+
+m10 <- lme(log(GPP_mgO2_d_gAFDW_2) ~ temp_C * nutrient_trt*month + AI, random = ~ 1 + temp_C | rock_ID, weights = varIdent(form = ~1|month), data = dat_lme, control=(msMaxIter=1000), contrasts = list(month = contr.sum, nutrient_trt = contr.sum))
+# changing exp_ID to month (this works since there are no repeated months in the dataset so the analyses are equivalent). I did this to make model interpretation more intuitive since exp_ID is an arbitrary value and month is more easy to relate to seasonal effects.
+
 
 m6 <- lme(log(GPP_mgO2_d_gAFDW_2) ~ temp_C * nutrients + AI, random = ~ 1 | exp_ID / rock_ID, data = dat_lme)
 
@@ -636,7 +673,7 @@ m7 <- lme(log(GPP_mgO2_d_gAFDW_2) ~ temp_C * nutrients + AI, random = ~ 1 | exp_
 m9 <- lme(log(GPP_mgO2_d_gAFDW_2) ~ temp_C * nutrients + AI, random = ~ 1 + temp_C | exp_ID / rock_ID, weights = varIdent(form = ~1|exp_ID), data = dat_lme, control=(msMaxIter=1000))
 # does not converge
 
-AIC(m1, m2, m3, m4, m5, m6, m7, m9)
+AIC(m1, m2, m3, m4, m5, m6, m7, m9, m10)
 # model 5 has the lowest AIC
 
 summary(m1)
@@ -648,13 +685,15 @@ summary(m3)
 summary(m4)
 
 summary(m5)
-# the model summary indicates that temp and exp_ID7 are significant predictors of GPP
+# the model summary indicates that the average effect of temp across all experiments and nutrient levels is a 4% increase in GPP per degree C, the average effect of ambient nutrients (low concentrations) across all experiments and temperatures is a reduction in GPP by 6% relative to enriched concentrations?? Need to check emmeans tables to see real temp:nutrient interactions as well as seasonal interactions with nutrients (during which seasons are periphyton more sensitive to a pulse of nutrients?).
 
 summary(m6)
 
 summary(m7)
 
 summary(m9)
+
+summary(m10)
 
 
 # interpreting effect sizes of temp from m7
@@ -666,12 +705,14 @@ exp(0.045)
 # produces html file showing models and parameter estimates
 tab_model(m1, m2, m3, m4, m5, m6, m7, m9, dv.labels = c("Model1", "Model2", "Model3", "Model4", "Model5", "Model6", "Model7", "Model9"),
   show.ci = FALSE, 
-  show.p = FALSE, 
+  p.style = "stars", 
   transform = NULL)
 ```
 
 #### Model validation
 ```{r}
+
+# model with lowest AIC
 # checking ordinary residuals of the final model (these are allowed to show heteroscedasticity). Using code from Zuur et al.
 E1 <- resid(m9)
 coplot(E1 ∼ rock_ID|exp_ID,
@@ -684,6 +725,19 @@ ylab = "Normalized residuals", data = dat_lme)
 
 plot(m9)
 
+# diagnostic plots for model with exp_ID included as fixed effect for comparison of residuals
+# checking ordinary residuals of the final model (these are allowed to show heteroscedasticity). Using code from Zuur et al.
+E3 <- resid(m10)
+coplot(E3 ∼ rock_ID|month,
+ylab = "Ordinary residuals", data = dat_lme)
+
+# now checking standardized residuals of each of the experiments (random effect in the model). These should not show any patterns and should exhibit homogeneous variance.
+E4 <- resid(m10, type = "normalized")
+coplot(E4 ∼ rock_ID|month,
+ylab = "Normalized residuals", data = dat_lme)
+
+plot(m10)
+
 
 ```
 
@@ -692,12 +746,36 @@ plot(m9)
 ```{r}
 # reccommended emmeans analyses from Stats Consulting
 
-emtrends(m9, pairwise ~ nutrients, var = "temp_C")
+emtrends(m5, pairwise ~ nutrients|exp_ID, var = "temp_C")
 
-emmip(m9, nutrients ~ temp_C, cov.reduce = F, CIs = T) +
-  geom_point(aes(x = temp_C, y = log(GPP_mgO2_d_gAFDW_2), color = interaction(temp_C, nutrients)), data = dat_lme)
+emmeans(m5, pairwise ~ nutrient_trt|exp_ID, cov.keep = "temp_C")
 
-# why is emmip treating the temp_C variable as a factor instead of numeric??
+emmeans(m5, pairwise ~ exp_ID, cov.keep = "temp_C")
+
+emmip(m5, nutrient_trt ~ temp_C|exp_ID, CIs = T, cov.keep = c("temp_C", "nutrient_trt")) +
+  geom_point(aes(x = temp_C, y = log(GPP_mgO2_d_gAFDW_2), color = nutrient_trt), data = dat_lme)
+
+
+rg<- emmip(m5, nutrients ~ temp_C|exp_ID, CIs = T, cov.keep = c("temp_C", "nutrients"))
+
+
+# same interaction analysis for m10 (has month instead of exp_ID in model)
+
+emmeans(m10, pairwise ~ nutrient_trt|month, cov.keep = "temp_C")
+# shows seasonal interactions with nutrient enrichment; nutrients seemed to have a signficant effect on october incubations suggesting that periphyton are sensitive to nutrient additions at this timepoint
+
+emmeans(m10, pairwise ~ month, cov.keep = "temp_C")
+# shows effect of month on GPP averaged across all levels of temperature and nutrients, with direct pairwise comparisions between months.
+
+# interaction plot of temp, nutrients, and month in log scale
+emmip(m10, nutrient_trt ~ temp_C|month, CIs = T, cov.keep = c("temp_C", "nutrient_trt")) +
+  geom_point(aes(x = temp_C, y = log(GPP_mgO2_d_gAFDW_2), color = nutrient_trt), data = dat_lme) +
+  theme_minimal()
+
+# interaction plot of temp, nutrients, and month in response scale
+emmip(m10, nutrient_trt ~ temp_C|month, CIs = T, cov.keep = c("temp_C", "nutrient_trt"), type = "response") +
+  geom_point(aes(x = temp_C, y = GPP_mgO2_d_gAFDW_2, color = nutrient_trt), data = dat_lme) +
+  theme_minimal()
 
 ```
 
@@ -708,8 +786,10 @@ emmip(m9, nutrients ~ temp_C, cov.reduce = F, CIs = T) +
 dat_lme <- dat_clean %>%
   filter(!is.na(ER_mgO2_d_gAFDW_2) & exp_ID > 4)
 
-# converting experiment ID from numberic to a factor
+# converting experiment ID, nutrient_trt, and month from numeric to a factor
 dat_lme$exp_ID <- as.factor(dat_lme$exp_ID)
+dat_lme$nutrient_trt <- as.factor(dat_lme$nutrient_trt)
+dat_lme$month <- as.factor(dat_lme$month)
 
 #glimpse(dat_lme)
 #View(dat_lme)
@@ -739,14 +819,21 @@ m7 <- lme(log(ER_mgO2_d_gAFDW_2) ~ temp_C * nutrients + AI, random = ~ 1 | exp_I
 #m9 <- lme(log(ER_mgO2_d_gAFDW_2) ~ temp_C * nutrients + AI, random = ~ 1 + temp_C | exp_ID / rock_ID, weights = varIdent(form = ~1|exp_ID), data = dat_lme)
 # does not converge
 
+m10 <- lme(log(ER_mgO2_d_gAFDW_2) ~ temp_C * nutrient_trt*month + AI, random = ~ 1 | rock_ID, weights = varIdent(form = ~1|month), data = dat_lme, control=(msMaxIter=1000), contrasts = list(month = contr.sum, nutrient_trt = contr.sum)) # incorporating weights to account for heteroscedasticity within and btwn different experiments, also increasing the number of iterations to acheive model convergence
+# including exp_ID as a fixed effect (interested in interpreting seasonal effects and interactions with temp and nutrient effects)
+# coded in nutrient_trt as a factor instead of nutrients which is of class numeric
+# used contrasts for month and nutrient_trt so that the coefficients were interpretable as the average of that effect over all the other variable combinations instead of in relation to the first default factor setting (ambient nutrients or the first month in the data set). This change got rid of covariance structure between temp_C and exp_ID in the model and made interpretations of the coefficients more intuitive.
 
-AIC(m1, m2, m3, m4, m6, m7)
+
+AIC(m1, m2, m3, m4, m6, m7, m10)
 # model 7 has the strongest support according to AIC
 
 summary(m3)
 # looks like all the fixed effects are statistically significant and will be kept in the model
 
 summary(m7)
+
+summary(m10)
 
 # both models 3 and 7 have the structure I need, but including exp_ID (experiment ID) as a random effect is more accurate to the experiment structure since seasonality is nested within the temp:nutrient effects and we expect a distribution of effect estimates across seasons rather than one "true" temp and nutrient effect for all seasons.
 
@@ -772,9 +859,9 @@ exp(0.462)
 # comparing model estimates to see if they change drastically with differing model structure
 # produces html file showing models and parameter estimates
 
-tab_model(m1, m2, m3, m4, m6, m7, dv.labels = c("Model1", "Model2", "Model3", "Model4", "Model6", "Model7"),
+tab_model(m1, m2, m3, m4, m6, m7, m10, dv.labels = c("Model1", "Model2", "Model3", "Model4", "Model6", "Model7", "Model10"),
   show.ci = FALSE, 
-  show.p = FALSE, 
+  p.style = "stars", 
   transform = NULL)
 ```
 
@@ -794,6 +881,36 @@ ylab = "Normalized residuals", data = dat_lme)
 #coplot(resid(m10) ~ fitted(m10) | dat_lme$exp_ID)
 
 plot(ER_final)
+
+
+# diagnostic plots for model with exp_ID included as fixed effect for comparison of residuals
+# checking ordinary residuals of the final model (these are allowed to show heteroscedasticity). Using code from Zuur et al.
+E3 <- resid(m3)
+coplot(E3 ∼ rock_ID|exp_ID,
+ylab = "Ordinary residuals", data = dat_lme)
+
+# now checking standardized residuals of each of the experiments (random effect in the model). These should not show any patterns and should exhibit homogeneous variance.
+E4 <- resid(m3, type = "normalized")
+coplot(E4 ∼ rock_ID|exp_ID,
+ylab = "Normalized residuals", data = dat_lme)
+
+plot(m3)
+
+
+# plots of model 10 with month as fixed effect and contrast levels readjusted
+
+E5 <- resid(m10)
+coplot(E5 ∼ rock_ID|month,
+ylab = "Ordinary residuals", data = dat_lme)
+
+# now checking standardized residuals of each of the experiments (random effect in the model). These should not show any patterns and should exhibit homogeneous variance.
+E6 <- resid(m10, type = "normalized")
+coplot(E6 ∼ rock_ID|month,
+ylab = "Normalized residuals", data = dat_lme)
+
+plot(m10)
+
+
 ```
 
 
@@ -803,6 +920,24 @@ emtrends(m7, pairwise ~ nutrients, var = "temp_C")
 
 emmip(m7, nutrients ~ temp_C, cov.reduce = F, CIs = T) +
   geom_point(aes(x = temp_C, y = log(ER_mgO2_d_gAFDW_2), color = interaction(temp_C, nutrients)), data = dat_lme)
+
+
+# plots to interpret model 10
+emmeans(m10, pairwise ~ nutrient_trt|month, cov.keep = "temp_C")
+# shows seasonal interactions with nutrient enrichment; nutrients seemed to have a signficant effect on october incubations suggesting that periphyton are sensitive to nutrient additions at this timepoint
+
+emmeans(m10, pairwise ~ month, cov.keep = "temp_C")
+# shows effect of month on GPP averaged across all levels of temperature and nutrients, with direct pairwise comparisions between months.
+
+# interaction plot of temp, nutrients, and month in log scale
+emmip(m10, nutrient_trt ~ temp_C|month, CIs = T, cov.keep = c("temp_C", "nutrient_trt")) +
+  geom_point(aes(x = temp_C, y = log(ER_mgO2_d_gAFDW_2), color = nutrient_trt), data = dat_lme) +
+  theme_minimal()
+
+# interaction plot of temp, nutrients, and month in response scale
+emmip(m10, nutrient_trt ~ temp_C|month, CIs = T, cov.keep = c("temp_C", "nutrient_trt"), type = "response") +
+  geom_point(aes(x = temp_C, y = ER_mgO2_d_gAFDW_2, color = nutrient_trt), data = dat_lme) +
+  theme_minimal()
 ```
 
 
@@ -814,6 +949,8 @@ dat_lme <- dat_clean %>%
 
 # converting experiment ID from numberic to a factor
 dat_lme$exp_ID <- as.factor(dat_lme$exp_ID)
+dat_lme$nutrient_trt <- as.factor(dat_lme$nutrient_trt)
+dat_lme$month <- as.factor(dat_lme$month)
 
 #glimpse(dat_lme)
 #View(dat_lme)
@@ -841,7 +978,12 @@ m8 <- lme(log(NEP_mgO2_d_gAFDW_2) ~ temp_C * nutrients + AI, random = ~ 1 + temp
 
 m9 <- lme(log(NEP_mgO2_d_gAFDW_2) ~ temp_C * nutrients + AI, random = ~ 1 + temp_C| exp_ID / rock_ID, weights = varIdent(form = ~1|exp_ID), data = dat_lme, control=(msMaxIter=500))
 
-AIC(m1, m2, m3, m4, m5, m6, m7, m8, m9)
+m10 <- lme(log(NEP_mgO2_d_gAFDW_2) ~ temp_C * nutrient_trt*month + AI, random = ~ 1 + temp_C | rock_ID, weights = varIdent(form = ~1|month), data = dat_lme, control=(msMaxIter=1000), contrasts = list(month = contr.sum, nutrient_trt = contr.sum)) # incorporating weights to account for heteroscedasticity within and btwn different experiments, also increasing the number of iterations to acheive model convergence
+# including exp_ID as a fixed effect (interested in interpreting seasonal effects and interactions with temp and nutrient effects)
+# coded in nutrient_trt as a factor instead of nutrients which is of class numeric
+# used contrasts for month and nutrient_trt so that the coefficients were interpretable as the average of that effect over all the other variable combinations instead of in relation to the first default factor setting (ambient nutrients or the first month in the data set). This change got rid of covariance structure between temp_C and exp_ID in the model and made interpretations of the coefficients more intuitive.
+
+AIC(m1, m2, m3, m4, m5, m6, m7, m8, m9, m10)
 # model 9 has the most support according to AIC
 
 summary(m5)
@@ -853,6 +995,8 @@ summary(m7)
 summary(m8)
 
 summary(m9)
+
+summary(m10)
 
 
 NEP_final <- m9
@@ -871,9 +1015,9 @@ exp(0.036)
 # comparing model estimates to see if they change drastically with differing model structure
 # produces html file showing models and parameter estimates
 
-tab_model(m1, m2, m3, m4, m5, m6, m7, m8, m9, dv.labels = c("Model1", "Model2", "Model3", "Model4", "Model5", "Model6", "Model7", "Model8", "Model9"),
+tab_model(m1, m2, m3, m4, m5, m6, m7, m8, m9, m10, dv.labels = c("Model1", "Model2", "Model3", "Model4", "Model5", "Model6", "Model7", "Model8", "Model9"),
   show.ci = FALSE, 
-  show.p = FALSE, 
+  p.style = "stars", 
   transform = NULL)
 ```
 
@@ -893,6 +1037,34 @@ ylab = "Normalized residuals", data = dat_lme)
 #coplot(resid(m10) ~ fitted(m10) | dat_lme$exp_ID)
 
 plot(NEP_final)
+
+
+# diagnostic plots for model with exp_ID included as fixed effect for comparison of residuals
+# checking ordinary residuals of the final model (these are allowed to show heteroscedasticity). Using code from Zuur et al.
+E3 <- resid(m5)
+coplot(E3 ∼ rock_ID|exp_ID,
+ylab = "Ordinary residuals", data = dat_lme)
+
+# now checking standardized residuals of each of the experiments (random effect in the model). These should not show any patterns and should exhibit homogeneous variance.
+E4 <- resid(m5, type = "normalized")
+coplot(E4 ∼ rock_ID|exp_ID,
+ylab = "Normalized residuals", data = dat_lme)
+
+plot(m5)
+
+
+# diagnostic plots for m10
+
+E5 <- resid(m10)
+coplot(E5 ∼ rock_ID|month,
+ylab = "Ordinary residuals", data = dat_lme)
+
+# now checking standardized residuals of each of the experiments (random effect in the model). These should not show any patterns and should exhibit homogeneous variance.
+E6 <- resid(m10, type = "normalized")
+coplot(E6 ∼ rock_ID|month,
+ylab = "Normalized residuals", data = dat_lme)
+
+plot(m10)
 ```
 
 
@@ -903,6 +1075,24 @@ emtrends(m9, pairwise ~ nutrients, var = "temp_C")
 
 emmip(m9, nutrients ~ temp_C, cov.reduce = F, CIs = T) +
   geom_point(aes(x = temp_C, y = log(NEP_mgO2_d_gAFDW_2), color = interaction(temp_C, nutrients)), data = dat_lme)
+
+
+# plots to interpret model 10
+emmeans(m10, pairwise ~ nutrient_trt|month, cov.keep = "temp_C")
+# shows seasonal interactions with nutrient enrichment; nutrients seemed to have a signficant effect on october incubations suggesting that periphyton are sensitive to nutrient additions at this timepoint
+
+emmeans(m10, pairwise ~ month, cov.keep = "temp_C")
+# shows effect of month on GPP averaged across all levels of temperature and nutrients, with direct pairwise comparisions between months.
+
+# interaction plot of temp, nutrients, and month in log scale
+emmip(m10, nutrient_trt ~ temp_C|month, CIs = T, cov.keep = c("temp_C", "nutrient_trt")) +
+  geom_point(aes(x = temp_C, y = log(NEP_mgO2_d_gAFDW_2), color = nutrient_trt), data = dat_lme) +
+  theme_minimal()
+
+# interaction plot of temp, nutrients, and month in response scale
+emmip(m10, nutrient_trt ~ temp_C|month, CIs = T, cov.keep = c("temp_C", "nutrient_trt"), type = "response") +
+  geom_point(aes(x = temp_C, y = NEP_mgO2_d_gAFDW_2, color = nutrient_trt), data = dat_lme) +
+  theme_minimal()
 ```
 
 
