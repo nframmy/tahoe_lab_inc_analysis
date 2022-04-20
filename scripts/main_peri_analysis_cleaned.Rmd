@@ -640,6 +640,9 @@ dat_lme$exp_ID <- as.factor(dat_lme$exp_ID)
 dat_lme$nutrient_trt <- as.factor(dat_lme$nutrient_trt)
 dat_lme$month <- as.factor(dat_lme$month)
 
+# reordering month variable so it graphs months in order
+dat_lme$month <- factor(dat_lme$month, levels = c("february", "june", "august", "october", "november"))
+
 #glimpse(dat_lme)
 #View(dat_lme)
 
@@ -768,9 +771,14 @@ emmeans(m10, pairwise ~ month, cov.keep = "temp_C")
 # shows effect of month on GPP averaged across all levels of temperature and nutrients, with direct pairwise comparisions between months.
 
 # interaction plot of temp, nutrients, and month in log scale
-emmip(m10, nutrient_trt ~ temp_C|month, CIs = T, cov.keep = c("temp_C", "nutrient_trt")) +
+GPP_IP <- emmip(m10, nutrient_trt ~ temp_C|month, CIs = T, cov.keep = c("temp_C", "nutrient_trt")) +
   geom_point(aes(x = temp_C, y = log(GPP_mgO2_d_gAFDW_2), color = nutrient_trt), data = dat_lme) +
-  theme_minimal()
+  facet_grid(cols = vars(month)) +
+  labs(y = expression(log(GPP~(mgO[2]~day^{-1}~gAFDW^{-1}))), x = "") +
+  theme_minimal() +
+  theme(legend.position = "none")
+
+ggsave("plots/main_analysis/GPP_IP.png", plot = GPP_IP, width = 7, height = 3, dpi = 300)
 
 # interaction plot of temp, nutrients, and month in response scale
 emmip(m10, nutrient_trt ~ temp_C|month, CIs = T, cov.keep = c("temp_C", "nutrient_trt"), type = "response") +
@@ -790,6 +798,10 @@ dat_lme <- dat_clean %>%
 dat_lme$exp_ID <- as.factor(dat_lme$exp_ID)
 dat_lme$nutrient_trt <- as.factor(dat_lme$nutrient_trt)
 dat_lme$month <- as.factor(dat_lme$month)
+
+
+# reordering month variable so it graphs months in order
+dat_lme$month <- factor(dat_lme$month, levels = c("february", "june", "august", "october", "november"))
 
 #glimpse(dat_lme)
 #View(dat_lme)
@@ -930,9 +942,14 @@ emmeans(m10, pairwise ~ month, cov.keep = "temp_C")
 # shows effect of month on GPP averaged across all levels of temperature and nutrients, with direct pairwise comparisions between months.
 
 # interaction plot of temp, nutrients, and month in log scale
-emmip(m10, nutrient_trt ~ temp_C|month, CIs = T, cov.keep = c("temp_C", "nutrient_trt")) +
+ER_IP <- emmip(m10, nutrient_trt ~ temp_C|month, CIs = T, cov.keep = c("temp_C", "nutrient_trt")) +
   geom_point(aes(x = temp_C, y = log(ER_mgO2_d_gAFDW_2), color = nutrient_trt), data = dat_lme) +
-  theme_minimal()
+  facet_grid(cols = vars(month)) +
+  labs(y = expression(log(ER~(mgO[2]~day^{-1}~gAFDW^{-1}))), x = "") +
+  theme_minimal() +
+  theme(legend.position = "none")
+
+ggsave("plots/main_analysis/ER_IP.png", plot = ER_IP, width = 7, height = 3, dpi = 300)
 
 # interaction plot of temp, nutrients, and month in response scale
 emmip(m10, nutrient_trt ~ temp_C|month, CIs = T, cov.keep = c("temp_C", "nutrient_trt"), type = "response") +
@@ -951,6 +968,9 @@ dat_lme <- dat_clean %>%
 dat_lme$exp_ID <- as.factor(dat_lme$exp_ID)
 dat_lme$nutrient_trt <- as.factor(dat_lme$nutrient_trt)
 dat_lme$month <- as.factor(dat_lme$month)
+
+# reordering month variable so it graphs months in order
+dat_lme$month <- factor(dat_lme$month, levels = c("february", "june", "august", "october", "november"))
 
 #glimpse(dat_lme)
 #View(dat_lme)
@@ -1085,14 +1105,32 @@ emmeans(m10, pairwise ~ month, cov.keep = "temp_C")
 # shows effect of month on GPP averaged across all levels of temperature and nutrients, with direct pairwise comparisions between months.
 
 # interaction plot of temp, nutrients, and month in log scale
-emmip(m10, nutrient_trt ~ temp_C|month, CIs = T, cov.keep = c("temp_C", "nutrient_trt")) +
+NEP_IP <- emmip(m10, nutrient_trt ~ temp_C|month, CIs = T, cov.keep = c("temp_C", "nutrient_trt")) +
   geom_point(aes(x = temp_C, y = log(NEP_mgO2_d_gAFDW_2), color = nutrient_trt), data = dat_lme) +
-  theme_minimal()
+  facet_grid(cols = vars(month)) +
+  scale_color_discrete("Nutrient Treatment") +
+  labs(y = expression(log(NEP~(mgO[2]~day^{-1}~gAFDW^{-1}))), x = expression('Temperature (\u00B0C)')) +
+  theme_minimal() +
+   theme(legend.position = "bottom")
+
+ggsave("plots/main_analysis/NEP_IP.png", plot = NEP_IP, width = 7, height = 3, dpi = 300)
 
 # interaction plot of temp, nutrients, and month in response scale
 emmip(m10, nutrient_trt ~ temp_C|month, CIs = T, cov.keep = c("temp_C", "nutrient_trt"), type = "response") +
   geom_point(aes(x = temp_C, y = NEP_mgO2_d_gAFDW_2, color = nutrient_trt), data = dat_lme) +
+  facet_grid(cols = vars(month)) +
   theme_minimal()
+```
+
+
+### Stacking plots
+```{r}
+# combining emmip plots for GPP, ER, and NEP
+library(patchwork)
+
+metab_IP <- (GPP_IP/ER_IP/ NEP_IP)
+
+ggsave("plots/main_analysis/metab_IP.png", plot = metab_IP, height = 8, width = 7, dpi = 300)
 ```
 
 
