@@ -642,6 +642,10 @@ dat_lme$month <- as.factor(dat_lme$month)
 
 # reordering month variable so it graphs months in order
 dat_lme$month <- factor(dat_lme$month, levels = c("february", "june", "august", "october", "november"))
+levels(dat_lme$month)
+
+# reordering nutrient trt variable so that enriched is first; this guarantees that the nutrient trt effect reported in the model summary reflects the effect of the enriched treatment rather than the ambient treatment
+dat_lme$nutrient_trt <- factor(dat_lme$nutrient_trt, levels = c("enriched", "ambient"))
 
 #glimpse(dat_lme)
 #View(dat_lme)
@@ -696,17 +700,22 @@ summary(m7)
 
 summary(m9)
 
-summary(m10)
 
+GPP_final <- m10
 
-# interpreting effect sizes of temp from m7
-exp(0.045)
-# for every 1C increase in temperature, GPP increases by 4.6% (a factor of 1.046 mgO2 per day per g AFDW).
+summary(GPP_final)
 
+# interpreting effect sizes of temp from m10
+exp(0.044)
+# for every 1C increase in temperature, GPP increases by 4.5% (a factor of 1.045 mgO2 per day per g AFDW).
+
+# interpreting effect size of nutrients for m10
+exp(0.056)
+# nutrient enrichement increased GPP rates by 5.8%
 
 # comparing model estimates to see if they change drastically with differing model structure
 # produces html file showing models and parameter estimates
-tab_model(m1, m2, m3, m4, m5, m6, m7, m9, dv.labels = c("Model1", "Model2", "Model3", "Model4", "Model5", "Model6", "Model7", "Model9"),
+tab_model(m1, m2, m3, m4, m5, m6, m7, m9, m10, dv.labels = c("Model1", "Model2", "Model3", "Model4", "Model5", "Model6", "Model7", "Model9", "Model10"),
   show.ci = FALSE, 
   p.style = "stars", 
   transform = NULL)
@@ -749,8 +758,6 @@ plot(m10)
 ```{r}
 # reccommended emmeans analyses from Stats Consulting
 
-emtrends(m5, pairwise ~ nutrients|exp_ID, var = "temp_C")
-
 emmeans(m5, pairwise ~ nutrient_trt|exp_ID, cov.keep = "temp_C")
 
 emmeans(m5, pairwise ~ exp_ID, cov.keep = "temp_C")
@@ -759,16 +766,18 @@ emmip(m5, nutrient_trt ~ temp_C|exp_ID, CIs = T, cov.keep = c("temp_C", "nutrien
   geom_point(aes(x = temp_C, y = log(GPP_mgO2_d_gAFDW_2), color = nutrient_trt), data = dat_lme)
 
 
-rg<- emmip(m5, nutrients ~ temp_C|exp_ID, CIs = T, cov.keep = c("temp_C", "nutrients"))
-
 
 # same interaction analysis for m10 (has month instead of exp_ID in model)
 
-emmeans(m10, pairwise ~ nutrient_trt|month, cov.keep = "temp_C")
+emmeans(GPP_final, pairwise ~ nutrient_trt|month, cov.keep = "temp_C", type = "response")
 # shows seasonal interactions with nutrient enrichment; nutrients seemed to have a signficant effect on october incubations suggesting that periphyton are sensitive to nutrient additions at this timepoint
 
 emmeans(m10, pairwise ~ month, cov.keep = "temp_C")
 # shows effect of month on GPP averaged across all levels of temperature and nutrients, with direct pairwise comparisions between months.
+
+emmeans(m10, ~ temp_C|month, cov.keep = "temp_C")
+
+emtrends(GPP_final, pairwise ~ month , var = "temp_C" )
 
 # interaction plot of temp, nutrients, and month in log scale
 GPP_IP <- emmip(m10, nutrient_trt ~ temp_C|month, CIs = T, cov.keep = c("temp_C", "nutrient_trt")) +
@@ -785,6 +794,7 @@ emmip(m10, nutrient_trt ~ temp_C|month, CIs = T, cov.keep = c("temp_C", "nutrien
   geom_point(aes(x = temp_C, y = GPP_mgO2_d_gAFDW_2, color = nutrient_trt), data = dat_lme) +
   theme_minimal()
 
+exp(0.093)
 ```
 
 
@@ -802,6 +812,9 @@ dat_lme$month <- as.factor(dat_lme$month)
 
 # reordering month variable so it graphs months in order
 dat_lme$month <- factor(dat_lme$month, levels = c("february", "june", "august", "october", "november"))
+
+# reordering nutrient trt variable so that enriched is first; this guarantees that the nutrient trt effect reported in the model summary reflects the effect of the enriched treatment rather than the ambient treatment
+dat_lme$nutrient_trt <- factor(dat_lme$nutrient_trt, levels = c("enriched", "ambient"))
 
 #glimpse(dat_lme)
 #View(dat_lme)
@@ -849,15 +862,15 @@ summary(m10)
 
 # both models 3 and 7 have the structure I need, but including exp_ID (experiment ID) as a random effect is more accurate to the experiment structure since seasonality is nested within the temp:nutrient effects and we expect a distribution of effect estimates across seasons rather than one "true" temp and nutrient effect for all seasons.
 
-ER_final <- m7
+ER_final <- m10
 
-# interpreting effect size of temp
-exp(0.066)
+# interpreting effect size of temp in m10
+exp(0.068)
 
-# for every 1C increase in temperature, ER increases by 7% (a factor of 1.068 mg O2 per day per g AFDW)
+# for every 1C increase in temperature, ER increases by 7% (a factor of 1.070 mg O2 per day per g AFDW)
 
 # interpreting effect size of nutrients
-exp(0.462)
+exp(0.22)
 
 # enriched ER rates were increased by 59% on average relative to ambient rates
 
@@ -935,11 +948,13 @@ emmip(m7, nutrients ~ temp_C, cov.reduce = F, CIs = T) +
 
 
 # plots to interpret model 10
-emmeans(m10, pairwise ~ nutrient_trt|month, cov.keep = "temp_C")
+emmeans(ER_final, pairwise ~ nutrient_trt|month, cov.keep = "temp_C", type = "response")
 # shows seasonal interactions with nutrient enrichment; nutrients seemed to have a signficant effect on october incubations suggesting that periphyton are sensitive to nutrient additions at this timepoint
 
 emmeans(m10, pairwise ~ month, cov.keep = "temp_C")
 # shows effect of month on GPP averaged across all levels of temperature and nutrients, with direct pairwise comparisions between months.
+
+emtrends(ER_final, pairwise ~ month , var = "temp_C" )
 
 # interaction plot of temp, nutrients, and month in log scale
 ER_IP <- emmip(m10, nutrient_trt ~ temp_C|month, CIs = T, cov.keep = c("temp_C", "nutrient_trt")) +
@@ -971,6 +986,9 @@ dat_lme$month <- as.factor(dat_lme$month)
 
 # reordering month variable so it graphs months in order
 dat_lme$month <- factor(dat_lme$month, levels = c("february", "june", "august", "october", "november"))
+
+# reordering nutrient trt variable so that enriched is first; this guarantees that the nutrient trt effect reported in the model summary reflects the effect of the enriched treatment rather than the ambient treatment
+dat_lme$nutrient_trt <- factor(dat_lme$nutrient_trt, levels = c("enriched", "ambient"))
 
 #glimpse(dat_lme)
 #View(dat_lme)
@@ -1019,23 +1037,26 @@ summary(m9)
 summary(m10)
 
 
-NEP_final <- m9
+NEP_final <- m10
 
 # interpreting effect size of temp in m5
 exp(0.041)
 
 # for every 1C increase in temperature, NEP increases by 4.2% (a factor of 1.042 mg O2 per day per g AFDW)
 
-# interpreting temp effect size in m7
-exp(0.036)
+# interpreting temp effect size in m10
+exp(0.035)
 
-# for every 1C increase in temperature, NEP increases by 3.7% (a factor of 1.037 mg O2 per day per g AFDW)
+# for every 1C increase in temperature, NEP increases by 3.6% (a factor of 1.036 mg O2 per day per g AFDW)
+
+# interpreting nutrient effect size in m10
+exp(0.011)
 
 
 # comparing model estimates to see if they change drastically with differing model structure
 # produces html file showing models and parameter estimates
 
-tab_model(m1, m2, m3, m4, m5, m6, m7, m8, m9, m10, dv.labels = c("Model1", "Model2", "Model3", "Model4", "Model5", "Model6", "Model7", "Model8", "Model9"),
+tab_model(m1, m2, m3, m4, m5, m6, m7, m8, m9, m10, dv.labels = c("Model1", "Model2", "Model3", "Model4", "Model5", "Model6", "Model7", "Model8", "Model9", "Model10"),
   show.ci = FALSE, 
   p.style = "stars", 
   transform = NULL)
@@ -1098,11 +1119,13 @@ emmip(m9, nutrients ~ temp_C, cov.reduce = F, CIs = T) +
 
 
 # plots to interpret model 10
-emmeans(m10, pairwise ~ nutrient_trt|month, cov.keep = "temp_C")
+emmeans(NEP_final, pairwise ~ nutrient_trt|month, cov.keep = "temp_C", type = "response")
 # shows seasonal interactions with nutrient enrichment; nutrients seemed to have a signficant effect on october incubations suggesting that periphyton are sensitive to nutrient additions at this timepoint
 
 emmeans(m10, pairwise ~ month, cov.keep = "temp_C")
 # shows effect of month on GPP averaged across all levels of temperature and nutrients, with direct pairwise comparisions between months.
+
+emtrends(NEP_final, pairwise ~ month , var = "temp_C" )
 
 # interaction plot of temp, nutrients, and month in log scale
 NEP_IP <- emmip(m10, nutrient_trt ~ temp_C|month, CIs = T, cov.keep = c("temp_C", "nutrient_trt")) +
@@ -1131,6 +1154,15 @@ library(patchwork)
 metab_IP <- (GPP_IP/ER_IP/ NEP_IP)
 
 ggsave("plots/main_analysis/metab_IP.png", plot = metab_IP, height = 8, width = 7, dpi = 300)
+```
+
+
+### Model Summary Table
+```{r}
+tab_model(GPP_final, ER_final, NEP_final, dv.labels = c("GPP", "ER", "NEP"),
+  show.ci = FALSE, 
+  p.style = "stars", 
+  transform = "exp")
 ```
 
 
