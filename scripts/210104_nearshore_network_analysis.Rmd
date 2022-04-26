@@ -333,3 +333,19 @@ dat_feb %>%
 ```
 
 Looks like daily max temps range from 6.5-7.5C within feb 20-28th 2020. The average water temp between feb 15-march 15 is ~6C, but temps range mostly between 5-7C with 1.5C temperature swings each day. Nearshore temps for the February 2022 experiment should likely be between 4-7C.
+
+# Tahoe City Annual Water Temps
+```{r}
+#View(dat_TC)
+
+TC_temp <- dat_TC%>%
+  filter(!is.na(T)) %>%
+  ggplot(aes(x = TimeLocal, y = T)) +
+  geom_point() +
+  geom_smooth() +
+  labs(x = "Date", y = expression('Water Temperature (\u00B0C)')) +
+  theme_classic()
+TC_temp
+
+ggsave("plots/nearshore_temp_analysis/TC_temp_plot.png", plot = TC_temp, height = 4, width = 6, dpi = 300)
+```
