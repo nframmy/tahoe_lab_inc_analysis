@@ -707,10 +707,7 @@ summary(m7)
 
 summary(m9)
 
-
-GPP_final <- m10
-
-summary(GPP_final)
+summary(m10)
 
 # interpreting effect sizes of temp from m10
 exp(0.044)
@@ -756,6 +753,7 @@ m0 <- gls(log(GPP_mgO2_d_gAFDW_2) ~ 1, data = dat_lme)
 
 m1 <- gls(log(GPP_mgO2_d_gAFDW_2) ~ temp_C * nutrient_trt * month, method = "REML", data = dat_lme)
 
+
 m2 <- lme(log(GPP_mgO2_d_gAFDW_2) ~ temp_C * nutrient_trt * month, random = ~ 1 | rock_ID, data = dat_lme, contrasts = list(month = contr.sum, nutrient_trt = contr.sum)) # adding in random intercept for each rock sample
 
 m3 <- lme(log(GPP_mgO2_d_gAFDW_2) ~ temp_C * nutrient_trt * month, random = ~ 1 | rock_ID, weights = varIdent(form = ~1|exp_ID), data = dat_lme, contrasts = list(month = contr.sum, nutrient_trt = contr.sum)) # incorporating weights to account for heteroscedasticity within and btwn different experiments
@@ -769,8 +767,20 @@ m5 <- lme(log(GPP_mgO2_d_gAFDW_2) ~ temp_C * nutrient_trt * month, random = ~ 1 
 # coded in nutrient_trt as a factor instead of nutrients which is of class numeric
 # used contrasts for month and nutrient_trt so that the coefficients were interpretable as the average of that effect over all the other variable combinations instead of in relation to the first default factor setting (ambient nutrients or the first month in the data set). This change got rid of covariance structure between temp_C and month in the model and made interpretations of the coefficients more intuitive.
 
+summary(m5)
+
 # comparing AICs of models
 AIC(m0, m1, m2, m3, m5)
+
+GPP_final <- m5
+summary(GPP_final)
+
+# summary table for model comparison
+tab_model(m0, m1, m2, m3, m5, dv.labels = c("Model0", "Model1", "Model2", "Model3", "Model5"),
+  show.ci = FALSE,
+  show.aic = T,
+  p.style = "stars",
+  transform = NULL)
 ```
 
 
@@ -778,31 +788,18 @@ AIC(m0, m1, m2, m3, m5)
 #### Model validation
 ```{r}
 
-# model with lowest AIC
+# diagnostic plots for model with month included as fixed effect for comparison of residuals
 # checking ordinary residuals of the final model (these are allowed to show heteroscedasticity). Using code from Zuur et al.
-E1 <- resid(m9)
-coplot(E1 ∼ rock_ID|exp_ID,
-ylab = "Ordinary residuals", data = dat_lme)
-
-# now checking standardized residuals of each of the experiments (random effect in the model). These should not show any patterns and should exhibit homogeneous variance.
-E2 <- resid(m9, type = "normalized")
-coplot(E2 ∼ rock_ID|exp_ID,
-ylab = "Normalized residuals", data = dat_lme)
-
-plot(m9)
-
-# diagnostic plots for model with exp_ID included as fixed effect for comparison of residuals
-# checking ordinary residuals of the final model (these are allowed to show heteroscedasticity). Using code from Zuur et al.
-E3 <- resid(m10)
+E3 <- resid(GPP_final)
 coplot(E3 ∼ rock_ID|month,
 ylab = "Ordinary residuals", data = dat_lme)
 
 # now checking standardized residuals of each of the experiments (random effect in the model). These should not show any patterns and should exhibit homogeneous variance.
-E4 <- resid(m10, type = "normalized")
+E4 <- resid(GPP_final, type = "normalized")
 coplot(E4 ∼ rock_ID|month,
 ylab = "Normalized residuals", data = dat_lme)
 
-plot(m10)
+plot(GPP_final)
 
 
 ```
@@ -921,7 +918,6 @@ summary(m10)
 
 # both models 3 and 7 have the structure I need, but including exp_ID (experiment ID) as a random effect is more accurate to the experiment structure since seasonality is nested within the temp:nutrient effects and we expect a distribution of effect estimates across seasons rather than one "true" temp and nutrient effect for all seasons.
 
-ER_final <- m10
 
 # interpreting effect size of temp in m10
 exp(0.068)
@@ -995,9 +991,20 @@ m3 <- lme(log(ER_mgO2_d_gAFDW_2) ~ temp_C * nutrient_trt * month, random = ~ 1 |
 # coded in nutrient_trt as a factor instead of nutrients which is of class numeric
 # used contrasts for month and nutrient_trt so that the coefficients were interpretable as the average of that effect over all the other variable combinations instead of in relation to the first default factor setting (ambient nutrients or the first month in the data set). This change got rid of covariance structure between temp_C and month in the model and made interpretations of the coefficients more intuitive.
 
+summary(m3)
 
 # comparing AICs of models
 AIC(m0, m1, m2, m3)
+
+ER_final <- m3
+summary(ER_final)
+
+# summary table for model comparison
+tab_model(m0, m1, m2, m3, dv.labels = c("Model0", "Model1", "Model2", "Model3"),
+  show.ci = FALSE,
+  show.aic = T,
+  p.style = "stars",
+  transform = NULL)
 ```
 
 
@@ -1005,12 +1012,12 @@ AIC(m0, m1, m2, m3)
 ```{r}
 # checking ordinary residuals of the final model (these are allowed to show heteroscedasticity). Using code from Zuur et al.
 E1 <- resid(ER_final)
-coplot(E1 ∼ rock_ID|exp_ID,
+coplot(E1 ∼ rock_ID|month,
 ylab = "Ordinary residuals", data = dat_lme)
 
 # now checking standardized residuals of each of the experiments (random effect in the model). These should not show any patterns and should exhibit homogeneous variance.
 E2 <- resid(ER_final, type = "normalized")
-coplot(E2 ∼ rock_ID|exp_ID,
+coplot(E2 ∼ rock_ID|month,
 ylab = "Normalized residuals", data = dat_lme)
 
 #coplot(resid(m10) ~ fitted(m10) | dat_lme$exp_ID)
@@ -1018,32 +1025,7 @@ ylab = "Normalized residuals", data = dat_lme)
 plot(ER_final)
 
 
-# diagnostic plots for model with exp_ID included as fixed effect for comparison of residuals
-# checking ordinary residuals of the final model (these are allowed to show heteroscedasticity). Using code from Zuur et al.
-E3 <- resid(m3)
-coplot(E3 ∼ rock_ID|exp_ID,
-ylab = "Ordinary residuals", data = dat_lme)
 
-# now checking standardized residuals of each of the experiments (random effect in the model). These should not show any patterns and should exhibit homogeneous variance.
-E4 <- resid(m3, type = "normalized")
-coplot(E4 ∼ rock_ID|exp_ID,
-ylab = "Normalized residuals", data = dat_lme)
-
-plot(m3)
-
-
-# plots of model 10 with month as fixed effect and contrast levels readjusted
-
-E5 <- resid(m10)
-coplot(E5 ∼ rock_ID|month,
-ylab = "Ordinary residuals", data = dat_lme)
-
-# now checking standardized residuals of each of the experiments (random effect in the model). These should not show any patterns and should exhibit homogeneous variance.
-E6 <- resid(m10, type = "normalized")
-coplot(E6 ∼ rock_ID|month,
-ylab = "Normalized residuals", data = dat_lme)
-
-plot(m10)
 
 
 ```
@@ -1158,7 +1140,6 @@ summary(m9)
 summary(m10)
 
 
-NEP_final <- m10
 
 # interpreting effect size of temp in m5
 exp(0.041)
@@ -1228,6 +1209,18 @@ m5 <- lme(log(NEP_mgO2_d_gAFDW_2) ~ temp_C * nutrient_trt * month, random = ~ 1 
 
 # comparing AICs of models
 AIC(m0, m1, m2, m3, m4, m5)
+
+summary(m5)
+NEP_final <- m5
+
+summary(NEP_final)
+
+# summary table for model comparison
+tab_model(m0, m1, m2, m3, m4, m5, dv.labels = c("Model0", "Model1", "Model2", "Model3", "Model4", "Model5"),
+  show.ci = FALSE,
+  show.aic = T,
+  p.style = "stars",
+  transform = NULL)
 ```
 
 
@@ -1235,12 +1228,12 @@ AIC(m0, m1, m2, m3, m4, m5)
 ```{r}
 # checking ordinary residuals of the final model (these are allowed to show heteroscedasticity). Using code from Zuur et al.
 E1 <- resid(NEP_final)
-coplot(E1 ∼ rock_ID|exp_ID,
+coplot(E1 ∼ rock_ID|month,
 ylab = "Ordinary residuals", data = dat_lme)
 
 # now checking standardized residuals of each of the experiments (random effect in the model). These should not show any patterns and should exhibit homogeneous variance.
 E2 <- resid(NEP_final, type = "normalized")
-coplot(E2 ∼ rock_ID|exp_ID,
+coplot(E2 ∼ rock_ID|month,
 ylab = "Normalized residuals", data = dat_lme)
 
 #coplot(resid(m10) ~ fitted(m10) | dat_lme$exp_ID)
@@ -1248,32 +1241,7 @@ ylab = "Normalized residuals", data = dat_lme)
 plot(NEP_final)
 
 
-# diagnostic plots for model with exp_ID included as fixed effect for comparison of residuals
-# checking ordinary residuals of the final model (these are allowed to show heteroscedasticity). Using code from Zuur et al.
-E3 <- resid(m5)
-coplot(E3 ∼ rock_ID|exp_ID,
-ylab = "Ordinary residuals", data = dat_lme)
 
-# now checking standardized residuals of each of the experiments (random effect in the model). These should not show any patterns and should exhibit homogeneous variance.
-E4 <- resid(m5, type = "normalized")
-coplot(E4 ∼ rock_ID|exp_ID,
-ylab = "Normalized residuals", data = dat_lme)
-
-plot(m5)
-
-
-# diagnostic plots for m10
-
-E5 <- resid(m10)
-coplot(E5 ∼ rock_ID|month,
-ylab = "Ordinary residuals", data = dat_lme)
-
-# now checking standardized residuals of each of the experiments (random effect in the model). These should not show any patterns and should exhibit homogeneous variance.
-E6 <- resid(m10, type = "normalized")
-coplot(E6 ∼ rock_ID|month,
-ylab = "Normalized residuals", data = dat_lme)
-
-plot(m10)
 ```
 
 
