@@ -26,6 +26,7 @@ library(emmeans)
 library(sjPlot)
 library(sjmisc)
 library(sjlabelled)
+library(patchwork)
 
 # changing working directory from /scripts to /tahoe_lab_inc_analysis
 knitr::opts_knit$set(root.dir = '..')
@@ -390,7 +391,7 @@ metab_rates
 ggsave("plots/main_analysis/AFDW_model_output_plot.png", plot = metab_rates, width = 7, height = 3, dpi = 300)
 
 
-# plot with only march and april experiments to test for carry-over effects between ambient and enriched trials (samples from these experiments were independent between ambient and enriched trials and were incubated immediatelu with no hold-times between; however, samples were collected from the field 2 wks apart which could introduce variation in the periphyton communities being incubated)
+# plot with only march and april experiments to test for carry-over effects between ambient and enriched trials (samples from these experiments were independent between ambient and enriched trials and were incubated immediately with no hold-times between; however, samples were collected from the field 2 wks apart which could introduce variation in the periphyton communities being incubated)
 
 AFDW_2_log_rates_april <- dat %>% # data frame with march data included
   filter(month != "june" | nutrients != 0 | chamber != 1) %>%
@@ -585,10 +586,10 @@ cor(dat_cor, use = "complete.obs")
 
 
 chla_trends <- dat %>%
-  mutate(chla_ug_m2 = total_chla_ug/rock_SA_m2) %>% # calculating areal chlorophyll-a concentrations (per m2)
-  ggplot(aes(x = date, y = chla_ug_m2, group = date)) +
+  mutate(chla_g_m2 = total_chla_ug/rock_SA_m2/1e6) %>% # calculating areal chlorophyll-a concentrations (per m2)
+  ggplot(aes(x = date, y = chla_g_m2, group = date)) +
   geom_boxplot() +
-  labs(x = "Date", y = "Periphyton Total Chlorophyll-a (ug/m2)") +
+  labs(x = "Date", y = expression(Periphyton~Chl-a~(g~m^{-2}))) +
   theme_classic()
 
 chla_trends
@@ -608,7 +609,7 @@ AI_trends <- dat %>%
 
 AI_trends
 
-ggsave("plots/main_analysis/AI_timeseries.png", plot = AI_trends, height = 4, width = 8)
+ggsave("plots/main_analysis/AI_timeseries.png", plot = AI_trends, height = 4, width = 8, dpi = 300)
 ```
 
 ### AFDW
@@ -619,12 +620,60 @@ AFDW_trends <- dat %>%
   mutate(AFDW_g_m2 = total_AFDW_g_2/rock_SA_m2) %>%
   ggplot(aes(x = date, y = total_AFDW_g_2, group = date)) +
   geom_boxplot() +
-  labs(x = "Date", y = expression(Periphyton~AFDW~(g~m^{-2}))) +
+  labs(x = "", y = expression(Periphyton~AFDW~(g~m^{-2}))) +
   theme_classic()
 
 AFDW_trends
+
+ggsave("plots/main_analysis/AFDW_timeseries.png", plot = AFDW_trends, height = 4, width = 8, dpi = 300)
+
+# patching together AI and AFDW timeseries plots so that they share the same x-axis
+library(patchwork)
+
+AI_AFDW <- (chla_trends/AFDW_trends/AI_trends)
+
+ggsave("plots/main_analysis/AI_AFDW_trends.png", plot = AI_AFDW, height = 8, width = 8, dpi = 300)
 ```
 
+
+## Control rates across seasons
+### AFDW-normalized
+```{r}
+metab_trend_AFDW <- dat_long %>%
+  filter(exp_ID == 3 & temp_C ==7 | exp_ID == 5 & temp_C == 14.5 | exp_ID == 6 & temp_C == 19.5 | exp_ID == 7 & temp_C == 15 | exp_ID == 8 & temp_C == 9.5 | exp_ID == 9 & temp_C == 6) %>% # filtering only ambient and in-situ temperature data from all experiments except march one due to different biomass methods giving consistently higher data values
+  ggplot(aes(x = date, y = rates_AFDW, group = date)) +
+  facet_grid(cols = vars(rate_name_AFDW)) +
+  geom_boxplot() +
+  labs(x = "", y = expression(Metabolic~Rate~(mgO[2]~day^{-1}~gAFDW^{-1}))) +
+  theme_classic()
+
+
+metab_trend_AFDW
+
+
+```
+
+### SA normalized
+```{r}
+metab_trend_sa <- dat_long_m2 %>%
+  filter(exp_ID == 3 & temp_C ==7 | exp_ID == 5 & temp_C == 14.5 | exp_ID == 6 & temp_C == 19.5 | exp_ID == 7 & temp_C == 15 | exp_ID == 8 & temp_C == 9.5 | exp_ID == 9 & temp_C == 6) %>% # filtering only ambient and in-situ temperature data from all experiments except march one due to different biomass methods giving consistenly higher data values
+  ggplot(aes(x = date, y = rates_m2, group = date)) +
+  facet_grid(cols = vars(rate_name_m2)) +
+  geom_boxplot() +
+  labs(x = "", y = expression(GPP~(mgO[2]~day^{-1}~m^{2}))) +
+  theme_classic()
+
+
+metab_trend_sa
+
+```
+
+### combining AFDW and SA metabolic trend plots
+```{r}
+metab_trend <- (metab_trend_AFDW/metab_trend_sa)
+
+ggsave("plots/main_analysis/metab_trends.png", plot = metab_trend, height = 8, width = 10, dpi = 300)
+```
 
 
 # Models using new AFDW-normalized metab rates and only for repeated-measured experiments
@@ -829,6 +878,8 @@ emmeans(GPP_final, pairwise ~ month, cov.keep = "temp_C", type = "response")
 
 emtrends(GPP_final, pairwise ~ month, var = "temp_C")
 # shows the interaction between month and temperature, with the difference slopes of temperature shown for each month
+
+emtrends(GPP_final, pairwise ~ nutrient_trt | month, var = "temp_C")
 
 # interaction plot of temp, nutrients, and month in log scale
 GPP_IP <- emmip(GPP_final, nutrient_trt ~ temp_C|month, CIs = T, cov.keep = c("temp_C", "nutrient_trt")) +
@@ -1048,6 +1099,8 @@ emmeans(ER_final, pairwise ~ month, cov.keep = "temp_C", type = "response")
 
 emtrends(ER_final, pairwise ~ month , var = "temp_C" )
 # shows the interaction between month and temperature, with the difference slopes of temperature shown for each month
+
+emtrends(GPP_final, pairwise ~ nutrient_trt | month, var = "temp_C") # checking out temperature-nutrient interactions for each month
 
 
 # interaction plot of temp, nutrients, and month in log scale
