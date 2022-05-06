@@ -584,15 +584,27 @@ cor(dat_cor, use = "complete.obs")
 ```{r}
 ### chlorophyll-a trends across time
 
-
 chla_trends <- dat %>%
+  filter(exp_ID != 1) %>% # filtering out march 1st data due to different chla sampling protocols used for this experiment
   mutate(chla_g_m2 = total_chla_ug/rock_SA_m2/1e6) %>% # calculating areal chlorophyll-a concentrations (per m2)
   ggplot(aes(x = date, y = chla_g_m2, group = date)) +
   geom_boxplot() +
-  labs(x = "Date", y = expression(Periphyton~Chl-a~(g~m^{-2}))) +
+  labs(x = "", y = expression(Periphyton~Chl-a~(g~m^{-2}))) +
   theme_classic()
 
 chla_trends
+
+# simplified plot w/o expressions for ggplotly
+
+chla_plotly <- dat %>%
+  filter(exp_ID != 1) %>% # filtering out march 1st data due to different chla sampling protocols used for this experiment
+  mutate(chla_g_m2 = total_chla_ug/rock_SA_m2/1e6) %>% # calculating areal chlorophyll-a concentrations (per m2)
+  ggplot(aes(x = date, y = chla_g_m2, group = date)) +
+  geom_boxplot() +
+  theme_classic()
+
+p <- plotly::ggplotly(chla_plotly)
+p
 ```
 
 
@@ -601,6 +613,7 @@ chla_trends
 # plotting changes in AI over the year
 
 AI_trends <- dat %>%
+  filter(exp_ID != 1) %>% # filtering out march 1st data due to different chla sampling protocols used for this experiment
   filter(AI < 5000) %>% # filtering out 2 outliers from october and march
   ggplot(aes(x = date, y = AI, group = date)) +
   geom_boxplot() +
@@ -617,8 +630,10 @@ ggsave("plots/main_analysis/AI_timeseries.png", plot = AI_trends, height = 4, wi
 # plotting changes in areal AFDW over the year
 
 AFDW_trends <- dat %>%
+  filter(exp_ID != 1) %>% # filtering out march 1st data due to different chla sampling protocols used for this experiment
   mutate(AFDW_g_m2 = total_AFDW_g_2/rock_SA_m2) %>%
-  ggplot(aes(x = date, y = total_AFDW_g_2, group = date)) +
+  filter(AFDW_g_m2 <= 200) %>% # filtering out outlier from exp_ID 2
+  ggplot(aes(x = date, y = AFDW_g_m2, group = date)) +
   geom_boxplot() +
   labs(x = "", y = expression(Periphyton~AFDW~(g~m^{-2}))) +
   theme_classic()
@@ -626,6 +641,19 @@ AFDW_trends <- dat %>%
 AFDW_trends
 
 ggsave("plots/main_analysis/AFDW_timeseries.png", plot = AFDW_trends, height = 4, width = 8, dpi = 300)
+
+
+# simplified plot for plotly
+AFDW_plotly <- dat %>%
+  filter(exp_ID != 1) %>% # filtering out march 1st data due to different chla sampling protocols used for this experiment
+  mutate(AFDW_g_m2 = total_AFDW_g_2/rock_SA_m2) %>%
+  filter(AFDW_g_m2 <= 200) %>% # filtering out outlier from exp_ID 2
+  ggplot(aes(x = date, y = AFDW_g_m2, group = date)) +
+  geom_boxplot() +
+  theme_classic()
+
+p <- plotly::ggplotly(AFDW_plotly)
+p
 
 # patching together AI and AFDW timeseries plots so that they share the same x-axis
 library(patchwork)
@@ -641,14 +669,31 @@ ggsave("plots/main_analysis/AI_AFDW_trends.png", plot = AI_AFDW, height = 8, wid
 ```{r}
 metab_trend_AFDW <- dat_long %>%
   filter(exp_ID == 3 & temp_C ==7 | exp_ID == 5 & temp_C == 14.5 | exp_ID == 6 & temp_C == 19.5 | exp_ID == 7 & temp_C == 15 | exp_ID == 8 & temp_C == 9.5 | exp_ID == 9 & temp_C == 6) %>% # filtering only ambient and in-situ temperature data from all experiments except march one due to different biomass methods giving consistently higher data values
-  ggplot(aes(x = date, y = rates_AFDW, group = date)) +
-  facet_grid(cols = vars(rate_name_AFDW)) +
+  ggplot(aes(x = date, y = rates_AFDW, group = date, fill = rate_name_AFDW)) +
+  facet_grid(rows = vars(rate_name_AFDW)) +
   geom_boxplot() +
+  scale_fill_viridis_d() +
   labs(x = "", y = expression(Metabolic~Rate~(mgO[2]~day^{-1}~gAFDW^{-1}))) +
-  theme_classic()
+  theme_bw() +
+  theme(legend.position = "None")
 
 
 metab_trend_AFDW
+
+
+# simplified plot for plotly
+metab_trend_AFDW_plotly <- dat_long %>%
+  filter(exp_ID == 3 & temp_C ==7 | exp_ID == 5 & temp_C == 14.5 | exp_ID == 6 & temp_C == 19.5 | exp_ID == 7 & temp_C == 15 | exp_ID == 8 & temp_C == 9.5 | exp_ID == 9 & temp_C == 6) %>% # filtering only ambient and in-situ temperature data from all experiments except march one due to different biomass methods giving consistently higher data values
+  ggplot(aes(x = date, y = rates_AFDW, group = date, fill = rate_name_AFDW)) +
+  facet_grid(rows = vars(rate_name_AFDW)) +
+  geom_boxplot() +
+  scale_fill_viridis_d() +
+  theme_bw() +
+  theme(legend.position = "None")
+
+
+p <- plotly::ggplotly(metab_trend_AFDW_plotly)
+p
 
 
 ```
@@ -657,22 +702,37 @@ metab_trend_AFDW
 ```{r}
 metab_trend_sa <- dat_long_m2 %>%
   filter(exp_ID == 3 & temp_C ==7 | exp_ID == 5 & temp_C == 14.5 | exp_ID == 6 & temp_C == 19.5 | exp_ID == 7 & temp_C == 15 | exp_ID == 8 & temp_C == 9.5 | exp_ID == 9 & temp_C == 6) %>% # filtering only ambient and in-situ temperature data from all experiments except march one due to different biomass methods giving consistenly higher data values
-  ggplot(aes(x = date, y = rates_m2, group = date)) +
-  facet_grid(cols = vars(rate_name_m2)) +
+  ggplot(aes(x = date, y = rates_m2, group = date, fill = rate_name_m2)) +
+  facet_grid(rows = vars(rate_name_m2)) +
   geom_boxplot() +
-  labs(x = "", y = expression(GPP~(mgO[2]~day^{-1}~m^{2}))) +
-  theme_classic()
+  scale_fill_viridis_d() +
+  labs(x = "", y = expression(Metabolic~Rate~(mgO[2]~day^{-1}~m^{-2})), fill = "Metabolic Rate") +
+  theme_bw()
 
 
 metab_trend_sa
 
+
+# simplified plot for plotly
+
+metab_trend_sa_plotly <- dat_long_m2 %>%
+  filter(exp_ID == 3 & temp_C ==7 | exp_ID == 5 & temp_C == 14.5 | exp_ID == 6 & temp_C == 19.5 | exp_ID == 7 & temp_C == 15 | exp_ID == 8 & temp_C == 9.5 | exp_ID == 9 & temp_C == 6) %>% # filtering only ambient and in-situ temperature data from all experiments except march one due to different biomass methods giving consistenly higher data values
+  ggplot(aes(x = date, y = rates_m2, group = date, fill = rate_name_m2)) +
+  facet_grid(rows = vars(rate_name_m2)) +
+  geom_boxplot() +
+  scale_fill_viridis_d() +
+  theme_bw()
+ 
+p <- plotly::ggplotly(metab_trend_sa_plotly)
+p
 ```
 
 ### combining AFDW and SA metabolic trend plots
 ```{r}
-metab_trend <- (metab_trend_AFDW/metab_trend_sa)
+metab_trend <- (metab_trend_AFDW + metab_trend_sa)
 
-ggsave("plots/main_analysis/metab_trends.png", plot = metab_trend, height = 8, width = 10, dpi = 300)
+ggsave("plots/main_analysis/metab_trends.png", plot = metab_trend, height = 6, width = 12, dpi = 300)
+
 ```
 
 
@@ -880,6 +940,7 @@ emtrends(GPP_final, pairwise ~ month, var = "temp_C")
 # shows the interaction between month and temperature, with the difference slopes of temperature shown for each month
 
 emtrends(GPP_final, pairwise ~ nutrient_trt | month, var = "temp_C")
+# shows interaction between temperature and nutrients for each month
 
 # interaction plot of temp, nutrients, and month in log scale
 GPP_IP <- emmip(GPP_final, nutrient_trt ~ temp_C|month, CIs = T, cov.keep = c("temp_C", "nutrient_trt")) +
@@ -1100,7 +1161,7 @@ emmeans(ER_final, pairwise ~ month, cov.keep = "temp_C", type = "response")
 emtrends(ER_final, pairwise ~ month , var = "temp_C" )
 # shows the interaction between month and temperature, with the difference slopes of temperature shown for each month
 
-emtrends(GPP_final, pairwise ~ nutrient_trt | month, var = "temp_C") # checking out temperature-nutrient interactions for each month
+emtrends(ER_final, pairwise ~ nutrient_trt | month, var = "temp_C") # checking out temperature-nutrient interactions for each month
 
 
 # interaction plot of temp, nutrients, and month in log scale
@@ -1316,6 +1377,8 @@ emmeans(NEP_final, pairwise ~ month, cov.keep = "temp_C", type = "response")
 
 emtrends(NEP_final, pairwise ~ month , var = "temp_C" )
 # shows the interaction between month and temperature, with the difference slopes of temperature shown for each month
+
+emtrends(NEP_final, pairwise ~ nutrient_trt | month, var = "temp_C") # checking out temperature-nutrient interactions for each month
 
 
 # interaction plot of temp, nutrients, and month in log scale

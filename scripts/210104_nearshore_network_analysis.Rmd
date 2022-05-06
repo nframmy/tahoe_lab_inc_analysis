@@ -14,6 +14,7 @@ library(ggpubr)
 knitr::opts_knit$set(root.dir = '..')
 ```
 
+# Loading Data
 ```{r}
 # importing dataset for tahoe city (closest site to the pineland site)
 dat_TC <- read_csv("C:/Users/ntframst/Documents/Tahoe_nearshore_network_data/TC.txt")
@@ -22,6 +23,15 @@ dat_TC <- read_csv("C:/Users/ntframst/Documents/Tahoe_nearshore_network_data/TC.
 
 # importing data for homewood site (next closest to pineland site)
 dat_HW <- read_csv("C:/Users/ntframst/Documents/Tahoe_nearshore_network_data/HW.txt")
+
+# looking at min and max temps for homewood
+dat_HW %>%
+  filter(!is.na(T)) %>%
+  summarise(minT = min(T), max = max(T))
+
+# now looking for dates associated with these min and max temps
+dat_HW %>%
+  filter(T == 3.65674 | T == 21.26802)
 ```
 
 ### plotting temperature (probeT) for TC site
