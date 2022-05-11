@@ -405,9 +405,13 @@ control_uptake <- main %>%
   summarise(avg_uptake = mean(AFDW_rates), sd_uptake = sd(AFDW_rates)) %>% # obtaining an average nutrient uptake rate for each nutrient type and each month
   arrange(avg_uptake)
 
+# formatting date column from a character class to a datetime
+control_uptake$date <- as_date(control_uptake$date)
+
+
 control_uptake_plot <- control_uptake %>%
   ggplot(aes(x = date, y = avg_uptake, color = uptake_rate_name, group = uptake_rate_name)) +
-  scale_color_viridis_d(name = "") +
+  scale_color_viridis_d(name = "", labels = expression(NH[4], NO[3], SRP)) +
   geom_point() +
   geom_pointrange(aes(ymin = avg_uptake - sd_uptake, ymax = avg_uptake + sd_uptake)) +
   geom_line() +
