@@ -128,3 +128,12 @@ dat_ER %>%
 ```
 
 Background ER rates range from -4 to 6mgO2/day.
+
+# merging GPP and ER dataframes
+```{r}
+feb_backrnd <- full_join(dat_GPP, dat_ER, by="jar", suffix=c("",".y")) %>%
+  dplyr::select(-ends_with(".y"))
+
+write_csv(feb_backrnd, "data/220227_pineland_a_e/feb_background_rates.csv")
+```
+

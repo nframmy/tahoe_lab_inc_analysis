@@ -127,3 +127,11 @@ dat_ER %>%
 ```
 
 Background ER rates range from -2 to 3mg O2/day per chamber, which is much smaller than the rates produced by the periphyton (range: 9-44mg O2/day; average: 26mg O2/day). These values are perhaps large enough that they should be accounted for in periphyton ER rate determination.
+
+# merging GPP and ER dataframes
+```{r}
+oct_backrnd <- full_join(dat_GPP, dat_ER, by="jar", suffix=c("",".y")) %>%
+  dplyr::select(-ends_with(".y"))
+
+write_csv(oct_backrnd, "data/211010_pineland_a_e/oct_background_rates.csv")
+```

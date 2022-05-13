@@ -125,3 +125,12 @@ dat_ER %>%
 ```
 
 Background ER rates ranged from -6 to 0 mgO2/day. Periphyton ER rates ranged from 6 to 49 mgO2/day (avg = 20.7 mgO2/day).
+
+
+# merging GPP and ER dataframes
+```{r}
+nov_backrnd <- full_join(dat_GPP, dat_ER, by="jar", suffix=c("",".y")) %>%
+  dplyr::select(-ends_with(".y"))
+
+write_csv(nov_backrnd, "data/211128_pineland_a_e/nov_background_rates.csv")
+```

@@ -126,3 +126,11 @@ dat_ER %>%
   geom_label(aes(label = jar))
 ```
 Background ER rates range from -0.7 to 1.5mg O2/day per chamber (excluding the one outlier jar 31), which is much smaller than the 7-15mg O2/day produced by the periphyton. These values are perhaps large enough that they should be accounted for in periphyton ER rate determination.
+
+# merging GPP and ER dataframes
+```{r}
+aug_backrnd <- full_join(dat_GPP, dat_ER, by="jar", suffix=c("",".y")) %>% # labeling duplicate rows with a "y"
+  dplyr::select(-ends_with(".y")) # removing duplicate rows containing y
+
+write_csv(aug_backrnd, "data/210808_pineland_a_e/aug_background_rates.csv")
+```
