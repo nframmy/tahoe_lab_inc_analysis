@@ -27,6 +27,9 @@ knitr::opts_knit$set(root.dir = '..')
 dat <- read_csv("data/nutrient_data/220328_nutrient_data_main_R.csv", skip = 2)
 head(dat)
 
+dat <- dat[-c(192:422),] # removing the last rows of containing no data
+#View(dat)
+
 
 # reformatting date column into datetimes in POSIXct
 dat$date <- mdy_hm(dat$date)
@@ -41,7 +44,8 @@ dat <- dat %>%
 # Creating dataframe containing field nutrient concentrations only
 ```{r}
 ambient_nutrients <- dat %>%
-  filter(site_treatment == "TPI_TC_NA" | site_treatment == "TPI_PNLD_0.5m")
+  filter(site_treatment == "TPI_TC_NA" | site_treatment == "TPI_PNLD_0.5m") %>%
+ mutate(month = month(datetime, label = T, abbr = F)) # adding a month column to dataframe based on the datetime column
 
 #View(ambient_nutrients)
 
@@ -363,8 +367,9 @@ main <- main %>%
 # plotting nutrient uptake rates
 AFDW <- main %>%
   filter(date != "2021-04-21" & date != "2021-03-15" & uptake_rate_name != "DP_rate" & AFDW_rates < 600) %>% # filtering out april 2021 data since rates were near zero due to error with nutrient enrichment, filtering out march 2021 data since waterbath temperatures were not held at treatment levels overnight during the incubation period and nutrient uptake rates will not reflect a temperature signal, also filtering out DP data, and filtering out outlier from nov 2021 experiment
-  filter(date_chamber != "2021-11-28_F_15" & date_chamber != "2021-11-28_F_2") %>% # removing outlier datapoints for november rates
-  ggplot(aes(x = temp_C, y = AFDW_rates)) +
+  filter(date_chamber != "2021-11-28_F_15" & date_chamber != "2021-11-28_F_2" & date_chamber != "2021-06-13_F_1") %>% # removing outlier datapoints for november and june rates
+  mutate(AFDW_rates_2 = ifelse(AFDW_rates < 0, 0, AFDW_rates)) %>% # making negative uptake rate values for NO3 be zeros
+  ggplot(aes(x = temp_C, y = AFDW_rates_2)) +
   facet_grid(cols = vars(uptake_rate_name)) +
   geom_point(aes(group = date_chamber, color = month)) +
   geom_smooth(aes(color = month), method = "lm", se = F) +
@@ -382,7 +387,8 @@ ggsave("plots/nutrient_uptake/AFDW_norm_uptake_rates.png", plot = AFDW, width = 
 # simplified plot for plotly
 AFDW_plotly <- main %>%
   filter(date != "2021-04-21" & date != "2021-03-15" & uptake_rate_name != "DP_rate" & AFDW_rates < 600) %>% # filtering out april 2021 data since rates were near zero due to error with nutrient enrichment, filtering out march 2021 data since waterbath temperatures were not held at treatment levels overnight during the incubation period and nutrient uptake rates will not reflect a temperature signal, also filtering out DP data, and filtering out outlier from nov 2021 experiment
-  ggplot(aes(x = temp_C, y = AFDW_rates)) +
+  mutate(AFDW_rates_2 = ifelse(AFDW_rates < 0, 0, AFDW_rates)) %>% # making negative uptake rate values for NO3 be zeros
+  ggplot(aes(x = temp_C, y = AFDW_rates_2)) +
   facet_grid(cols = vars(uptake_rate_name)) +
   geom_point(aes(group = date_chamber, color = month)) +
   geom_smooth(aes(color = month), method = "lm", se = F) +
@@ -394,9 +400,15 @@ AFDW_plotly
 
 p <- plotly::ggplotly(AFDW_plotly)
 p
+
+  
 ```
 
-# calculating average nutrient uptake rate for season for in-situ temps
+# Comparing Reuter et al. 1986 uptake rates
+I used the above plotly plot to assess the average NH4 and NO3 uptake rates (using the trendlines) for samples ~7c in february experiments and 19C in august experiments (these coincide with sampling dates and temperatures used in Reuter et al 1986's nutrient uptake experiments) and compared NH4 and NO3 uptake rates to see if they were on par with each other. The NH4 uptake rates of the february experiment at ~7C were 19ugNH4-N gAFDW hr, which is near Reuter's value of ~16-17ugNH4-N gAFDW hr at a concentration of 400ug/L in the march experiment. NO3 uptake rates in the february experiment at 7C were ~4ugNO3-N gAFDW hr, which is slightly lower than Reuter's value of 12-13 at a concentration of 400ug NO3-N/L during february. Average august NH4-N uptake rates were ~69ugNH4-N gAFDW hr at 19.5C, while Reuter's rates were ~23ugNH4-N gAFDW hr under these same conditions. Average august NO3 uptake rates were ~3.5ugNO3-N gAFDW hr while Ruters rates were ~20ugNO3-N gAFDW hr under these same conditions.
+
+
+# In-situ nutrient uptake rates
 ```{r}
 control_uptake <- main %>%
   filter(!is.na(uptake_rate_name) & month != "March" & month != "April") %>% # filtering out DP uptake data and march and april experiments
@@ -421,6 +433,81 @@ control_uptake_plot <- control_uptake %>%
 control_uptake_plot
 
 ggsave("plots/nutrient_uptake/control_nutrient_uptake_rate.png", plot = control_uptake_plot, height = 4, width = 7, dpi = 300)
+```
+
+
+# In-situ nutrient uptake vs. ambient nutrient concentrations
+```{r}
+#View(dat)
+
+# adding up nutrient concentrations (NO3, NH4, and SRP) and getting in-situ nutrient uptake rates
+control_uptake <- main %>%
+  filter(!is.na(uptake_rate_name) & month != "March" & month != "April") %>% # filtering out DP uptake data and march and april experiments
+  filter(temp_C == 6 | temp_C == 7 | temp_C == 14.5 | temp_C == 19.5 | temp_C == 9.5 | temp_C == 15 & month == "October") %>% # filtering only data corresponding to in-situ temperatures for each experiment
+  group_by(uptake_rate_name, month, date) %>% # grouping data by nutrient uptake type, month, and ambient nutrients
+  summarise(avg_uptake = mean(AFDW_rates), sd_uptake = sd(AFDW_rates)) %>% # obtaining an average nutrient uptake rate for each nutrient type and each month
+  arrange(avg_uptake)
+
+control_uptake
+
+# prepping ambient nutrients dataframe for joining
+ambient_subset <- ambient_nutrients %>%
+  mutate(NH4_N_pos = ifelse(NH4_N < 0, 1, NH4_N)) %>% # changing negative NH4 value to be half of the method detection limit (2ug/L) since negative values are not possible 
+  dplyr::select(NH4_N_pos, NO3_N_py, SRP, month) %>% # selecting only the columns I need
+  rename(NH4_N_amb = NH4_N_pos, NO3_N_amb = NO3_N_py, SRP_amb = SRP) %>% # renaming columns so they're not duplicate names in the join
+#View(ambient_subset)
+  filter(month != "March" & month != "April")
+
+# combining ambient nutrients dataframe and control nutrient uptake rates dataframe by the month column so that ambient nutrient concentrations are matched with their respective nutrient uptake rates
+
+combo <- full_join(control_uptake, ambient_subset, by = "month")
+
+# formatting date column from a character class to a datetime
+combo$date <- as_date(combo$date)
+
+# creating a nutrient column of NO3, NH4, and SRP concentrations added together
+combo <- combo %>%
+  mutate(N_conc = NH4_N_amb + NO3_N_amb)
+
+#View(combo)
+
+# nutrient uptake rates as a function of ambient nitrogen concentrations
+NO3_plot <- combo %>%
+  ggplot(aes(x = NO3_N_amb, y = avg_uptake, color = uptake_rate_name, group = uptake_rate_name)) +
+ scale_color_viridis_d(name = "", labels = expression(NH[4], NO[3], SRP)) +
+  geom_point() +
+  geom_pointrange(aes(ymin = avg_uptake - sd_uptake, ymax = avg_uptake + sd_uptake)) +
+  geom_line() +
+  labs(x = expression(NH[4]~+~NO[3]~concentration~(paste(mu, "g")~L^{-1})), y = expression(Nutrient~Uptake~(paste(mu, "g")~N/paste(mu, "g")~P~gAFDW^{-1}~hr^{-1}))) +
+  theme_classic()
+
+# nutrient uptake rates as a function of ambient SRP concentrations
+P_plot <- combo %>%
+  ggplot(aes(x = SRP_amb, y = avg_uptake, color = uptake_rate_name, group = uptake_rate_name)) +
+ scale_color_viridis_d(name = "", labels = expression(NH[4], NO[3], SRP)) +
+  geom_point() +
+  geom_pointrange(aes(ymin = avg_uptake - sd_uptake, ymax = avg_uptake + sd_uptake)) +
+  geom_line() +
+  labs(x = expression(SRP~concentration~(paste(mu, "g")~L^{-1})), y = expression(Nutrient~Uptake~(paste(mu, "g")~N/paste(mu, "g")~P~gAFDW^{-1}~hr^{-1}))) +
+  theme_classic()
+
+# nutrient uptake rates as a function of ambient NH4 concentrations
+
+NH4_plot <- combo %>%
+  ggplot(aes(x = NH4_N_amb, y = avg_uptake, color = uptake_rate_name, group = uptake_rate_name)) +
+ scale_color_viridis_d(name = "", labels = expression(NH[4], NO[3], SRP)) +
+  geom_point() +
+  geom_pointrange(aes(ymin = avg_uptake - sd_uptake, ymax = avg_uptake + sd_uptake)) +
+  geom_line() +
+  labs(x = expression(NH[4]~concentration~(paste(mu, "g")~L^{-1})), y = expression(Nutrient~Uptake~(paste(mu, "g")~N/paste(mu, "g")~P~gAFDW^{-1}~hr^{-1}))) +
+  theme_classic()
+
+# saving plots
+ggsave("plots/nutrient_uptake/nut_uptake_vs_NO3.png", plot = NO3_plot, height = 4, width = 6, dpi = 300)
+
+ggsave("plots/nutrient_uptake/nut_uptake_vs_P.png", plot = P_plot, height = 4, width = 6, dpi = 300)
+
+ggsave("plots/nutrient_uptake/nut_uptake_vs_NH4.png", plot = NH4_plot, height = 4, width = 6, dpi = 300)
 ```
 
 
