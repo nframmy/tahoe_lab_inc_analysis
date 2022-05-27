@@ -633,7 +633,7 @@ ggsave("plots/nutrient_uptake/uptake_molar_ratio.png", plot = mol_ratio_plot, wi
 
 # Nutrient Use Efficiency
 ```{r}
-View(main)
+#View(main)
 # changing rate names back to compatible column names for R
 main$uptake_rate_name <- factor(main$uptake_rate_name, levels = c("Ammonium", "Nitrate", "Soluble Reactive Phosphorus"), labels = c("NH4_rate", "NO3_rate", "SRP_rate"))
 
@@ -692,6 +692,19 @@ UE_plot
 
 
 ggsave("plots/nutrient_uptake/nutrient_use_eff.png", plot = UE_plot, height = 4, width = 6, dpi = 300)
+
+# simplified plot for plotly
+UE_plotly <- UE_long %>%
+  filter(month != "March" & month != "April") %>% # filtering out april and march experiment data due to issues with nutrient enrichment levels or maintaining temperature
+  ggplot(aes(x = temp_C, y = value, color = month, group = interaction(month, parameter))) +
+  facet_grid(cols = vars(parameter)) +
+  geom_point() +
+  geom_smooth(aes(color = month), method = "lm", se = FALSE) +
+  scale_color_viridis_d() +
+  theme_minimal() +
+  theme(legend.position = "bottom")
+p <- plotly::ggplotly(UE_plotly)
+p
 
 # regression on aggregated data
 UE_long %>%
