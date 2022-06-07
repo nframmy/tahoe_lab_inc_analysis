@@ -271,6 +271,29 @@ dat <- dat %>%
 ```
 
 
+# COMBINING NUTRIENT UPTAKE RATE DATAFRAME WITH MAIN DATA
+```{r}
+# loading in nutrient uptake rate data
+nutrient_dat <- read_csv("data/nutrient_data/nutrient_data_lahontan.csv")
+
+# making rock_ID column a factor variable in nutrient data so that it's compatible with the main dataframe
+nutrient_dat$rock_ID <- as.factor(nutrient_dat$rock_ID)
+
+# combining dataframes
+main_dat <- left_join(dat, nutrient_dat, by = "rock_ID")
+
+
+# making sure that ambient samples have "NA" for nutrient data and uptake rates in dataframe since this data only applies to enriched rocks
+main_dat <- main_dat %>%
+  mutate(across(c(NO3_N_py:DP_rate), ~ifelse(nutrient_trt == "ambient", NA, .))) # making values of NO3_N_py column and all columns to the right of it be NA for ambient nutrient samples
+
+#View(main_dat)
+
+# exporting main dataframe
+write_csv(main_dat, "data/main_analysis/main_data_lahontan.csv")
+```
+
+
 # Exporting and Cleaning data
 ```{r}
 # exporting combined dataframe as .csv
