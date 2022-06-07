@@ -27,6 +27,7 @@ library(sjPlot)
 library(sjmisc)
 library(sjlabelled)
 library(patchwork)
+library(gt)
 
 # changing working directory from /scripts to /tahoe_lab_inc_analysis
 knitr::opts_knit$set(root.dir = '..')
@@ -952,18 +953,55 @@ plot(GPP_final)
 
 # same interaction analysis for m10 (has month instead of exp_ID in model)
 
-emmeans(GPP_final, pairwise ~ nutrient_trt|month, cov.keep = "temp_C", type = "response")
+nut_seasonal <- emmeans(GPP_final, pairwise ~ nutrient_trt|month, cov.keep = "temp_C", type = "response")
 # shows seasonal interactions with nutrient enrichment; nutrients seemed to have a signficant effect on october incubations suggesting that periphyton are sensitive to nutrient additions at this timepoint
+
+nut_seasonal <- nut_seasonal$contrasts %>%
+  as.data.frame() # saving emmeans contrasts as a dataframe so I can export results in a table
+
+# printing table of data
+table <- nut_seasonal %>%
+    gt() %>%
+  tab_header(title = "Seasonal Variation in Nutrient Effects on Periphyton GPP")
+gtsave("plots/main_analysis/nut_seasonal_GPP.png", data = table)
+
+
+
+#######################################
 
 emmeans(GPP_final, pairwise ~ month, cov.keep = "temp_C", type = "response")
 # shows effect of month on GPP averaged across all levels of temperature and nutrients, with direct pairwise comparisions between months.
 
 
-emtrends(GPP_final, pairwise ~ month, var = "temp_C")
+
+############################
+temp_seasonal <- emtrends(GPP_final, pairwise ~ month, var = "temp_C")
 # shows the interaction between month and temperature, with the difference slopes of temperature shown for each month
 
-emtrends(GPP_final, pairwise ~ nutrient_trt | month, var = "temp_C")
+temp_seasonal <- temp_seasonal$contrasts %>%
+  as.data.frame() # saving emtrends contrasts as a dataframe so I can export results in a table
+
+# printing table of data
+temp_table <- temp_seasonal %>%
+    gt() %>%
+  tab_header(title = "Seasonal Variation in Temperature Effects on Periphyton GPP")
+gtsave("plots/main_analysis/temp_seasonal_GPP.png", data = temp_table)
+
+
+
+############################
+temp_nut_seasonal <- emtrends(GPP_final, pairwise ~ nutrient_trt | month, var = "temp_C")
 # shows interaction between temperature and nutrients for each month
+
+temp_nut_seasonal <- temp_nut_seasonal$contrasts %>%
+  as.data.frame()
+
+# printing table of data
+temp_nut_table <- temp_nut_seasonal %>%
+    gt() %>%
+  tab_header(title = "Seasonal Variation in Temperature-Nutrient Interactions on Periphyton GPP")
+gtsave("plots/main_analysis/temp_nut_seasonal_GPP.png", data = temp_nut_table)
+
 
 # interaction plot of temp, nutrients, and month in log scale
 GPP_IP <- emmip(GPP_final, nutrient_trt ~ temp_C|month, CIs = T, cov.keep = c("temp_C", "nutrient_trt")) +
@@ -1175,17 +1213,52 @@ plot(ER_final)
 
 
 # plots to interpret model 10
-emmeans(ER_final, pairwise ~ nutrient_trt|month, cov.keep = "temp_C", type = "response")
+nut_seasonal_ER <- emmeans(ER_final, pairwise ~ nutrient_trt|month, cov.keep = "temp_C", type = "response")
 # shows seasonal interactions with nutrient enrichment; nutrients seemed to have a signficant effect on october incubations suggesting that periphyton are sensitive to nutrient additions at this timepoint
 
+nut_seasonal_ER <- nut_seasonal_ER$contrasts %>%
+  as.data.frame() # saving contrasts from emmeans as dataframe so I can export a table of the results
+
+# printing table of data
+nut_table_ER <- nut_seasonal_ER %>%
+    gt() %>%
+  tab_header(title = "Seasonal Variation in Nutrient Effects on Periphyton ER")
+gtsave("plots/main_analysis/nut_seasonal_ER.png", data = nut_table_ER)
+
+
+
+####################
 emmeans(ER_final, pairwise ~ month, cov.keep = "temp_C", type = "response")
 # shows effect of month on ER averaged across all levels of temperature and nutrients, with direct pairwise comparisions between months.
 
-emtrends(ER_final, pairwise ~ month , var = "temp_C" )
+
+######################
+temp_seasonal_ER <- emtrends(ER_final, pairwise ~ month , var = "temp_C" )
 # shows the interaction between month and temperature, with the difference slopes of temperature shown for each month
 
-emtrends(ER_final, pairwise ~ nutrient_trt | month, var = "temp_C") # checking out temperature-nutrient interactions for each month
+temp_seasonal_ER <- temp_seasonal_ER$contrasts %>%
+  as.data.frame() # saving contrasts from emmeans as dataframe so I can export a table of the results
 
+temp_table_ER <- temp_seasonal_ER %>%
+  gt() %>%
+  tab_header(title = "Seasonal Variation in Temperature Effects on Periphyton ER")
+gtsave("plots/main_analysis/temp_seasonal_ER.png", data = temp_table_ER)
+
+
+
+##################
+temp_nut_seasonal_ER <- emtrends(ER_final, pairwise ~ nutrient_trt | month, var = "temp_C") # checking out temperature-nutrient interactions for each month
+
+temp_nut_seasonal_ER <- temp_nut_seasonal_ER$contrasts %>%
+  as.data.frame()# saving contrasts from emmeans as dataframe so I can export a table of the results
+
+temp_nut_table_ER <- temp_nut_seasonal_ER %>%
+  gt() %>%
+  tab_header(title = "Seasonal Variation in Temperature-Nutrient Interactions on Periphyton ER")
+gtsave("plots/main_analysis/temp_nut_seasonal_ER.png", data = temp_nut_table_ER)
+
+
+################
 
 # interaction plot of temp, nutrients, and month in log scale
 ER_IP <- emmip(ER_final, nutrient_trt ~ temp_C|month, CIs = T, cov.keep = c("temp_C", "nutrient_trt")) +
@@ -1391,18 +1464,57 @@ plot(NEP_final)
  # geom_point(aes(x = temp_C, y = log(NEP_mgO2_d_gAFDW_2), color = interaction(temp_C, nutrients)), data = dat_lme)
 
 
-# plots to interpret model 10
-emmeans(NEP_final, pairwise ~ nutrient_trt|month, cov.keep = "temp_C", type = "response")
+####################
+nut_seasonal_NEP <- emmeans(NEP_final, pairwise ~ nutrient_trt|month, cov.keep = "temp_C", type = "response")
 # shows seasonal interactions with nutrient enrichment; nutrients seemed to have a signficant effect on october incubations suggesting that periphyton are sensitive to nutrient additions at this timepoint
 
-emmeans(NEP_final, pairwise ~ month, cov.keep = "temp_C", type = "response")
-# shows effect of month on GPP averaged across all levels of temperature and nutrients, with direct pairwise comparisions between months.
+nut_seasonal_NEP <- nut_seasonal_NEP$contrasts %>%
+  as.data.frame() # saving contrasts from emmeans as dataframe so I can export a table of the results
 
-emtrends(NEP_final, pairwise ~ month , var = "temp_C" )
+# printing table of data
+nut_table_NEP <- nut_seasonal_NEP %>%
+    gt() %>%
+  tab_header(title = "Seasonal Variation in Nutrient Effects on Periphyton NEP")
+gtsave("plots/main_analysis/nut_seasonal_NEP.png", data = nut_table_NEP)
+
+
+#######################
+emmeans(NEP_final, pairwise ~ month, cov.keep = "temp_C", type = "response")
+# shows effect of month on NEP averaged across all levels of temperature and nutrients, with direct pairwise comparisions between months.
+
+
+
+
+###################
+temp_seasonal_NEP <- emtrends(NEP_final, pairwise ~ month , var = "temp_C" )
 # shows the interaction between month and temperature, with the difference slopes of temperature shown for each month
 
-emtrends(NEP_final, pairwise ~ nutrient_trt | month, var = "temp_C") # checking out temperature-nutrient interactions for each month
+temp_seasonal_NEP <- temp_seasonal_NEP$contrasts %>%
+  as.data.frame() # saving contrasts from emmeans as dataframe so I can export a table of the results
 
+# printing table of data
+temp_table_NEP <- temp_seasonal_NEP %>%
+    gt() %>%
+  tab_header(title = "Seasonal Variation in Temperature Effects on Periphyton NEP")
+gtsave("plots/main_analysis/temp_seasonal_NEP.png", data = temp_table_NEP)
+
+
+#####################
+
+temp_nut_seasonal_NEP <- emtrends(NEP_final, pairwise ~ nutrient_trt | month, var = "temp_C") # checking out temperature-nutrient interactions for each month
+
+temp_nut_seasonal_NEP <- temp_nut_seasonal_NEP$contrasts %>%
+  as.data.frame() # saving contrasts from emmeans as dataframe so I can export a table of the results
+
+# printing table of data
+temp_nut_table_NEP <- temp_nut_seasonal_NEP %>%
+    gt() %>%
+  tab_header(title = "Seasonal Variation in Temperature-Nutrient Interactions on Periphyton NEP")
+gtsave("plots/main_analysis/temp_nut_seasonal_NEP.png", data = temp_nut_table_NEP)
+
+
+
+#######################
 
 # interaction plot of temp, nutrients, and month in log scale
 NEP_IP <- emmip(NEP_final, nutrient_trt ~ temp_C|month, CIs = T, cov.keep = c("temp_C", "nutrient_trt")) +
