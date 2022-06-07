@@ -349,6 +349,8 @@ main <- left_join(dat_long, metab_dat, by = "chamber_ID")
 main <- main %>%
   mutate(AFDW_rates = rates/total_AFDW_g)
 
+write_csv(main, "data/nutrient_data/nutrient_data_export.csv")
+
 
 # renaming factor levels for graphing purposes
 main$uptake_rate_name <- factor(main$uptake_rate_name, levels = c("NH4_rate", "NO3_rate", "SRP_rate"), labels = c("Ammonium", "Nitrate", "Soluble Reactive Phosphorus")) 
