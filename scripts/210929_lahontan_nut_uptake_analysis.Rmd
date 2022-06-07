@@ -47,6 +47,9 @@ ambient_nutrients <- dat %>%
   filter(site_treatment == "TPI_TC_NA" | site_treatment == "TPI_PNLD_0.5m") %>%
  mutate(month = month(datetime, label = T, abbr = F)) # adding a month column to dataframe based on the datetime column
 
+# exporting dataframe of ambient concentrations only
+write_csv(ambient_nutrients, "data/nutrient_data/in_situ_nutrient_data.csv")
+
 #View(ambient_nutrients)
 
 # converting dataframe form wide to long format
@@ -314,7 +317,7 @@ Important things to keep in mind: 1) The April experiment had much lower initial
 2) The June experiment only had an 11-hr incubation, which was about half as long as the ~24hr incubation period in the other experiments
 3) The March 2021 experiment had slightly higher nutrient enrichment concentrations, and the stoichiometry of N & P in the additions were slightly different as well.
 
-# Plotting AFDW-normalized nutrient uptake rates
+# joining nutrient uptake and metabolic dataframes
 ```{r}
 # prepping nutrient data for joining to incubation AFDW data
 # creating numeric chamber column in nutrient data and removing the "F_" from individual cells
@@ -348,9 +351,26 @@ main <- left_join(dat_long, metab_dat, by = "chamber_ID")
 # calculating AFDW-normalized rates
 main <- main %>%
   mutate(AFDW_rates = rates/total_AFDW_g)
+```
 
-write_csv(main, "data/nutrient_data/nutrient_data_export.csv")
 
+# preparing data to merge with main dataframe
+```{r}
+# convert dataframe back to wide format for export
+main_wide <- main %>%
+  dplyr::select(-rates) %>% # removing this column so I can pivot data to wide format based on AFDW_rates column
+  pivot_wider(names_from = uptake_rate_name, values_from = AFDW_rates) %>%
+  mutate(rock_ID = c(17:32, 49:144)) %>%
+  dplyr::select(NO3_N_py, NH4_N, SRP, DP, bulk_NO3_N_py, bulk_NH4_N, bulk_SRP, bulk_DP, NO3_rate:rock_ID) # selecting only the rows I need
+  #View(main_wide)
+
+write_csv(main_wide, "data/nutrient_data/nutrient_data_lahontan.csv")
+```
+
+
+
+# Plotting AFDW-normalized nutrient uptake rates
+```{r}
 
 # renaming factor levels for graphing purposes
 main$uptake_rate_name <- factor(main$uptake_rate_name, levels = c("NH4_rate", "NO3_rate", "SRP_rate"), labels = c("Ammonium", "Nitrate", "Soluble Reactive Phosphorus")) 
@@ -408,6 +428,7 @@ p
 
 # Comparing Reuter et al. 1986 uptake rates
 I used the above plotly plot to assess the average NH4 and NO3 uptake rates (using the trendlines) for samples ~7c in february experiments and 19C in august experiments (these coincide with sampling dates and temperatures used in Reuter et al 1986's nutrient uptake experiments) and compared NH4 and NO3 uptake rates to see if they were on par with each other. The NH4 uptake rates of the february experiment at ~7C were 19ugNH4-N gAFDW hr, which is near Reuter's value of ~16-17ugNH4-N gAFDW hr at a concentration of 400ug/L in the march experiment. NO3 uptake rates in the february experiment at 7C were ~4ugNO3-N gAFDW hr, which is slightly lower than Reuter's value of 12-13 at a concentration of 400ug NO3-N/L during february. Average august NH4-N uptake rates were ~69ugNH4-N gAFDW hr at 19.5C, while Reuter's rates were ~23ugNH4-N gAFDW hr under these same conditions. Average august NO3 uptake rates were ~3.5ugNO3-N gAFDW hr while Ruters rates were ~20ugNO3-N gAFDW hr under these same conditions.
+
 
 
 # In-situ nutrient uptake rates
