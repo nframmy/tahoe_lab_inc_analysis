@@ -962,6 +962,7 @@ nut_seasonal <- nut_seasonal$contrasts %>%
 # printing table of data
 table <- nut_seasonal %>%
     gt() %>%
+  cols_label(contrast = "comparison", ratio = "effect size") %>%
   tab_header(title = "Seasonal Variation in Nutrient Effects on Periphyton GPP")
 gtsave("plots/main_analysis/nut_seasonal_GPP.png", data = table)
 
@@ -986,6 +987,24 @@ temp_table <- temp_seasonal %>%
     gt() %>%
   tab_header(title = "Seasonal Variation in Temperature Effects on Periphyton GPP")
 gtsave("plots/main_analysis/temp_seasonal_GPP.png", data = temp_table)
+
+
+# now making a table of the emmeans instead of the contrasts for the same emtrends results
+
+temp_seasonal_emm <- emtrends(GPP_final, pairwise ~ month, var = "temp_C")
+
+temp_seasonal_emm <- temp_seasonal_emm$emtrends %>%
+  as.data.frame() # saving emtrends contrasts as a dataframe so I can export results in a table
+
+# printing table of data and calculating Q10 values from temperature coefficients (done by raising them to the 10th power)
+temp_emmeans_table <- temp_seasonal_emm %>%
+  mutate(temp_C.trend = exp(temp_C.trend)) %>% # putting the estimated temp trends in the response scale by undoing the log-transformation
+  mutate(Q10_value = temp_C.trend^10) %>% # calculating Q10 values
+    gt() %>%
+  cols_move(columns = Q10_value, after = temp_C.trend) %>%
+  cols_label(temp_C.trend = "temperature effect", Q10_value = html("Q<sub>10</sub> ")) %>%
+  tab_header(title = "Seasonal Variation in Temperature Effects on Periphyton GPP")
+gtsave("plots/main_analysis/temp_seasonal_GPP_emmeans.png", data = temp_emmeans_table)
 
 
 
@@ -1222,6 +1241,7 @@ nut_seasonal_ER <- nut_seasonal_ER$contrasts %>%
 # printing table of data
 nut_table_ER <- nut_seasonal_ER %>%
     gt() %>%
+  cols_label(contrast = "comparison", ratio = "effect size") %>%
   tab_header(title = "Seasonal Variation in Nutrient Effects on Periphyton ER")
 gtsave("plots/main_analysis/nut_seasonal_ER.png", data = nut_table_ER)
 
@@ -1243,6 +1263,23 @@ temp_table_ER <- temp_seasonal_ER %>%
   gt() %>%
   tab_header(title = "Seasonal Variation in Temperature Effects on Periphyton ER")
 gtsave("plots/main_analysis/temp_seasonal_ER.png", data = temp_table_ER)
+
+# now making a table of the emmeans instead of the contrasts for the same emtrends results
+
+temp_seasonal_ER_emm <- emtrends(ER_final, pairwise ~ month, var = "temp_C")
+
+temp_seasonal_ER_emm <- temp_seasonal_ER_emm$emtrends %>%
+  as.data.frame() # saving emtrends contrasts as a dataframe so I can export results in a table
+
+# printing table of data with associated Q10 values
+temp_emmeans_table_ER <- temp_seasonal_ER_emm %>%
+  mutate(temp_C.trend = exp(temp_C.trend)) %>% # putting the estimated temp trends in the response scale by undoing the log-transformation
+   mutate(Q10_value = temp_C.trend^10) %>% # calculating Q10 values
+    gt() %>%
+  cols_move(columns = Q10_value, after = temp_C.trend) %>%
+  cols_label(temp_C.trend = "temperature effect", Q10_value = html("Q<sub>10</sub> ")) %>%
+  tab_header(title = "Seasonal Variation in Temperature Effects on Periphyton ER")
+gtsave("plots/main_analysis/temp_seasonal_ER_emmeans.png", data = temp_emmeans_table_ER)
 
 
 
@@ -1474,6 +1511,7 @@ nut_seasonal_NEP <- nut_seasonal_NEP$contrasts %>%
 # printing table of data
 nut_table_NEP <- nut_seasonal_NEP %>%
     gt() %>%
+  cols_label(contrast = "comparison", ratio = "effect size") %>%
   tab_header(title = "Seasonal Variation in Nutrient Effects on Periphyton NEP")
 gtsave("plots/main_analysis/nut_seasonal_NEP.png", data = nut_table_NEP)
 
@@ -1497,6 +1535,24 @@ temp_table_NEP <- temp_seasonal_NEP %>%
     gt() %>%
   tab_header(title = "Seasonal Variation in Temperature Effects on Periphyton NEP")
 gtsave("plots/main_analysis/temp_seasonal_NEP.png", data = temp_table_NEP)
+
+
+# now making a table of the emmeans instead of the contrasts for the same emtrends results
+
+temp_seasonal_NEP_emm <- emtrends(NEP_final, pairwise ~ month, var = "temp_C")
+
+temp_seasonal_NEP_emm <- temp_seasonal_NEP_emm$emtrends %>%
+  as.data.frame() # saving emtrends contrasts as a dataframe so I can export results in a table
+
+# printing table of data with associated Q10 values
+temp_emmeans_table_NEP <- temp_seasonal_NEP_emm %>%
+  mutate(temp_C.trend = exp(temp_C.trend)) %>% # putting the estimated temp trends in the response scale by undoing the log-transformation
+    mutate(Q10_value = temp_C.trend^10) %>% # calculating Q10 values
+    gt() %>%
+  cols_move(columns = Q10_value, after = temp_C.trend) %>%
+  cols_label(temp_C.trend = "temperature effect", Q10_value = html("Q<sub>10</sub> ")) %>%
+  tab_header(title = "Seasonal Variation in Temperature Effects on Periphyton NEP")
+gtsave("plots/main_analysis/temp_seasonal_NEP_emmeans.png", data = temp_emmeans_table_NEP)
 
 
 #####################
