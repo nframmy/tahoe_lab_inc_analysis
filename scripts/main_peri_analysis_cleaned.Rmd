@@ -909,11 +909,12 @@ GPP_final <- m5
 summary(GPP_final)
 
 # summary table for model comparison
-tab_model(m0, m1, m2, m3, m5, dv.labels = c("Model0", "Model1", "Model2", "Model3", "Model5"),
+tab_model(m0, m1, m2, m3, m5, dv.labels = c("Intercept only", "GLS", "LMM1", "LMM2", "LMM3"),
   show.ci = FALSE,
   show.aic = T,
   p.style = "stars",
-  transform = NULL)
+  transform = NULL,
+  file = "plots/main_analysis/GPP_mod_sum.doc")
 ```
 
 
@@ -957,7 +958,8 @@ nut_seasonal <- emmeans(GPP_final, pairwise ~ nutrient_trt|month, cov.keep = "te
 # shows seasonal interactions with nutrient enrichment; nutrients seemed to have a signficant effect on october incubations suggesting that periphyton are sensitive to nutrient additions at this timepoint
 
 nut_seasonal <- nut_seasonal$contrasts %>%
-  as.data.frame() # saving emmeans contrasts as a dataframe so I can export results in a table
+  as.data.frame() %>% # saving emmeans contrasts as a dataframe so I can export results in a table
+  mutate(across(c(ratio:p.value), ~signif(.,4))) # rounding numbers in all numeric columns to 4 sig figs
 
 # printing table of data
 table <- nut_seasonal %>%
@@ -995,11 +997,13 @@ temp_seasonal_emm <- emtrends(GPP_final, pairwise ~ month, var = "temp_C")
 
 temp_seasonal_emm <- temp_seasonal_emm$emtrends %>%
   as.data.frame() # saving emtrends contrasts as a dataframe so I can export results in a table
+  
 
 # printing table of data and calculating Q10 values from temperature coefficients (done by raising them to the 10th power)
 temp_emmeans_table <- temp_seasonal_emm %>%
   mutate(temp_C.trend = exp(temp_C.trend)) %>% # putting the estimated temp trends in the response scale by undoing the log-transformation
   mutate(Q10_value = temp_C.trend^10) %>% # calculating Q10 values
+  mutate(across(c(temp_C.trend:Q10_value), ~round(.,4))) %>% # rounding all numeric columns to 4 sig figs
     gt() %>%
   cols_move(columns = Q10_value, after = temp_C.trend) %>%
   cols_label(temp_C.trend = "temperature effect", Q10_value = html("Q<sub>10</sub> ")) %>%
@@ -1192,11 +1196,12 @@ ER_final <- m3
 summary(ER_final)
 
 # summary table for model comparison
-tab_model(m0, m1, m2, m3, dv.labels = c("Model0", "Model1", "Model2", "Model3"),
+tab_model(m0, m1, m2, m3, dv.labels = c("Intercept only", "GLS", "LMM1", "LMM2"),
   show.ci = FALSE,
   show.aic = T,
   p.style = "stars",
-  transform = NULL)
+  transform = NULL,
+  file = "plots/main_analysis/ER_mod_sum.doc")
 ```
 
 
@@ -1236,7 +1241,8 @@ nut_seasonal_ER <- emmeans(ER_final, pairwise ~ nutrient_trt|month, cov.keep = "
 # shows seasonal interactions with nutrient enrichment; nutrients seemed to have a signficant effect on october incubations suggesting that periphyton are sensitive to nutrient additions at this timepoint
 
 nut_seasonal_ER <- nut_seasonal_ER$contrasts %>%
-  as.data.frame() # saving contrasts from emmeans as dataframe so I can export a table of the results
+  as.data.frame() %>% # saving contrasts from emmeans as dataframe so I can export a table of the results
+  mutate(across(c(ratio:p.value), ~signif(.,4))) # rounding numbers in all numeric columns to 4 sig figs
 
 # printing table of data
 nut_table_ER <- nut_seasonal_ER %>%
@@ -1275,6 +1281,7 @@ temp_seasonal_ER_emm <- temp_seasonal_ER_emm$emtrends %>%
 temp_emmeans_table_ER <- temp_seasonal_ER_emm %>%
   mutate(temp_C.trend = exp(temp_C.trend)) %>% # putting the estimated temp trends in the response scale by undoing the log-transformation
    mutate(Q10_value = temp_C.trend^10) %>% # calculating Q10 values
+   mutate(across(c(temp_C.trend:Q10_value), ~round(.,4))) %>% # rounding all numeric columns to 4 sig figs
     gt() %>%
   cols_move(columns = Q10_value, after = temp_C.trend) %>%
   cols_label(temp_C.trend = "temperature effect", Q10_value = html("Q<sub>10</sub> ")) %>%
@@ -1463,11 +1470,12 @@ NEP_final <- m5
 summary(NEP_final)
 
 # summary table for model comparison
-tab_model(m0, m1, m2, m3, m4, m5, dv.labels = c("Model0", "Model1", "Model2", "Model3", "Model4", "Model5"),
+tab_model(m0, m1, m2, m3, m4, m5, dv.labels = c("Intercept only", "GLS", "LMM1", "LMM2", "LMM3", "LMM4"),
   show.ci = FALSE,
   show.aic = T,
   p.style = "stars",
-  transform = NULL)
+  transform = NULL,
+  file = "plots/main_analysis/NEP_mod_sum.doc")
 ```
 
 
@@ -1506,7 +1514,8 @@ nut_seasonal_NEP <- emmeans(NEP_final, pairwise ~ nutrient_trt|month, cov.keep =
 # shows seasonal interactions with nutrient enrichment; nutrients seemed to have a signficant effect on october incubations suggesting that periphyton are sensitive to nutrient additions at this timepoint
 
 nut_seasonal_NEP <- nut_seasonal_NEP$contrasts %>%
-  as.data.frame() # saving contrasts from emmeans as dataframe so I can export a table of the results
+  as.data.frame() %>% # saving contrasts from emmeans as dataframe so I can export a table of the results
+  mutate(across(c(ratio:p.value), ~signif(.,4))) # rounding numbers in all numeric columns to 4 sig figs
 
 # printing table of data
 nut_table_NEP <- nut_seasonal_NEP %>%
@@ -1547,7 +1556,8 @@ temp_seasonal_NEP_emm <- temp_seasonal_NEP_emm$emtrends %>%
 # printing table of data with associated Q10 values
 temp_emmeans_table_NEP <- temp_seasonal_NEP_emm %>%
   mutate(temp_C.trend = exp(temp_C.trend)) %>% # putting the estimated temp trends in the response scale by undoing the log-transformation
-    mutate(Q10_value = temp_C.trend^10) %>% # calculating Q10 values
+   mutate(Q10_value = temp_C.trend^10) %>% # calculating Q10 values
+   mutate(across(c(temp_C.trend:Q10_value), ~round(.,4))) %>% # rounding all numeric columns to 4 sig figs
     gt() %>%
   cols_move(columns = Q10_value, after = temp_C.trend) %>%
   cols_label(temp_C.trend = "temperature effect", Q10_value = html("Q<sub>10</sub> ")) %>%
@@ -1607,7 +1617,9 @@ ggsave("plots/main_analysis/metab_IP.png", plot = metab_IP, height = 8, width = 
 tab_model(GPP_final, ER_final, NEP_final, dv.labels = c("GPP", "ER", "NEP"),
   show.ci = FALSE, 
   p.style = "stars", 
-  transform = "exp")
+  transform = "exp",
+  file = "plots/main_analysis/mod_sum.doc") # saving model tabel as a doc file, looks great!
+
 ```
 
 
