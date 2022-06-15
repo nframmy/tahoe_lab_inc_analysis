@@ -318,7 +318,7 @@ pnld_e_10_NEP
 
 ######################## ER rate calculations
 
-## The linear portion of the ER curve has a very small signal, thus I measured ER from the dark period preceding the NEP portion of the incubation (roughly from minute 0 to minute 19) and averaged this with the ER signal post-NEP period.
+## The linear portion of the ER curve has a very small signal, thus I want to check the strength of the ER from the dark period preceding the NEP portion of the incubation (roughly from minute 0 to minute 19) 
 
 pnld_e_10 <- dat_full %>%
   filter(chamber == "10" & delta_T_min <= 19)

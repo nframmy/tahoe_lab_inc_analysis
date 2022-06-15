@@ -338,7 +338,7 @@ pnld_a_4_plot <- dat_full %>%
   theme_classic()
 pnld_a_4_plot
 ```
-##### has R2 just below 0.9 (0.93 exactly)
+##### has R2 near 0.9 (0.93 exactly)
 
 #### Chamber 6
 ```{r}
