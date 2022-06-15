@@ -272,6 +272,36 @@ dat <- dat %>%
 ```
 
 
+# Adding in PP data
+```{r}
+# reading in compiled particulate phosphorus data file
+PP <- read_csv("data/nutrient_data/PP_main_R.csv", skip = 1)
+
+PP$date <- lubridate::mdy(PP$date) # formatting date column so that its of date class and not a character
+
+# formatting columns to match main data frame
+PP <- PP %>%
+  filter(!grepl("0.5", sample_2) & chamber != "14_and_15") %>% # filtering out rows of in-situ lake PP concentrations and row of data with an analyitical error
+  mutate(chamber = ifelse(grepl("_1", chamber), gsub('.{2}$', '', chamber), chamber)) %>% # some samples have 2 replicates analyzed using 2 different filtering methods, and we want to keep the data from the samples labeled with "_1". Thus, we're formatting the rows with "_1" in the chamber column to just have chamber number and remove the "_1" characters at the end of the string
+  filter(!grepl("_2", chamber)) %>% # filtering out the replicates with "_2" in the chamber column. These rows correspond to replicates that used the filtering method we dont want to use data from.
+  unite(date_chamber, date, chamber, sep = "_", remove = F) %>% # making a combined column of dates and chambers for use in combining with main dataframe
+  dplyr::select(date_chamber, ug_P_per_liter_ppb, ug_P_per_gram_periphyton) # selecting only the colmns I need
+
+#View(PP)
+
+dat <- dat %>%
+  mutate(date = lubridate::date(date)) %>%
+  unite(date_chamber, date, chamber, sep = "_", remove = F) # adding a date_chamber column to main dataframe as well
+
+dat <- left_join(dat, PP, by = "date_chamber") # joining particulate phosphorus data to dataframe
+
+dat <- dat %>%
+  rename(periphyton_PP_ug_L = ug_P_per_liter_ppb, periphyton_PP_ug_g = ug_P_per_gram_periphyton) %>% # renaming columns in dataframe
+  dplyr::select(-date_chamber) # removing this indexing column as its not longer needed
+#View(dat)
+```
+
+
 # COMBINING NUTRIENT UPTAKE RATE DATAFRAME WITH MAIN DATA
 ```{r}
 # loading in nutrient uptake rate data
@@ -290,9 +320,13 @@ main_dat <- main_dat %>%
 
 #View(main_dat)
 
+main_dat <- main_dat %>%
+  dplyr::select(-total_AFDW_g, -GPP_mgO2_d_gAFDW:-ER_mgO2_d_gAFDW, -SDW_60C_g, - SCW_500C_g, -NO3_N_py:-bulk_DP) # removing columns associated with incorrect AFDW data, and other unecessary columns
+
 # exporting main dataframe
 write_csv(main_dat, "data/main_analysis/main_data_lahontan.csv")
 ```
+
 
 
 # Exporting and Cleaning data
