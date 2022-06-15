@@ -47,6 +47,26 @@ ambient_nutrients <- dat %>%
   filter(site_treatment == "TPI_TC_NA" | site_treatment == "TPI_PNLD_0.5m") %>%
  mutate(month = month(datetime, label = T, abbr = F)) # adding a month column to dataframe based on the datetime column
 
+# loading in particulate phosphorus data
+PP <- read_csv("data/nutrient_data/PP_main_R.csv", skip = 1)
+
+PP$date <- lubridate::mdy(PP$date) # formatting date column so that its of date class and not a character
+
+# formatting columns to match main data frame
+PP <- PP %>%
+  filter(grepl("0.5", sample_2)) %>% # selecting only rows with in-situ data
+  dplyr::select(date, ug_P_per_liter_ppb)
+#View(PP)
+
+# joining PP data with field nutrient concentration data
+ambient_nutrients <- left_join(ambient_nutrients, PP, by = "date")
+
+# choosing only the columns I need
+
+ambient_nutrients <- ambient_nutrients %>%
+  dplyr::select(site_treatment, sample_type, item, NO3_N_py, NH4_N, SRP, DP, date, month, ug_P_per_liter_ppb) %>%
+  rename(PP_ug_liter = ug_P_per_liter_ppb)
+
 # exporting dataframe of ambient concentrations only
 write_csv(ambient_nutrients, "data/nutrient_data/in_situ_nutrient_data.csv")
 
