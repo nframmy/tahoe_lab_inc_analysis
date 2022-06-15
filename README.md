@@ -3,8 +3,61 @@ Analysis of laboratory incubations of periphyton collected from Lake Tahoe as pa
 
 This also contains analysis of tahoe nearshore network data provided by Sergio Valbuena.
 
-Incubation Datasheet Column Meanings:
+"main_data_lahontan.csv" Column Meanings:
 Chamber: Chamber ID #
+
+temp_C: temperature treatment in degrees C
+
+total_DW_g: total periphyton dry weight in grams
+
+rock_SA_m2: surface area of rock in square meters
+
+NEP_mg_d, ER_mg_d, GPP_mg_d: raw, non-normalized periphyton metabolic rates in mg oxygen produced/consumed per day
+
+treatment: temperature treatment coded as a factor for separate statistical analyses
+
+GPP_mgO2_d_m2, NEP_mgO2_d_m2, ER_mgO2_d_m2: periphyton metabolic rates in mg of oxygen produced/consumed per day per square meter
+
+nutrient_treatment: nutrient treatment applied (ambient = no nutrients added, enriched = nutrients added to 6.5 times average groundwater concentrations)
+
+nutrients: numerical variable for nutrient treatment (0 = ambient, 1 = enriched)
+
+NO3_N_ug_L: initial concentration of nitrate and nitrite in water used to fill metabolic chambers; expressed as micrograms N per liter
+
+NH4_N_ug_L: initial concentration of ammonium in water used to fill metabolic chambers; expressed as micrograms N per liter
+
+SRP_ug_L: initial concentration of soluble reactive phosphorus (phosphate) in water used to fill metabolic chambers; expressed as micrograms P per liter
+
+exp_ID: unique ID number assigned to each individual experiment for statistical analysis purposes
+
+rock_ID: unique ID number assigned to each individual rock for statistical analysis purposes
+
+total_chla_ug: total amount of chlorophyll-a on the sample rock in micrograms
+
+date: date the rocks were harvested for the experiment
+
+total_AFDW_g_2: total ash-free dry weight of periphyton in grams
+
+GPP_mgO2_d_gAFDW_2, NEPmgO2_d_gAFDW_2, ER_mgO2_d_gAFDW_2: periphyton metabolic rates in milligrams of oxygen produced/consumed per day per gram of periphyton ash-free dry weight
+
+AI: autotrophic index calculated as the ratio between AFDW:Chl-a
+
+periphyton_PP_ug_L: periphyton particulate phosphorus in micrograms per liter (only available for 3/1/21 experiment as methods were changed for subsequent experiments)
+
+periphyton_PP_ug_g: periphyton particulate phosphorus expressed in micrograms per gram of periphyton
+
+NO3_rate: periphyton uptake rate of nitrite and nitrate in micrograms N per hour per gram of periphyton ash-free dry weight
+
+NH4_rate: periphyton uptake rate of ammonium in micrograms N per hour per gram of ash-free dry weight
+
+SRP_rate: periphyton uptake rate of soluble reactive phosphorus in micrograms P per hour per gram of ash-free dry weight
+
+DP_rate: periphyton uptake rate of dissolved phosphorus in micrograms of P per hour per gram of ash-free dry weight
+
+###############
+
+
+Individual experiment datasheet column meanings:
 
 drained_wt_g: weight in grams of chamber and rock with no water
 
