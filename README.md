@@ -22,11 +22,13 @@ nutrient_treatment: nutrient treatment applied (ambient = no nutrients added, en
 
 nutrients: numerical variable for nutrient treatment (0 = ambient, 1 = enriched)
 
-NO3_N_ug_L: initial concentration of nitrate and nitrite in water used to fill metabolic chambers; expressed as micrograms N per liter
+NO3_N_ug_L_initial: initial concentration of nitrate and nitrite in water used to fill metabolic chambers; expressed as micrograms N per liter
 
-NH4_N_ug_L: initial concentration of ammonium in water used to fill metabolic chambers; expressed as micrograms N per liter
+NH4_N_ug_L_initial: initial concentration of ammonium in water used to fill metabolic chambers; expressed as micrograms N per liter
 
-SRP_ug_L: initial concentration of soluble reactive phosphorus (phosphate) in water used to fill metabolic chambers; expressed as micrograms P per liter
+SRP_ug_L_initial: initial concentration of soluble reactive phosphorus (phosphate) in water used to fill metabolic chambers; expressed as micrograms P per liter
+
+DP_ug_L_initial: initial concentration of dissolved phosphorus in water used to fill metabolic chambers; expressed as micrograms P per liter
 
 exp_ID: unique ID number assigned to each individual experiment for statistical analysis purposes
 
@@ -45,6 +47,15 @@ AI: autotrophic index calculated as the ratio between AFDW:Chl-a
 periphyton_PP_ug_L: periphyton particulate phosphorus in micrograms per liter (only available for 3/1/21 experiment as methods were changed for subsequent experiments)
 
 periphyton_PP_ug_g: periphyton particulate phosphorus expressed in micrograms per gram of periphyton
+
+NO3_N_final: post-experiment concentration of nitrate in chambers (only applicable to enriched chambers) which was used to calculate nutrient uptake rates. Units are micrograms N per liter.
+
+NH4_N_final: post-experiment concentration of ammonium in chambers (only applicable to enriched chambers) which was used to calculate nutrient uptake rates. Units are micrograms N per liter.
+
+SRP_final: post-experiment concentration of soluble reactive phosphorus in chambers (only applicable to enriched chambers) which was used to calculate nutrient uptake rates. Units are micrograms P per liter.
+
+DP_final: post-experiment concentration of dissolved phosphorus in chambers (only applicable to enriched chambers) which was used to calculate nutrient uptake rates. Units are micrograms P per liter.
+
 
 NO3_rate: periphyton uptake rate of nitrite and nitrate in micrograms N per hour per gram of periphyton ash-free dry weight
 
