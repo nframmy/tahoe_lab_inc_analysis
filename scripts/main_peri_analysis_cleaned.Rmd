@@ -109,7 +109,11 @@ dat <- dat %>%
     nutrient_trt == "ambient" & month == "august" ~ 7.5,
     nutrient_trt == "enriched" & month == "august" ~ 387.33,
     nutrient_trt == "ambient" & month == "october" ~ 4.53,
-    nutrient_trt == "enriched" & month == "october" ~ 376.76
+    nutrient_trt == "enriched" & month == "october" ~ 376.76,
+    nutrient_trt == "ambient" & month == "november" ~ 2.06,
+    nutrient_trt == "enriched" & month == "november" ~ 362.43,
+    nutrient_trt == "ambient" & month == "february" ~ 6.74,
+    nutrient_trt == "enriched" & month == "february" ~ 406.6
   ),
   NH4_N_ug_L = case_when(
     nutrient_trt == "ambient" & month == "march" ~ 0.39,
@@ -121,10 +125,14 @@ dat <- dat %>%
     nutrient_trt == "ambient" & month == "august" ~ 4.57,
     nutrient_trt == "enriched" & month == "august" ~ 416.04,
     nutrient_trt == "ambient" & month == "october" ~ 5.03,
-    nutrient_trt == "enriched" & month == "october" ~ 438.69
+    nutrient_trt == "enriched" & month == "october" ~ 438.69,
+    nutrient_trt == "ambient" & month == "november" ~ 2.31,
+    nutrient_trt == "enriched" & month == "november" ~ 408.12,
+    nutrient_trt == "ambient" & month == "february" ~ 3.95,
+    nutrient_trt == "enriched" & month == "february" ~ 409.77
   ),
   SRP_ug_L = case_when(
-    nutrient_trt == "ambient" & month == "march" ~ 2.77,
+    nutrient_trt == "ambient" & month == "march" ~ 8.95,
     nutrient_trt == "enriched" & month == "march" ~ 823.85,
     nutrient_trt == "ambient" & month == "april" ~ 2.53,
     nutrient_trt == "enriched" & month == "april" ~ 67.91,
@@ -133,11 +141,31 @@ dat <- dat %>%
     nutrient_trt == "ambient" & month == "august" ~ 5.43,
     nutrient_trt == "enriched" & month == "august" ~ 320.3,
     nutrient_trt == "ambient" & month == "october" ~ 3.41,
-    nutrient_trt == "enriched" & month == "october" ~ 325.74
+    nutrient_trt == "enriched" & month == "october" ~ 325.74,
+    nutrient_trt == "ambient" & month == "november" ~ 0.23,
+    nutrient_trt == "enriched" & month == "november" ~ 315.7,
+    nutrient_trt == "ambient" & month == "february" ~ 1.14,
+    nutrient_trt == "enriched" & month == "february" ~ 319.04
+  ),
+  DP_ug_L = case_when(
+    nutrient_trt == "ambient" & month == "march" ~ 9.69,
+    nutrient_trt == "enriched" & month == "march" ~ 822.82,
+    nutrient_trt == "ambient" & month == "april" ~ 8.38,
+    nutrient_trt == "enriched" & month == "april" ~ 76.01,
+    nutrient_trt == "ambient" & month == "june" ~ 8.01,
+    nutrient_trt == "enriched" & month == "june" ~ 328.53,
+    nutrient_trt == "ambient" & month == "august" ~ 10.12,
+    nutrient_trt == "enriched" & month == "august" ~ 323.82,
+    nutrient_trt == "ambient" & month == "october" ~ 13.3,
+    nutrient_trt == "enriched" & month == "october" ~ 332.08,
+    nutrient_trt == "ambient" & month == "november" ~ 6.42,
+    nutrient_trt == "enriched" & month == "november" ~ 329.58,
+    nutrient_trt == "ambient" & month == "february" ~ 4.66,
+    nutrient_trt == "enriched" & month == "february" ~ 319.9
   ))
 
 
-####### Adding in Unique Chamber ID for each Experiment #########
+####### Adding in Unique ID for each Experiment #########
 dat <- dat %>%
   mutate(exp_ID = case_when(
     nutrients == 0 & month == "march" ~ 1,
@@ -285,7 +313,9 @@ PP <- PP %>%
   mutate(chamber = ifelse(grepl("_1", chamber), gsub('.{2}$', '', chamber), chamber)) %>% # some samples have 2 replicates analyzed using 2 different filtering methods, and we want to keep the data from the samples labeled with "_1". Thus, we're formatting the rows with "_1" in the chamber column to just have chamber number and remove the "_1" characters at the end of the string
   filter(!grepl("_2", chamber)) %>% # filtering out the replicates with "_2" in the chamber column. These rows correspond to replicates that used the filtering method we dont want to use data from.
   unite(date_chamber, date, chamber, sep = "_", remove = F) %>% # making a combined column of dates and chambers for use in combining with main dataframe
-  dplyr::select(date_chamber, ug_P_per_liter_ppb, ug_P_per_gram_periphyton) # selecting only the colmns I need
+  dplyr::select(date_chamber, ug_P_per_liter_ppb, ug_P_per_gram_periphyton) %>% # selecting only the colmns I need
+  group_by(date_chamber) %>% # grouping data so that I can use summary function to get means for each individual sample
+  summarise_if(is.numeric, mean) # averaging duplicate PP measuremnts for some samples from the 3/1/21 experiment
 
 #View(PP)
 
@@ -321,10 +351,51 @@ main_dat <- main_dat %>%
 #View(main_dat)
 
 main_dat <- main_dat %>%
-  dplyr::select(-total_AFDW_g, -GPP_mgO2_d_gAFDW:-ER_mgO2_d_gAFDW, -SDW_60C_g, - SCW_500C_g, -NO3_N_py:-bulk_DP) # removing columns associated with incorrect AFDW data, and other unecessary columns
+  dplyr::select(-total_AFDW_g, -GPP_mgO2_d_gAFDW:-ER_mgO2_d_gAFDW, -SDW_60C_g, - SCW_500C_g, -bulk_NO3_N_py:-bulk_DP) %>% # removing columns associated with incorrect AFDW data, and other unecessary columns
+  rename(NO3_N_ug_L_initial = NO3_N_ug_L, NH4_N_ug_L_initial = NH4_N_ug_L, SRP_ug_L_initial = SRP_ug_L, DP_ug_L_initial = DP_ug_L, NO3_N_final = NO3_N_py, NH4_N_final = NH4_N, SRP_final = SRP, DP_final = DP)
+
+#View(main_dat)
 
 # exporting main dataframe
 write_csv(main_dat, "data/main_analysis/main_data_lahontan.csv")
+
+# checking to see if numbers of samples add up
+str(main_dat)
+length(which(main_dat$NO3_rate != "NA")) # number of measurements for nitrate uptake rates
+length(which(main_dat$NH4_rate != "NA"))
+length(which(main_dat$SRP_rate != "NA"))
+length(which(main_dat$DP_rate != "NA"))
+
+length(which(main_dat$NO3_N_ug_L_initial
+ != "NA")) + length(which(main_dat$NO3_N_final
+ != "NA")) # number of measurements of nitrate
+
+length(which(main_dat$NH4_N_ug_L_initial
+ != "NA")) + length(which(main_dat$NH4_N_final
+ != "NA")) # number of measurements of nitrate
+
+length(which(main_dat$SRP_ug_L_initial
+ != "NA")) + length(which(main_dat$SRP_final
+ != "NA")) # number of measurements of nitrate
+
+length(which(main_dat$DP_ug_L_initial
+ != "NA")) + length(which(main_dat$DP_final
+ != "NA")) # number of measurements of nitrate
+
+length(which(main_dat$periphyton_PP_ug_L != "NA")) + length(which(main_dat$periphyton_PP_ug_g
+ != "NA"))
+
+length(which(main_dat$total_DW_g
+ != "NA")) # number of measurements of nitrate
+
+length(which(main_dat$total_AFDW_g_2
+ != "NA")) # number of measurements of nitrate
+
+length(which(main_dat$total_chla_ug
+ != "NA")) # number of measurements of nitrate
+
+length(unique(main_dat$rock_ID)) # number of different rocks
+
 ```
 
 
