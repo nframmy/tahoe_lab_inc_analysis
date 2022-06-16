@@ -65,7 +65,8 @@ ambient_nutrients <- left_join(ambient_nutrients, PP, by = "date")
 
 ambient_nutrients <- ambient_nutrients %>%
   dplyr::select(site_treatment, sample_type, item, NO3_N_py, NH4_N, SRP, DP, date, month, ug_P_per_liter_ppb) %>%
-  rename(PP_ug_liter = ug_P_per_liter_ppb)
+  rename(PP_ug_liter = ug_P_per_liter_ppb) %>%
+  mutate(TP_ug_L = PP_ug_liter + DP)
 
 # exporting dataframe of ambient concentrations only
 write_csv(ambient_nutrients, "data/nutrient_data/in_situ_nutrient_data.csv")
