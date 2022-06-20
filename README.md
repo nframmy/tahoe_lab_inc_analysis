@@ -48,6 +48,14 @@ periphyton_PP_ug_L: periphyton particulate phosphorus in micrograms per liter (o
 
 periphyton_PP_ug_g: periphyton particulate phosphorus expressed in micrograms per gram of periphyton
 
+periphyton_particulate_N_ug_g: periphyton particulate nitrogen concentration expressed in micrograms per gram of periphyton
+
+periphyton_particulate_C_ug_g: periphyton particulate carbon concentration expressed in micrograms per gram of periphyton
+
+periphyton_particulate_N_ug_L: periphyton particulate nitrogen concentration expressed in micrograms per liter of periphyton slurry filtered (only for 3/1/21 samples before methods were changed)
+
+periphyton_particulate_C_ug_L: periphyton particulate carbon concentration expressed in micrograms per liter of periphyton slurry filtered (only for 3/1/21 samples before methods were changed)
+
 NO3_N_final: post-experiment concentration of nitrate in chambers (only applicable to enriched chambers) which was used to calculate nutrient uptake rates. Units are micrograms N per liter.
 
 NH4_N_final: post-experiment concentration of ammonium in chambers (only applicable to enriched chambers) which was used to calculate nutrient uptake rates. Units are micrograms N per liter.
