@@ -61,10 +61,27 @@ PP <- PP %>%
 # joining PP data with field nutrient concentration data
 ambient_nutrients <- left_join(ambient_nutrients, PP, by = "date")
 
+############# Adding in PCPN data
+PCPN <- read_csv("data/main_analysis/PCPN_main.csv")
+
+PCPN$date <- lubridate::mdy(PCPN$date) # formatting date column so that its of date class and not a character
+
+# formatting columns to match main data frame
+PCPN <- PCPN %>%
+  filter(sample_type == "Filtered water") %>% # selecting only rows with water concentration data
+  # calculating %N and %C content of samples using subsample weights and adding a date_chamber column to use when adding to main dataframe
+  mutate(water_particulate_N_ug_L = N_mass_ug/(vol_filtered_ml / 1000), water_particulate_C_ug_L = C_mass_ug/(vol_filtered_ml / 1000)) %>% # calculating water column concentrations of pariculate N and C
+  dplyr::select(date, water_particulate_N_ug_L, water_particulate_C_ug_L)
+#View(PCPN)
+
+# joining PCPN data with field nutrient concentration data
+ambient_nutrients <- left_join(ambient_nutrients, PCPN, by = "date")
+
+
 # choosing only the columns I need
 
 ambient_nutrients <- ambient_nutrients %>%
-  dplyr::select(site_treatment, sample_type, item, NO3_N_py, NH4_N, SRP, DP, date, month, ug_P_per_liter_ppb) %>%
+  dplyr::select(site_treatment, sample_type, item, NO3_N_py, NH4_N, SRP, DP, date, month, ug_P_per_liter_ppb, water_particulate_N_ug_L, water_particulate_C_ug_L) %>%
   rename(PP_ug_liter = ug_P_per_liter_ppb) %>%
   mutate(TP_ug_L = PP_ug_liter + DP)
 

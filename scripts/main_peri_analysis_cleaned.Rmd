@@ -300,7 +300,7 @@ dat <- dat %>%
 ```
 
 
-# Adding in PP data
+# Adding in PP and PCPN data
 ```{r}
 # reading in compiled particulate phosphorus data file
 PP <- read_csv("data/nutrient_data/PP_main_R.csv", skip = 1)
@@ -319,11 +319,28 @@ PP <- PP %>%
 
 #View(PP)
 
+# reading in PCPN dataframe
+PCPN <- read_csv("data/main_analysis/PCPN_main.csv")
+
+PCPN$date <- lubridate::mdy(PCPN$date) # formatting date column so that its of date class and not a character
+
+# calculating %N and %C content of samples using subsample weights and adding a date_chamber column to use when adding to main dataframe
+PCPN <- PCPN %>%
+  filter(sample_type == "Periphyton" | sample_type == "Filter + Periphyton") %>% # filtering data to only include periphyton samples to exclude water samples
+  mutate(periphyton_particulate_N_ug_g = N_mass_ug/(sample_mass_mg / 1000), periphyton_particulate_C_ug_g = C_mass_ug/(sample_mass_mg / 1000)) %>% # calculating periphyton particulate N and C concentration
+  mutate(periphyton_particulate_N_ug_L = N_mass_ug/(vol_filtered_ml / 1000), periphyton_particulate_C_ug_L = C_mass_ug/(vol_filtered_ml / 1000)) %>% # calculating water column concentrations of pariculate N and C
+  unite(date_chamber, date, chamber, sep = "_", remove = F) %>% # making a combined column of dates and chambers for use in combining with main dataframe
+  dplyr::select(date_chamber, periphyton_particulate_N_ug_g, periphyton_particulate_C_ug_g, periphyton_particulate_N_ug_L, periphyton_particulate_C_ug_L)
+
+#View(PCPN)
+
 dat <- dat %>%
   mutate(date = lubridate::date(date)) %>%
   unite(date_chamber, date, chamber, sep = "_", remove = F) # adding a date_chamber column to main dataframe as well
 
 dat <- left_join(dat, PP, by = "date_chamber") # joining particulate phosphorus data to dataframe
+
+dat <- left_join(dat, PCPN, by = "date_chamber") # joining particulate carbon and nitrogen data to dataframe
 
 dat <- dat %>%
   rename(periphyton_PP_ug_L = ug_P_per_liter_ppb, periphyton_PP_ug_g = ug_P_per_gram_periphyton) %>% # renaming columns in dataframe
