@@ -349,6 +349,22 @@ p <- plotly::ggplotly(p)
 p
 
 
+# plotting background nutrient uptake rates for supplemental materials
+#View(dat_long)
+background_nut_uptake <- dat_long %>%
+  filter(grepl("background", date_background)) %>% # filtering only background samples (they contain no periphyton)
+  ggplot(aes(x = temp_C, y = rates)) +
+  facet_grid(cols = vars(uptake_rate_name)) +
+  geom_point(aes(group = date_chamber, color = date_background)) +
+  geom_smooth(aes(color = date_background), method = "lm", se = F) +
+  scale_color_viridis_d("Experiment Date") +
+  theme_bw() +
+  labs(title = "Background Nutrient Uptake Rates vs. Temperature",
+      x = expression('Temperature (\u00B0C)'),
+      y = expression(Nutrient~Uptake~(ugN/ugP~hr^{-1})))
+background_nut_uptake
+
+ggsave("plots/nutrient_uptake/background_nut_uptake.png", plot = background_nut_uptake, height = 3, width = 7, dpi = 300)
 ```
 
 Important things to keep in mind: 1) The April experiment had much lower initial nutrient concentrations than the other experiments and nutrients were virtually exhausted in these chambers. 

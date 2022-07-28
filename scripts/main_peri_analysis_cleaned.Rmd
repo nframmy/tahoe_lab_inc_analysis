@@ -731,7 +731,7 @@ cor(dat_cor, use = "complete.obs")
 ### chlorophyll-a trends across time
 
 chla_trends <- dat %>%
-  filter(exp_ID != 1) %>% # filtering out march 1st data due to different chla sampling protocols used for this experiment
+  filter(exp_ID != 1 & exp_ID != 2) %>% # filtering out march 1st and 15th data since they were performed at a different site
   mutate(chla_g_m2 = total_chla_ug/rock_SA_m2/1e6) %>% # calculating areal chlorophyll-a concentrations (per m2)
   ggplot(aes(x = date, y = chla_g_m2, group = date)) +
   geom_boxplot() +
@@ -759,11 +759,11 @@ p
 # plotting changes in AI over the year
 
 AI_trends <- dat %>%
-  filter(exp_ID != 1) %>% # filtering out march 1st data due to different chla sampling protocols used for this experiment
+  filter(exp_ID != 1 & exp_ID != 2) %>% # filtering out march 1st and 15th data since they were performed at a different site
   filter(AI < 5000) %>% # filtering out 2 outliers from october and march
   ggplot(aes(x = date, y = AI, group = date)) +
   geom_boxplot() +
-  labs(x = "Date", y = "Periphyton Autotrophic Index (gAFDW:gChla)") +
+  labs(y = "Periphyton Autotrophic Index (gAFDW:gChla)") +
   theme_classic()
 
 AI_trends
@@ -771,12 +771,14 @@ AI_trends
 ggsave("plots/main_analysis/AI_timeseries.png", plot = AI_trends, height = 4, width = 8, dpi = 300)
 ```
 
+
+
 ### AFDW
 ```{r}
 # plotting changes in areal AFDW over the year
 
 AFDW_trends <- dat %>%
-  filter(exp_ID != 1) %>% # filtering out march 1st data due to different chla sampling protocols used for this experiment
+  filter(exp_ID != 1 & exp_ID != 2) %>% # filtering out march 1st and 15th data since they were performed at a different site
   mutate(AFDW_g_m2 = total_AFDW_g_2/rock_SA_m2) %>%
   filter(AFDW_g_m2 <= 200) %>% # filtering out outlier from exp_ID 2
   ggplot(aes(x = date, y = AFDW_g_m2, group = date)) +
@@ -801,14 +803,30 @@ AFDW_plotly <- dat %>%
 p <- plotly::ggplotly(AFDW_plotly)
 p
 
-# patching together AI and AFDW timeseries plots so that they share the same x-axis
-library(patchwork)
-
-AI_AFDW <- (chla_trends/AFDW_trends/AI_trends)
-
-ggsave("plots/main_analysis/AI_AFDW_trends.png", plot = AI_AFDW, height = 8, width = 8, dpi = 300)
 ```
 
+
+### Temp
+```{r}
+# plotting in-situ temps for each experiment
+
+insitu_temp <- dat %>%
+ filter(exp_ID != 1 & exp_ID != 2) %>% # filtering out march 1st and 15th data since they were performed at a different site
+  filter(exp_ID == 2 & temp_C == 7 | exp_ID == 3 & temp_C == 7 | exp_ID == 4 & temp_C == 7 | exp_ID == 5 & temp_C == 14.5 | exp_ID == 6 & temp_C == 19.5 | exp_ID == 7 & temp_C == 15 | exp_ID == 8 & temp_C == 9.5 | exp_ID == 9 & temp_C == 6) %>% # filtering only data from in-situ temperatures in the field
+  ggplot(aes( x = date, y = temp_C)) +
+  geom_point() +
+  geom_line() +
+  labs(y = expression('Temperature (\u00B0C)'), x = "Date") +
+  theme_classic()
+insitu_temp
+
+# patching together AI, AFDW, chl-a, and in situ temp timeseries plots so that they share the same x-axis
+library(patchwork)
+
+AI_AFDW <- (chla_trends/AFDW_trends/AI_trends/insitu_temp)
+
+ggsave("plots/main_analysis/AI_AFDW_trends.png", plot = AI_AFDW, height = 11, width = 11, dpi = 300)
+```
 
 ## Control rates across seasons
 ### AFDW-normalized
@@ -871,6 +889,14 @@ metab_trend_sa_plotly <- dat_long_m2 %>%
  
 p <- plotly::ggplotly(metab_trend_sa_plotly)
 p
+
+# calculating average areal metabolic rates
+
+control_rates <- dat_long_m2 %>%
+  filter(exp_ID == 3 & temp_C ==7 | exp_ID == 5 & temp_C == 14.5 | exp_ID == 6 & temp_C == 19.5 | exp_ID == 7 & temp_C == 15 | exp_ID == 8 & temp_C == 9.5 | exp_ID == 9 & temp_C == 6) %>% # filtering only ambient and in-situ temperature data from all experiments except march one due to different biomass methods giving consistently higher data values
+  group_by(rate_name_m2) %>%
+  summarise(avg_rate_m2 = mean(rates_m2))
+View(control_rates)
 ```
 
 ### combining AFDW and SA metabolic trend plots
@@ -1419,6 +1445,7 @@ temp_nut_seasonal_ER <- temp_nut_seasonal_ER$contrasts %>%
   as.data.frame()# saving contrasts from emmeans as dataframe so I can export a table of the results
 
 temp_nut_table_ER <- temp_nut_seasonal_ER %>%
+  mutate(estimate = exp(estimate), SE = exp(SE)) %>% # converting temp:nut interaction estimate to the response scale due to the log-transformation
   gt() %>%
   tab_header(title = "Seasonal Variation in Temperature-Nutrient Interactions on Periphyton ER")
 gtsave("plots/main_analysis/temp_nut_seasonal_ER.png", data = temp_nut_table_ER)
