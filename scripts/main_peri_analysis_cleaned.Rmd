@@ -828,6 +828,52 @@ AI_AFDW <- (chla_trends/AFDW_trends/AI_trends/insitu_temp)
 ggsave("plots/main_analysis/AI_AFDW_trends.png", plot = AI_AFDW, height = 11, width = 11, dpi = 300)
 ```
 
+### P deficiency index (Lean & Pick 1981)
+```{r}
+#View(main_dat)
+# calculating p deficiency index (optimum photosynthetic rate:maximum phosphate uptake velocity) -- units should cancel
+# using biomass specific rates
+dat_pnld_pdef <- main_dat %>%
+  filter(!is.na(SRP_rate)) %>% # filtering out rows with no SRP uptake rate
+  filter(exp_ID != 1 & exp_ID != 2) %>% # filtering out march 1st and 15th data since they were performed at a different site
+  filter(exp_ID == 2 & temp_C == 7 | exp_ID == 3 & temp_C == 7 | exp_ID == 4 & temp_C == 7 | exp_ID == 5 & temp_C == 14.5 | exp_ID == 6 & temp_C == 19.5 | exp_ID == 7 & temp_C == 15 | exp_ID == 8 & temp_C == 9.5 | exp_ID == 9 & temp_C == 6) %>% # filtering only data from in-situ temperatures in the field
+  mutate(P_def_AFDW = NEP_mgO2_d_gAFDW_2/24/SRP_rate) %>% # converting NEP to mg O2 per hour per gram AFDW of periphyton and then dividing by the phosphate uptake rate
+  group_by(date) %>% # grouping the data by date
+  summarise(avg_P_def = mean(P_def_AFDW), lower = mean(P_def_AFDW) - 2 * sd(P_def_AFDW), upper = mean(P_def_AFDW) + 2 * sd(P_def_AFDW))
+#View(dat_pnld_pdef)
+
+
+#################### plotting results
+dat_pnld_pdef %>%
+  filter(!is.na(lower)) %>% # filtering out rows from 3/15 and 4/21 experiments
+  ggplot(aes( x = date, y = avg_P_def)) +
+  geom_point() +
+  geom_line() +
+  geom_errorbar(aes(ymin = lower, ymax = upper))
+
+
+############## now doing same with areal rates
+dat_pnld_pdef <- main_dat %>%
+  filter(!is.na(SRP_rate)) %>% # filtering out rows with no SRP uptake rate
+  filter(exp_ID != 1 & exp_ID != 2) %>% # filtering out march 1st and 15th data since they were performed at a different site
+  filter(exp_ID == 2 & temp_C == 7 | exp_ID == 3 & temp_C == 7 | exp_ID == 4 & temp_C == 7 | exp_ID == 5 & temp_C == 14.5 | exp_ID == 6 & temp_C == 19.5 | exp_ID == 7 & temp_C == 15 | exp_ID == 8 & temp_C == 9.5 | exp_ID == 9 & temp_C == 6) %>% # filtering only data from in-situ temperatures in the field
+  mutate(P_def_m2 = NEP_mgO2_d_m2/24/SRP_rate) %>% # converting NEP to mg O2 per hour per gram AFDW of periphyton and then dividing by the phosphate uptake rate
+  group_by(date) %>% # grouping the data by date
+  summarise(avg_P_def = mean(P_def_m2), lower = mean(P_def_m2) - 2 * sd(P_def_m2), upper = mean(P_def_m2) + 2 * sd(P_def_m2))
+#View(dat_pnld_pdef)
+
+################ plotting results
+dat_pnld_pdef %>%
+  filter(!is.na(lower)) %>% # filtering out rows from 3/15 and 4/21 experiments
+  ggplot(aes( x = date, y = avg_P_def)) +
+  geom_point() +
+  geom_line() +
+  geom_errorbar(aes(ymin = lower, ymax = upper))
+# units of SRP uptake are per g AFDW of periphyton, not per m2. Thus the P deficiency indices based off areal rates are not comparable to those based off of biomass specific rates and are much higher.
+```
+All values fall within the extreme P deficiency group as put forth by Pick & Lean 1981.
+
+
 ## Control rates across seasons
 ### AFDW-normalized
 ```{r}
