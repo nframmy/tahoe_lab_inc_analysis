@@ -831,13 +831,36 @@ ggsave("plots/main_analysis/AI_AFDW_trends.png", plot = AI_AFDW, height = 11, wi
 ### P deficiency index (Lean & Pick 1981)
 ```{r}
 #View(main_dat)
+
+# plotting NEP rates vs. SRP uptake rates to get an idea of the dispersion pattern
+main_dat %>%
+  filter(!is.na(SRP_rate) & SRP_rate <= 200) %>% # filtering out rows with no SRP uptake rate and a few outlier rows
+  ggplot(aes(x = SRP_rate, y = NEP_mgO2_d_gAFDW_2, color = month)) +
+  geom_point() +
+  labs(x = expression(PO[4]~Uptake~(ugP~hr^{-1}~gAFDW^{-1})), y = expression(NEP~(mgO[2]~day^{-1}~gAFDW^{-1})))
+
+# making same plot, but averaging replicates by temperature and month
+
+Pdef_plot <- main_dat %>%
+  filter(!is.na(SRP_rate) & SRP_rate <= 200 & exp_ID >= 4) %>% # filtering out rows with no SRP uptake rate, a few outlier rows, and rows from march 2021 and April 7 2021 experiments
+  group_by(temp_C, date) %>% # grouping dataframe by temperature value and month
+  summarise(month, avgSRP = mean(SRP_rate), lowSRP = mean(SRP_rate) - sd(SRP_rate), upperSRP = mean(SRP_rate) + sd(SRP_rate), avgNEP = mean(NEP_mgO2_d_gAFDW_2), lowNEP = mean(NEP_mgO2_d_gAFDW_2) - sd(NEP_mgO2_d_gAFDW_2), upperNEP = mean(NEP_mgO2_d_gAFDW_2) + sd(NEP_mgO2_d_gAFDW_2)) %>% # calculating average and upper and lower bounds (+- SD) for NEP and SRP uptake rates for each temp treatment and each month
+  ggplot(aes(x = avgSRP, y = avgNEP, color = month)) +
+  geom_point() +
+  geom_errorbarh(aes(xmin = lowSRP, xmax = upperSRP)) +
+  geom_errorbar(aes(ymin = lowNEP, ymax = upperNEP)) +
+  labs(x = expression(PO[4]~Uptake~(ugP~hr^{-1}~gAFDW^{-1})), y = expression(NEP~(mgO[2]~day^{-1}~gAFDW^{-1})))
+
+ggsave("plots/main_analysis/pdef_plot.png", plot = Pdef_plot, height = 5, width = 7, dpi = 300)
+
+
 # calculating p deficiency index (optimum photosynthetic rate:maximum phosphate uptake velocity) -- units should cancel
 # using biomass specific rates
 dat_pnld_pdef <- main_dat %>%
   filter(!is.na(SRP_rate)) %>% # filtering out rows with no SRP uptake rate
   filter(exp_ID != 1 & exp_ID != 2) %>% # filtering out march 1st and 15th data since they were performed at a different site
   filter(exp_ID == 2 & temp_C == 7 | exp_ID == 3 & temp_C == 7 | exp_ID == 4 & temp_C == 7 | exp_ID == 5 & temp_C == 14.5 | exp_ID == 6 & temp_C == 19.5 | exp_ID == 7 & temp_C == 15 | exp_ID == 8 & temp_C == 9.5 | exp_ID == 9 & temp_C == 6) %>% # filtering only data from in-situ temperatures in the field
-  mutate(P_def_AFDW = NEP_mgO2_d_gAFDW_2/24/SRP_rate) %>% # converting NEP to mg O2 per hour per gram AFDW of periphyton and then dividing by the phosphate uptake rate
+  mutate(P_def_AFDW = NEP_mgO2_d_gAFDW_2/24 * 1000/SRP_rate) %>% # converting NEP to ug O2 per hour per gram AFDW of periphyton and then dividing by the phosphate uptake rate
   group_by(date) %>% # grouping the data by date
   summarise(avg_P_def = mean(P_def_AFDW), lower = mean(P_def_AFDW) - 2 * sd(P_def_AFDW), upper = mean(P_def_AFDW) + 2 * sd(P_def_AFDW))
 #View(dat_pnld_pdef)
@@ -849,7 +872,17 @@ dat_pnld_pdef %>%
   ggplot(aes( x = date, y = avg_P_def)) +
   geom_point() +
   geom_line() +
-  geom_errorbar(aes(ymin = lower, ymax = upper))
+  geom_errorbar(aes(ymin = lower, ymax = upper)) +
+  labs(x = "Date", y = expression(NEP:P~uptake~(mgO[2]/ugP)))
+
+
+############## plotting p deficiency index vs. temperature
+  main_dat %>%
+  filter(!is.na(SRP_rate)) %>% # filtering out rows with no SRP uptake rate
+  mutate(P_def_AFDW = NEP_mgO2_d_gAFDW_2/24 * 1000/SRP_rate) %>%
+    ggplot(aes(x = temp_C, y = P_def_AFDW)) +
+    geom_point() +
+    labs(x = "Temp (C)", y = expression(NEP:P~uptake~(mgO[2]/ugP)))
 
 
 ############## now doing same with areal rates

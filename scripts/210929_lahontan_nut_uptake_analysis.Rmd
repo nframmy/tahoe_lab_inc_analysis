@@ -555,7 +555,7 @@ NO3_plot <- combo %>%
   geom_point() +
   geom_pointrange(aes(ymin = avg_uptake - sd_uptake, ymax = avg_uptake + sd_uptake)) +
   geom_line() +
-  labs(x = expression(NH[4]~+~NO[3]~concentration~(paste(mu, "g")~L^{-1})), y = expression(Nutrient~Uptake~(paste(mu, "g")~N/paste(mu, "g")~P~gAFDW^{-1}~hr^{-1}))) +
+  labs(x = expression(NO[2]~+~NO[3]~concentration~(paste(mu, "g")~L^{-1})), y = expression(Nutrient~Uptake~(paste(mu, "g")~N/paste(mu, "g")~P~gAFDW^{-1}~hr^{-1}))) +
   theme_classic()
 
 # nutrient uptake rates as a function of ambient SRP concentrations
