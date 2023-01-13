@@ -18,7 +18,7 @@ library(lme4)
 library(lattice)
 
 # changing working directory from /scripts to /tahoe_lab_inc_analysis
-knitr::opts_knit$set(root.dir = '..')
+knitr::opts_chunk$set(root.dir = '..')
 ```
 
 # Loading and formatting dataframe
@@ -497,19 +497,25 @@ control_uptake <- main %>%
 # formatting date column from a character class to a datetime
 control_uptake$date <- as_date(control_uptake$date)
 
+# making bounds for x axis in plot below
+min <- as.Date("2021-06-01")
+max <- as.Date("2022-04-01")
 
+
+# making plot
 control_uptake_plot <- control_uptake %>%
-  ggplot(aes(x = date, y = avg_uptake, color = uptake_rate_name, group = uptake_rate_name)) +
-  scale_color_viridis_d(name = "", labels = expression(NH[4], NO[3], SRP)) +
+  ggplot(aes(x = date, y = avg_uptake, group = uptake_rate_name, linetype = uptake_rate_name)) +
+  scale_linetype_discrete(name = "", labels = expression(NH[4], NO[3], SRP)) +
   geom_point() +
   geom_pointrange(aes(ymin = avg_uptake - sd_uptake, ymax = avg_uptake + sd_uptake)) +
   geom_line() +
   labs(x = "Date", y = expression(Nutrient~Uptake~(ugN/ugP~gAFDW^{-1}~hr^{-1}))) +
+  scale_x_date(date_labels = "%b %Y", limits = c(min, max)) +
   theme_classic()
 
 control_uptake_plot
 
-ggsave("plots/nutrient_uptake/control_nutrient_uptake_rate.png", plot = control_uptake_plot, height = 4, width = 7, dpi = 300)
+ggsave("plots/nutrient_uptake/control_nutrient_uptake_rate.jpg", plot = control_uptake_plot, height = 4, width = 7, dpi = 300)
 ```
 
 
@@ -753,22 +759,26 @@ levels(UE_long$parameter)
 
 #View(UE_long)
 
+# facet labels for the plot below
+facet_label <- c("A", "B")
+names(facet_label) <- c("Nitrogen Use Efficiency", "Phosphorus Use Efficiency")
+
 # regression parsed out by experiment
 UE_plot <- UE_long %>%
   filter(month != "March" & month != "April") %>% # filtering out april and march experiment data due to issues with nutrient enrichment levels or maintaining temperature
   ggplot(aes(x = temp_C, y = value, color = month, group = interaction(month, parameter))) +
-  facet_grid(cols = vars(parameter)) +
+  facet_grid(cols = vars(parameter), labeller = labeller(parameter = facet_label)) +
   geom_point() +
   geom_smooth(aes(color = month), method = "lm", se = FALSE) +
   labs(x = expression('Temperature (\u00B0C)'),
        y = expression(mol~O2:mol~N/P)) +
-  scale_color_viridis_d() +
-  theme_minimal() +
+  scale_color_manual(values = c("#0D0887FF","#B12A90FF", "#FCA636FF", "#E16462FF", "#6A00A8FF")) +
+  theme_bw() +
   theme(legend.position = "bottom")
 UE_plot
 
 
-ggsave("plots/nutrient_uptake/nutrient_use_eff.png", plot = UE_plot, height = 4, width = 6, dpi = 300)
+ggsave("plots/nutrient_uptake/nutrient_use_eff.jpg", plot = UE_plot, height = 4, width = 6, dpi = 300)
 
 # simplified plot for plotly
 UE_plotly <- UE_long %>%
