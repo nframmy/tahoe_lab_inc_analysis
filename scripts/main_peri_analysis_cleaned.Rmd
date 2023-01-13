@@ -30,7 +30,7 @@ library(patchwork)
 library(gt)
 
 # changing working directory from /scripts to /tahoe_lab_inc_analysis
-knitr::opts_knit$set(root.dir = '..')
+knitr::opts_chunk$set(root.dir = '..')
 ```
 
 # Loading and formatting dataframe
@@ -730,13 +730,21 @@ cor(dat_cor, use = "complete.obs")
 ```{r}
 ### chlorophyll-a trends across time
 
+# making bounds for x axis in plot below
+min <- as.Date("2021-04-01")
+max <- as.Date("2022-04-01")
+
+
 chla_trends <- dat %>%
   filter(exp_ID != 1 & exp_ID != 2) %>% # filtering out march 1st and 15th data since they were performed at a different site
   mutate(chla_g_m2 = total_chla_ug/rock_SA_m2/1e6) %>% # calculating areal chlorophyll-a concentrations (per m2)
   ggplot(aes(x = date, y = chla_g_m2, group = date)) +
   geom_boxplot() +
   labs(x = "", y = expression(Periphyton~Chl-a~(g~m^{-2}))) +
-  theme_classic()
+  scale_x_date(limits = c(min, max)) +
+  theme_classic() +
+  theme(axis.text.x=element_blank(),
+        axis.ticks.x=element_blank())
 
 chla_trends
 
@@ -747,7 +755,9 @@ chla_plotly <- dat %>%
   mutate(chla_g_m2 = total_chla_ug/rock_SA_m2/1e6) %>% # calculating areal chlorophyll-a concentrations (per m2)
   ggplot(aes(x = date, y = chla_g_m2, group = date)) +
   geom_boxplot() +
-  theme_classic()
+  theme_classic() +
+  theme(axis.text.x=element_blank(),
+        axis.ticks.x=element_blank())
 
 p <- plotly::ggplotly(chla_plotly)
 p
@@ -763,8 +773,11 @@ AI_trends <- dat %>%
   filter(AI < 5000) %>% # filtering out 2 outliers from october and march
   ggplot(aes(x = date, y = AI, group = date)) +
   geom_boxplot() +
-  labs(y = "Periphyton Autotrophic Index (gAFDW:gChla)") +
-  theme_classic()
+  labs(x = "", y = "Periphyton Autotrophic Index (gAFDW:gChla)") +
+  scale_x_date(limits = c(min, max)) +
+  theme_classic() +
+  theme(axis.text.x=element_blank(),
+        axis.ticks.x=element_blank())
 
 AI_trends
 
@@ -784,7 +797,10 @@ AFDW_trends <- dat %>%
   ggplot(aes(x = date, y = AFDW_g_m2, group = date)) +
   geom_boxplot() +
   labs(x = "", y = expression(Periphyton~AFDW~(g~m^{-2}))) +
-  theme_classic()
+  scale_x_date(limits = c(min, max)) +
+  theme_classic() +
+  theme(axis.text.x=element_blank(),
+        axis.ticks.x=element_blank())
 
 AFDW_trends
 
@@ -808,15 +824,19 @@ p
 
 ### Temp
 ```{r}
-# plotting in-situ temps for each experiment
+# making bounds for x axis in plot below
+min <- as.Date("2021-04-01")
+max <- as.Date("2022-04-01")
 
+# plotting in-situ temps for each experiment
 insitu_temp <- dat %>%
  filter(exp_ID != 1 & exp_ID != 2) %>% # filtering out march 1st and 15th data since they were performed at a different site
   filter(exp_ID == 2 & temp_C == 7 | exp_ID == 3 & temp_C == 7 | exp_ID == 4 & temp_C == 7 | exp_ID == 5 & temp_C == 14.5 | exp_ID == 6 & temp_C == 19.5 | exp_ID == 7 & temp_C == 15 | exp_ID == 8 & temp_C == 9.5 | exp_ID == 9 & temp_C == 6) %>% # filtering only data from in-situ temperatures in the field
   ggplot(aes( x = date, y = temp_C)) +
-  geom_point() +
+  geom_point(size = 3) +
   geom_line() +
   labs(y = expression('Temperature (\u00B0C)'), x = "Date") +
+  scale_x_date(date_labels = "%b %Y", limits = c(min, max)) +
   theme_classic()
 insitu_temp
 
@@ -825,8 +845,9 @@ library(patchwork)
 
 AI_AFDW <- (chla_trends/AFDW_trends/AI_trends/insitu_temp)
 
-ggsave("plots/main_analysis/AI_AFDW_trends.png", plot = AI_AFDW, height = 11, width = 11, dpi = 300)
+ggsave("plots/main_analysis/AI_AFDW_trends.jpg", plot = AI_AFDW, height = 11, width = 11, dpi = 300)
 ```
+
 
 ### P deficiency index (Lean & Pick 1981)
 ```{r}
@@ -903,7 +924,10 @@ dat_pnld_pdef %>%
   geom_line() +
   geom_errorbar(aes(ymin = lower, ymax = upper))
 # units of SRP uptake are per g AFDW of periphyton, not per m2. Thus the P deficiency indices based off areal rates are not comparable to those based off of biomass specific rates and are much higher.
+
 ```
+
+
 All values fall within the extreme P deficiency group as put forth by Pick & Lean 1981.
 
 
@@ -912,13 +936,12 @@ All values fall within the extreme P deficiency group as put forth by Pick & Lea
 ```{r}
 metab_trend_AFDW <- dat_long %>%
   filter(exp_ID == 3 & temp_C ==7 | exp_ID == 5 & temp_C == 14.5 | exp_ID == 6 & temp_C == 19.5 | exp_ID == 7 & temp_C == 15 | exp_ID == 8 & temp_C == 9.5 | exp_ID == 9 & temp_C == 6) %>% # filtering only ambient and in-situ temperature data from all experiments except march one due to different biomass methods giving consistently higher data values
-  ggplot(aes(x = date, y = rates_AFDW, group = date, fill = rate_name_AFDW)) +
+  ggplot(aes(x = date, y = rates_AFDW, group = date)) +
   facet_grid(rows = vars(rate_name_AFDW)) +
   geom_boxplot() +
-  scale_fill_viridis_d() +
   labs(x = "", y = expression(Metabolic~Rate~(mgO[2]~day^{-1}~gAFDW^{-1}))) +
   theme_bw() +
-  theme(legend.position = "None")
+  theme(legend.position = "None", strip.text.y = element_text(angle = 0)) # removing legend and making facet labels horizontal
 
 
 metab_trend_AFDW
@@ -945,12 +968,12 @@ p
 ```{r}
 metab_trend_sa <- dat_long_m2 %>%
   filter(exp_ID == 3 & temp_C ==7 | exp_ID == 5 & temp_C == 14.5 | exp_ID == 6 & temp_C == 19.5 | exp_ID == 7 & temp_C == 15 | exp_ID == 8 & temp_C == 9.5 | exp_ID == 9 & temp_C == 6) %>% # filtering only ambient and in-situ temperature data from all experiments except march one due to different biomass methods giving consistenly higher data values
-  ggplot(aes(x = date, y = rates_m2, group = date, fill = rate_name_m2)) +
+  ggplot(aes(x = date, y = rates_m2, group = date)) +
   facet_grid(rows = vars(rate_name_m2)) +
   geom_boxplot() +
-  scale_fill_viridis_d() +
   labs(x = "", y = expression(Metabolic~Rate~(mgO[2]~day^{-1}~m^{-2})), fill = "Metabolic Rate") +
-  theme_bw()
+  theme_bw() +
+  theme(strip.text.y = element_text(angle = 0))
 
 
 metab_trend_sa
@@ -975,14 +998,14 @@ control_rates <- dat_long_m2 %>%
   filter(exp_ID == 3 & temp_C ==7 | exp_ID == 5 & temp_C == 14.5 | exp_ID == 6 & temp_C == 19.5 | exp_ID == 7 & temp_C == 15 | exp_ID == 8 & temp_C == 9.5 | exp_ID == 9 & temp_C == 6) %>% # filtering only ambient and in-situ temperature data from all experiments except march one due to different biomass methods giving consistently higher data values
   group_by(rate_name_m2) %>%
   summarise(avg_rate_m2 = mean(rates_m2))
-View(control_rates)
+#View(control_rates)
 ```
 
 ### combining AFDW and SA metabolic trend plots
 ```{r}
 metab_trend <- (metab_trend_AFDW + metab_trend_sa)
 
-ggsave("plots/main_analysis/metab_trends.png", plot = metab_trend, height = 6, width = 12, dpi = 300)
+ggsave("plots/main_analysis/metab_trends.jpg", plot = metab_trend, height = 6, width = 12, dpi = 300)
 
 ```
 
@@ -1254,11 +1277,11 @@ gtsave("plots/main_analysis/temp_nut_seasonal_GPP.png", data = temp_nut_table)
 
 
 # interaction plot of temp, nutrients, and month in log scale
-GPP_IP <- emmip(GPP_final, nutrient_trt ~ temp_C|month, CIs = T, cov.keep = c("temp_C", "nutrient_trt")) +
-  geom_point(aes(x = temp_C, y = log(GPP_mgO2_d_gAFDW_2), color = nutrient_trt), data = dat_lme) +
+GPP_IP <- emmip(GPP_final, nutrient_trt ~ temp_C|month, CIs = TRUE, cov.keep = c("temp_C", "nutrient_trt")) +
+  geom_point(aes(x = temp_C, y = log(GPP_mgO2_d_gAFDW_2), color = nutrient_trt), data = dat_lme, inherit.aes = FALSE) +
   facet_grid(cols = vars(month)) +
   labs(y = expression(log(GPP~(mgO[2]~day^{-1}~gAFDW^{-1}))), x = "") +
-  theme_minimal() +
+  theme_bw() +
   theme(legend.position = "none")
 
 ggsave("plots/main_analysis/GPP_IP.png", plot = GPP_IP, width = 7, height = 3, dpi = 300)
@@ -1534,10 +1557,10 @@ gtsave("plots/main_analysis/temp_nut_seasonal_ER.png", data = temp_nut_table_ER)
 
 # interaction plot of temp, nutrients, and month in log scale
 ER_IP <- emmip(ER_final, nutrient_trt ~ temp_C|month, CIs = T, cov.keep = c("temp_C", "nutrient_trt")) +
-  geom_point(aes(x = temp_C, y = log(ER_mgO2_d_gAFDW_2), color = nutrient_trt), data = dat_lme) +
+  geom_point(aes(x = temp_C, y = log(ER_mgO2_d_gAFDW_2), color = nutrient_trt), data = dat_lme, inherit.aes = FALSE) +
   facet_grid(cols = vars(month)) +
   labs(y = expression(log(ER~(mgO[2]~day^{-1}~gAFDW^{-1}))), x = "") +
-  theme_minimal() +
+  theme_bw() +
   theme(legend.position = "none")
 
 ggsave("plots/main_analysis/ER_IP.png", plot = ER_IP, width = 7, height = 3, dpi = 300)
@@ -1812,11 +1835,11 @@ gtsave("plots/main_analysis/temp_nut_seasonal_NEP.png", data = temp_nut_table_NE
 
 # interaction plot of temp, nutrients, and month in log scale
 NEP_IP <- emmip(NEP_final, nutrient_trt ~ temp_C|month, CIs = T, cov.keep = c("temp_C", "nutrient_trt")) +
-  geom_point(aes(x = temp_C, y = log(NEP_mgO2_d_gAFDW_2), color = nutrient_trt), data = dat_lme) +
+  geom_point(aes(x = temp_C, y = log(NEP_mgO2_d_gAFDW_2), color = nutrient_trt), data = dat_lme, inherit.aes = FALSE) +
   facet_grid(cols = vars(month)) +
   scale_color_discrete("Nutrient Treatment") +
   labs(y = expression(log(NEP~(mgO[2]~day^{-1}~gAFDW^{-1}))), x = expression('Temperature (\u00B0C)')) +
-  theme_minimal() +
+  theme_bw() +
    theme(legend.position = "bottom")
 
 ggsave("plots/main_analysis/NEP_IP.png", plot = NEP_IP, width = 7, height = 3, dpi = 300)
@@ -1836,7 +1859,7 @@ library(patchwork)
 
 metab_IP <- (GPP_IP/ER_IP/ NEP_IP)
 
-ggsave("plots/main_analysis/metab_IP.png", plot = metab_IP, height = 8, width = 7, dpi = 300)
+ggsave("plots/main_analysis/metab_IP.jpg", plot = metab_IP, height = 8, width = 7, dpi = 300)
 ```
 
 
