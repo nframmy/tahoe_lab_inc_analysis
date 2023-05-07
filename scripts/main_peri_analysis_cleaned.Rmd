@@ -773,7 +773,7 @@ AI_trends <- dat %>%
   filter(AI < 5000) %>% # filtering out 2 outliers from october and march
   ggplot(aes(x = date, y = AI, group = date)) +
   geom_boxplot() +
-  labs(x = "", y = "Periphyton Autotrophic Index (gAFDW:gChla)") +
+  labs(x = "", y = "Autotrophic Index (gAFDW:gChla)") +
   scale_x_date(limits = c(min, max)) +
   theme_classic() +
   theme(axis.text.x=element_blank(),
@@ -846,6 +846,8 @@ library(patchwork)
 AI_AFDW <- (chla_trends/AFDW_trends/AI_trends/insitu_temp)
 
 ggsave("plots/main_analysis/AI_AFDW_trends.jpg", plot = AI_AFDW, height = 11, width = 11, dpi = 300)
+
+ggsave("plots/final_paper/Figure2.jpg", plot = AI_AFDW, height = 11, width = 11, dpi = 300)
 ```
 
 
@@ -1007,6 +1009,8 @@ metab_trend <- (metab_trend_AFDW + metab_trend_sa)
 
 ggsave("plots/main_analysis/metab_trends.jpg", plot = metab_trend, height = 6, width = 12, dpi = 300)
 
+ggsave("plots/final_paper/Figure3.jpg", plot = metab_trend, height = 6, width = 12, dpi = 300)
+
 ```
 
 
@@ -1158,6 +1162,12 @@ AIC(m0, m1, m2, m3, m5)
 GPP_final <- m5
 summary(GPP_final)
 
+# saving model results
+saveRDS(GPP_final, "models/GPP_final_mod.rds")
+
+# reading in model
+GPP_final <- readRDS("models/GPP_final_mod.rds")
+
 # summary table for model comparison
 tab_model(m0, m1, m2, m3, m5, dv.labels = c("Intercept only", "GLS", "LMM1", "LMM2", "LMM3"),
   show.ci = FALSE,
@@ -1165,6 +1175,13 @@ tab_model(m0, m1, m2, m3, m5, dv.labels = c("Intercept only", "GLS", "LMM1", "LM
   p.style = "stars",
   transform = NULL,
   file = "plots/main_analysis/GPP_mod_sum.doc")
+
+tab_model(m0, m1, m2, m3, m5, dv.labels = c("Intercept only", "GLS", "LMM1", "LMM2", "LMM3"),
+  show.ci = FALSE,
+  show.aic = T,
+  p.style = "stars",
+  transform = NULL,
+  file = "plots/final_paper/TableE1.doc")
 ```
 
 
@@ -1175,16 +1192,28 @@ tab_model(m0, m1, m2, m3, m5, dv.labels = c("Intercept only", "GLS", "LMM1", "LM
 # diagnostic plots for model with month included as fixed effect for comparison of residuals
 # checking ordinary residuals of the final model (these are allowed to show heteroscedasticity). Using code from Zuur et al.
 E3 <- resid(GPP_final)
-coplot(E3 ∼ rock_ID|month,
-ylab = "Ordinary residuals", data = dat_lme)
+#coplot(E3 ∼ rock_ID|month,
+#ylab = "Ordinary residuals", data = dat_lme)
 
 # now checking standardized residuals of each of the experiments (random effect in the model). These should not show any patterns and should exhibit homogeneous variance.
 E4 <- resid(GPP_final, type = "normalized")
-coplot(E4 ∼ rock_ID|month,
-ylab = "Normalized residuals", data = dat_lme)
+#coplot(E4 ∼ rock_ID|month,
+#ylab = "Normalized residuals", data = dat_lme)
 
+# plot of standardized residuals
 plot(GPP_final)
 
+# plot of standardized residuals by month
+plot(GPP_final, resid(.,type="p") ~ fitted(.) | month, abline=0)
+
+# plot of standardized residuals by temperature trt
+plot(GPP_final, resid(.,type="p") ~ fitted(.) | temp_C, abline=0)
+
+# plot of standardized residuals by nutrient trt
+plot(GPP_final, resid(.,type="p") ~ fitted(.) | nutrient_trt, abline=0)
+
+# qq plot to assess normality of residuals
+qqnorm(GPP_final)
 
 ```
 
@@ -1216,7 +1245,7 @@ table <- nut_seasonal %>%
     gt() %>%
   cols_label(contrast = "comparison", ratio = "effect size") %>%
   tab_header(title = "Seasonal Variation in Nutrient Effects on Periphyton GPP")
-gtsave("plots/main_analysis/nut_seasonal_GPP.png", data = table)
+gt::gtsave("plots/main_analysis/nut_seasonal_GPP.png", data = table)
 
 
 
@@ -1288,7 +1317,7 @@ ggsave("plots/main_analysis/GPP_IP.png", plot = GPP_IP, width = 7, height = 3, d
 
 # interaction plot of temp, nutrients, and month in response scale
 emmip(GPP_final, nutrient_trt ~ temp_C|month, CIs = T, cov.keep = c("temp_C", "nutrient_trt"), type = "response") +
-  geom_point(aes(x = temp_C, y = GPP_mgO2_d_gAFDW_2, color = nutrient_trt), data = dat_lme) +
+  geom_point(aes(x = temp_C, y = GPP_mgO2_d_gAFDW_2, color = nutrient_trt), data = dat_lme, inherit.aes = FALSE) +
   theme_minimal()
 
 ```
@@ -1452,6 +1481,13 @@ tab_model(m0, m1, m2, m3, dv.labels = c("Intercept only", "GLS", "LMM1", "LMM2")
   p.style = "stars",
   transform = NULL,
   file = "plots/main_analysis/ER_mod_sum.doc")
+
+tab_model(m0, m1, m2, m3, dv.labels = c("Intercept only", "GLS", "LMM1", "LMM2"),
+  show.ci = FALSE,
+  show.aic = T,
+  p.style = "stars",
+  transform = NULL,
+  file = "plots/final_paper/TableE2.doc")
 ```
 
 
@@ -1459,13 +1495,13 @@ tab_model(m0, m1, m2, m3, dv.labels = c("Intercept only", "GLS", "LMM1", "LMM2")
 ```{r}
 # checking ordinary residuals of the final model (these are allowed to show heteroscedasticity). Using code from Zuur et al.
 E1 <- resid(ER_final)
-coplot(E1 ∼ rock_ID|month,
-ylab = "Ordinary residuals", data = dat_lme)
+#coplot(E1 ∼ rock_ID|month,
+#ylab = "Ordinary residuals", data = dat_lme)
 
 # now checking standardized residuals of each of the experiments (random effect in the model). These should not show any patterns and should exhibit homogeneous variance.
 E2 <- resid(ER_final, type = "normalized")
-coplot(E2 ∼ rock_ID|month,
-ylab = "Normalized residuals", data = dat_lme)
+#coplot(E2 ∼ rock_ID|month,
+#ylab = "Normalized residuals", data = dat_lme)
 
 #coplot(resid(m10) ~ fitted(m10) | dat_lme$exp_ID)
 
@@ -1567,7 +1603,7 @@ ggsave("plots/main_analysis/ER_IP.png", plot = ER_IP, width = 7, height = 3, dpi
 
 # interaction plot of temp, nutrients, and month in response scale
 emmip(ER_final, nutrient_trt ~ temp_C|month, CIs = T, cov.keep = c("temp_C", "nutrient_trt"), type = "response") +
-  geom_point(aes(x = temp_C, y = ER_mgO2_d_gAFDW_2, color = nutrient_trt), data = dat_lme) +
+  geom_point(aes(x = temp_C, y = ER_mgO2_d_gAFDW_2, color = nutrient_trt), data = dat_lme, inherit.aes = FALSE) +
   theme_minimal()
 ```
 
@@ -1727,6 +1763,13 @@ tab_model(m0, m1, m2, m3, m4, m5, dv.labels = c("Intercept only", "GLS", "LMM1",
   p.style = "stars",
   transform = NULL,
   file = "plots/main_analysis/NEP_mod_sum.doc")
+
+tab_model(m0, m1, m2, m3, m4, m5, dv.labels = c("Intercept only", "GLS", "LMM1", "LMM2", "LMM3", "LMM4"),
+  show.ci = FALSE,
+  show.aic = T,
+  p.style = "stars",
+  transform = NULL,
+  file = "plots/final_paper/TableE3.doc")
 ```
 
 
@@ -1734,13 +1777,13 @@ tab_model(m0, m1, m2, m3, m4, m5, dv.labels = c("Intercept only", "GLS", "LMM1",
 ```{r}
 # checking ordinary residuals of the final model (these are allowed to show heteroscedasticity). Using code from Zuur et al.
 E1 <- resid(NEP_final)
-coplot(E1 ∼ rock_ID|month,
-ylab = "Ordinary residuals", data = dat_lme)
+#coplot(E1 ∼ rock_ID|month,
+#ylab = "Ordinary residuals", data = dat_lme)
 
 # now checking standardized residuals of each of the experiments (random effect in the model). These should not show any patterns and should exhibit homogeneous variance.
 E2 <- resid(NEP_final, type = "normalized")
-coplot(E2 ∼ rock_ID|month,
-ylab = "Normalized residuals", data = dat_lme)
+#coplot(E2 ∼ rock_ID|month,
+#ylab = "Normalized residuals", data = dat_lme)
 
 #coplot(resid(m10) ~ fitted(m10) | dat_lme$exp_ID)
 
@@ -1846,7 +1889,7 @@ ggsave("plots/main_analysis/NEP_IP.png", plot = NEP_IP, width = 7, height = 3, d
 
 # interaction plot of temp, nutrients, and month in response scale
 emmip(NEP_final, nutrient_trt ~ temp_C|month, CIs = T, cov.keep = c("temp_C", "nutrient_trt"), type = "response") +
-  geom_point(aes(x = temp_C, y = NEP_mgO2_d_gAFDW_2, color = nutrient_trt), data = dat_lme) +
+  geom_point(aes(x = temp_C, y = NEP_mgO2_d_gAFDW_2, color = nutrient_trt), data = dat_lme, inherit.aes = FALSE) +
   facet_grid(cols = vars(month)) +
   theme_minimal()
 ```
@@ -1860,6 +1903,8 @@ library(patchwork)
 metab_IP <- (GPP_IP/ER_IP/ NEP_IP)
 
 ggsave("plots/main_analysis/metab_IP.jpg", plot = metab_IP, height = 8, width = 7, dpi = 300)
+
+ggsave("plots/final_paper/Figure4.jpg", plot = metab_IP, height = 8, width = 7, dpi = 300)
 ```
 
 
@@ -1871,6 +1916,11 @@ tab_model(GPP_final, ER_final, NEP_final, dv.labels = c("GPP", "ER", "NEP"),
   transform = "exp",
   file = "plots/main_analysis/mod_sum.doc") # saving model tabel as a doc file, looks great!
 
+tab_model(GPP_final, ER_final, NEP_final, dv.labels = c("GPP", "ER", "NEP"),
+  show.ci = FALSE, 
+  p.style = "stars", 
+  transform = "exp",
+  file = "plots/final_paper/Table2.doc")
 ```
 
 
