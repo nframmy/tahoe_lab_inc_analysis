@@ -823,6 +823,7 @@ p
 
 
 ### Temp
+#### Figure 2
 ```{r}
 # making bounds for x axis in plot below
 min <- as.Date("2021-04-01")
@@ -1004,6 +1005,7 @@ control_rates <- dat_long_m2 %>%
 ```
 
 ### combining AFDW and SA metabolic trend plots
+#### Figure 3
 ```{r}
 metab_trend <- (metab_trend_AFDW + metab_trend_sa)
 
@@ -1472,6 +1474,13 @@ summary(m3)
 AIC(m0, m1, m2, m3)
 
 ER_final <- m3
+
+# saving model object
+saveRDS(ER_final, "models/ER_final_mod.rds")
+
+# reading in model object
+ER_final <- readRDS("models/ER_final_mod.rds")
+
 summary(ER_final)
 
 # summary table for model comparison
@@ -1507,9 +1516,17 @@ E2 <- resid(ER_final, type = "normalized")
 
 plot(ER_final)
 
+# plot of standardized residuals by month
+plot(ER_final, resid(.,type="p") ~ fitted(.) | month, abline=0)
 
+# plot of standardized residuals by temperature trt
+plot(ER_final, resid(.,type="p") ~ fitted(.) | temp_C, abline=0)
 
+# plot of standardized residuals by nutrient trt
+plot(ER_final, resid(.,type="p") ~ fitted(.) | nutrient_trt, abline=0)
 
+# qq plot to assess normality of residuals
+qqnorm(ER_final)
 
 ```
 
@@ -1754,6 +1771,12 @@ AIC(m0, m1, m2, m3, m4, m5)
 summary(m5)
 NEP_final <- m5
 
+# saving model object
+saveRDS(NEP_final, "models/NEP_final_mod.rds")
+
+# reading in final model 
+NEP_final <- readRDS("models/NEP_final_mod.rds")
+
 summary(NEP_final)
 
 # summary table for model comparison
@@ -1789,7 +1812,17 @@ E2 <- resid(NEP_final, type = "normalized")
 
 plot(NEP_final)
 
+# plot of standardized residuals by month
+plot(NEP_final, resid(.,type="p") ~ fitted(.) | month, abline=0)
 
+# plot of standardized residuals by temperature trt
+plot(NEP_final, resid(.,type="p") ~ fitted(.) | temp_C, abline=0)
+
+# plot of standardized residuals by nutrient trt
+plot(NEP_final, resid(.,type="p") ~ fitted(.) | nutrient_trt, abline=0)
+
+# qq plot to assess normality of residuals
+qqnorm(NEP_final)
 
 ```
 
@@ -1896,6 +1929,7 @@ emmip(NEP_final, nutrient_trt ~ temp_C|month, CIs = T, cov.keep = c("temp_C", "n
 
 
 ### Stacking plots
+#### Figure 4
 ```{r}
 # combining emmip plots for GPP, ER, and NEP
 library(patchwork)
