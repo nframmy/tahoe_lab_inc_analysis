@@ -42,6 +42,7 @@ dat <- dat %>%
 ```
 
 # Creating dataframe containing field nutrient concentrations only
+## Figure F1
 ```{r}
 ambient_nutrients <- dat %>%
   filter(site_treatment == "TPI_TC_NA" | site_treatment == "TPI_PNLD_0.5m") %>%
@@ -432,6 +433,7 @@ write_csv(main_wide, "data/nutrient_data/nutrient_data_lahontan.csv")
 
 
 # Plotting AFDW-normalized nutrient uptake rates
+## Figure H1
 ```{r}
 
 # renaming factor levels for graphing purposes
@@ -499,6 +501,7 @@ I used the above plotly plot to assess the average NH4 and NO3 uptake rates (usi
 
 
 # In-situ nutrient uptake rates
+## Figure 5
 ```{r}
 control_uptake <- main %>%
   filter(!is.na(uptake_rate_name) & month != "March" & month != "April") %>% # filtering out DP uptake data and march and april experiments
@@ -535,6 +538,7 @@ ggsave("plots/final_paper/Figure5.jpg", plot = control_uptake_plot, height = 4, 
 
 
 # In-situ nutrient uptake vs. ambient nutrient concentrations
+## Figure G1
 ```{r}
 #View(dat)
 
@@ -621,6 +625,7 @@ ggsave("plots/nutrient_uptake/nut_uptake_vs_NH4.png", plot = NH4_plot, height = 
 
 
 # Molar nutrient uptake plot
+## Figure H2
 ```{r}
 #View(main)
 molar <- main %>%
@@ -711,6 +716,7 @@ SRP_molar
 ```
 
 # Molar ratio of nutrient uptake plot
+## Figure I1
 ```{r}
 #View(uptake_rates)
 molar_ratio <- uptake_rates %>%
@@ -748,6 +754,7 @@ ggsave("plots/final_paper/FigureI1.jpg", plot = mol_ratio_plot, width = 7, heigh
 
 
 # Nutrient Use Efficiency
+## Figure 6
 ```{r}
 #View(main)
 # changing rate names back to compatible column names for R
