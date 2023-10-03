@@ -722,6 +722,29 @@ dat_cor <- scale(dat_cor)
 # plotting correlation matrix of the data
 cor(dat_cor, use = "complete.obs")
 
+
+
+# looking at GPP grouped by month
+# making new dataset for lme models to remove NAs and data from april 2021 experiments
+dat_clean %>%
+  filter(!is.na(GPP_mgO2_d_gAFDW_2) & exp_ID > 4) %>% 
+  mutate(grand_mean = mean(GPP_mgO2_d_gAFDW_2)) %>% 
+  group_by(month) %>% 
+  mutate(month_mean = mean(GPP_mgO2_d_gAFDW_2)) %>% 
+  ggplot(aes(x = month, y = GPP_mgO2_d_gAFDW_2)) +
+  geom_boxplot() +
+  geom_label(aes(x = month, y = month_mean + 50, label = paste(month_mean))) +
+  geom_label(aes(x = "october", y = grand_mean + 50, label = paste(grand_mean)))
+
+# converting experiment ID, nutrient_trt, and month from numeric to a factor so that they are coded as such in the model instead of as a character
+dat_lme$exp_ID <- as.factor(dat_lme$exp_ID)
+dat_lme$nutrient_trt <- as.factor(dat_lme$nutrient_trt)
+dat_lme$month <- as.factor(dat_lme$month)
+
+# reordering month variable so it graphs months in order
+dat_lme$month <- factor(dat_lme$month, levels = c("february", "june", "august", "october", "november"))
+levels(dat_lme$month)
+
 ```
 
 
