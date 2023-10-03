@@ -63,17 +63,17 @@ Month = factor(Month, levels = c("Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul"
 # AFDW plot
 ```{r}
 AFDW_plot <- AFDW %>%
-  ggplot(aes(x = Month, y = AFDW_g_m2)) +
-  geom_point() +
-  geom_line() +
+  ggplot(aes(x = Month, y = AFDW_g_m2, group = 1)) +
+  geom_point(size = 3) +
+  geom_line(linetype = 2, linewidth = 1) +
   labs(y = expression(AFDW~(g/m^{2})), x = "") +
   theme_classic()
 AFDW_plot
 
 Chla_plot <- Chla %>%
-  ggplot(aes(x = Month, y = Chla_mg_m2)) +
-  geom_point() +
-  geom_line() +
+  ggplot(aes(x = Month, y = Chla_mg_m2, group = 1)) +
+  geom_point(size = 3) +
+  geom_line(linetype = 2, linewidth = 1) +
   labs(y = expression(Chl-a~(mg/m^{2}))) +
   theme_classic()
 Chla_plot
@@ -84,6 +84,8 @@ Chla_plot
 KA_biomass_trends <- AFDW_plot/Chla_plot
 
 ggsave("plots/main_analysis/KA_biomass_trends.jpg", plot = KA_biomass_trends, height = 6, width = 6, dpi = 300)
+
+ggsave("plots/final_paper/Figure1_inset.jpg", plot = KA_biomass_trends, height = 6, width = 6, dpi = 300)
 ```
 
 
