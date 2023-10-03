@@ -90,6 +90,8 @@ m5 <- lme(log(GPP_mgO2_d_gAFDW_2) ~ temp_C * nutrient_trt * month, random = ~ 1 
 
 summary(m5)
 
+model.matrix(log(GPP_mgO2_d_gAFDW_2) ~ temp_C * nutrient_trt * month, dat_lme, contrasts.arg = list(month = contr.sum, nutrient_trt = contr.sum))
+
 # comparing AICs of models
 AIC(m0, m1, m2, m3, m5)
 
@@ -225,10 +227,11 @@ temp_nut_seasonal <- emtrends(GPP_final, pairwise ~ nutrient_trt | month, var = 
 
 #######################
 # interaction plot of temp, nutrients, and month in log scale
-GPP_IP <- emmip(GPP_final, nutrient_trt ~ temp_C|month, CIs = TRUE, cov.keep = c("temp_C", "nutrient_trt")) +
+GPP_IP <- emmip(GPP_final, nutrient_trt ~ temp_C|month, CIs = FALSE, cov.keep = c("temp_C", "nutrient_trt")) +
   geom_point(aes(x = temp_C, y = log(GPP_mgO2_d_gAFDW_2), color = nutrient_trt), data = dat_lme, inherit.aes = FALSE) +
   facet_grid(cols = vars(month)) +
   labs(y = expression(log(GPP~(mgO[2]~day^{-1}~gAFDW^{-1}))), x = "") +
+  scale_color_manual(values = c("#00BFC4", "#F8766D")) +
   theme_bw() +
   theme(legend.position = "none")
 
@@ -383,10 +386,11 @@ temp_nut_seasonal_ER <- emtrends(ER_final, pairwise ~ nutrient_trt | month, var 
 ################
 
 # interaction plot of temp, nutrients, and month in log scale
-ER_IP <- emmip(ER_final, nutrient_trt ~ temp_C|month, CIs = T, cov.keep = c("temp_C", "nutrient_trt")) +
+ER_IP <- emmip(ER_final, nutrient_trt ~ temp_C|month, CIs = FALSE, cov.keep = c("temp_C", "nutrient_trt")) +
   geom_point(aes(x = temp_C, y = log(ER_mgO2_d_gAFDW_2), color = nutrient_trt), data = dat_lme, inherit.aes = FALSE) +
   facet_grid(cols = vars(month)) +
   labs(y = expression(log(ER~(mgO[2]~day^{-1}~gAFDW^{-1}))), x = "") +
+  scale_color_manual(values = c("#00BFC4", "#F8766D")) +
   theme_bw() +
   theme(legend.position = "none")
 
@@ -534,13 +538,13 @@ temp_nut_seasonal_NEP <- emtrends(NEP_final, pairwise ~ nutrient_trt | month, va
 #######################
 
 # interaction plot of temp, nutrients, and month in log scale
-NEP_IP <- emmip(NEP_final, nutrient_trt ~ temp_C|month, CIs = T, cov.keep = c("temp_C", "nutrient_trt")) +
+NEP_IP <- emmip(NEP_final, nutrient_trt ~ temp_C|month, CIs = FALSE, cov.keep = c("temp_C", "nutrient_trt")) +
   geom_point(aes(x = temp_C, y = log(NEP_mgO2_d_gAFDW_2), color = nutrient_trt), data = dat_lme, inherit.aes = FALSE) +
   facet_grid(cols = vars(month)) +
-  scale_color_discrete("Nutrient Treatment") +
   labs(y = expression(log(NEP~(mgO[2]~day^{-1}~gAFDW^{-1}))), x = expression('Temperature (\u00B0C)')) +
+  scale_color_manual("Nutrient Treatment", values = c("#00BFC4", "#F8766D")) +
   theme_bw() +
-   theme(legend.position = "bottom")
+  theme(legend.position = "bottom")
 
 ggsave("plots/main_analysis/NEP_IP.png", plot = NEP_IP, width = 7, height = 3, dpi = 300)
 ```
