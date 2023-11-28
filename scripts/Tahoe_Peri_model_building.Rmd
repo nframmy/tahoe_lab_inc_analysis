@@ -54,6 +54,7 @@ dat_lme$month <- factor(dat_lme$month, levels = c("february", "june", "august", 
 
 levels(dat_lme$month)
 
+
 # reordering nutrient trt variable so that enriched is first; this guarantees that the nutrient trt effect reported in the model summary reflects the effect of the enriched treatment rather than the ambient treatment
 dat_lme$nutrient_trt <- factor(dat_lme$nutrient_trt, levels = c("ambient", "enriched"))
 
@@ -319,9 +320,9 @@ tab_model(m0, m1, m2, m3, dv.labels = c("Intercept only", "GLS", "LMM1", "LMM2")
 
 
 
-# updating ER model to remove the y intercept using update()
-# this will make the fixed effect estimates easier to interpret by showing all levels of the factor variables in the model summary
-ER_new <- update(ER_final, ~ . -1)
+# updating ER model to add contrast sums using update()
+# this will make the fixed effect estimates be relative to the grand mean which can aid in interpretation
+ER_new <- update(ER_final, ~ contrasts = list(month = contr.sum, nutrient_trt = contr.sum))
 summary(ER_new)
 ```
 
@@ -471,6 +472,12 @@ tab_model(m0, m1, m2, m3, m4, m5, dv.labels = c("Intercept only", "GLS", "LMM1",
   p.style = "stars",
   transform = "exp",
   file = "plots/final_paper/TableE3.doc")
+
+
+# updating NEP model to add contrast sums using update()
+# this will make the fixed effect estimates be relative to the grand mean which can aid in interpretation
+NEP_new <- update(NEP_final, ~ contrasts = list(month = contr.sum, nutrient_trt = contr.sum))
+summary(NEP_new)
 ```
 
 ## model diagnostics
@@ -569,5 +576,22 @@ tab_model(GPP_final, ER_final, NEP_final, dv.labels = c("GPP", "ER", "NEP"),
   show.ci = FALSE, 
   p.style = "stars", 
   transform = "exp",
-  file = "plots/final_paper/Table2.doc")
+  file = "plots/final_paper/Table1.doc")
 ```
+
+
+##### contrast sums summary table
+```{r}
+# updating models to add contrast sums using update()
+# this will make the fixed effect estimates be relative to the grand mean which can aid in interpretation
+# need to run code in model building chunks to generate the dataframe used to create these models
+ER_new <- update(ER_final, contrasts = list(month = contr.sum, nutrient_trt = contr.sum))
+GPP_new <- update(GPP_final, contrasts = list(month = contr.sum, nutrient_trt = contr.sum))
+NEP_new <- update(NEP_final, contrasts = list(month = contr.sum, nutrient_trt = contr.sum))
+
+tab_model(GPP_new, ER_new, NEP_new, dv.labels = c("GPP", "ER", "NEP"),
+  show.ci = FALSE, 
+  p.style = "stars", 
+  transform = "exp")
+```
+
