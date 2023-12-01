@@ -170,6 +170,7 @@ qqnorm(GPP_final)
 ```
 
 ## estimated marginal means
+### Table 1A
 ```{r}
 # nutrient effect averaged over season
 emmeans(GPP_final, pairwise ~ nutrient_trt, cov.keep = "temp_C", type = "response")
@@ -189,13 +190,22 @@ nut_seasonal <- nut_seasonal$contrasts %>%
 #######################################
 
 # effect of month on GPP averaged across all levels of temperature and nutrients, with direct pairwise comparisions between months.
-emmeans(GPP_final, pairwise ~ month, cov.keep = "temp_C", type = "response")
+emmeans(GPP_final, pairwise ~ month, cov.keep = "temp_C")
 
 
 
 ############################
+# overall effect of temperature averaged over nutrient_trt and months
+temp_GPP <- emtrends(GPP_final, ~ temp_C, var = "temp_C", type = "response") %>% 
+  data.frame() %>% 
+  mutate_at(c("temp_C.trend", "lower.CL", "upper.CL"), exp)
+
+
+
 # interaction between month and temperature, with the difference slopes of temperature effects on GPP given for each month
 temp_seasonal <- emtrends(GPP_final, pairwise ~ month, var = "temp_C", type = "response")
+
+
 
 # saving emtrends contrasts as a dataframe so I can export results in a table
 temp_seasonal <- temp_seasonal$contrasts %>%
@@ -218,15 +228,17 @@ temp_seasonal_emm <- temp_seasonal_emm$emtrends %>%
 
 # printing table of data and calculating Q10 values from temperature coefficients (done by raising them to the 10th power)
 temp_emmeans_table <- temp_seasonal_emm %>%
-  mutate(temp_C.trend = exp(temp_C.trend)) %>% # putting the estimated temp trends in the response scale by undoing the log-transformation
+  mutate_at(c("temp_C.trend", "lower.CL", "upper.CL"), exp) %>% # putting the estimated temp trends and CIs in the response scale by undoing the log-transformation
   mutate(Q10_value = temp_C.trend^10) %>% # calculating Q10 values
-  mutate(across(c(temp_C.trend:Q10_value), ~round(.,4))) %>% # rounding all numeric columns to 4 sig figs
+  mutate(across(c(temp_C.trend:Q10_value), ~round(.,2))) %>% # rounding all numeric columns to 4 sig figs
     gt() %>%
   cols_move(columns = Q10_value, after = temp_C.trend) %>%
   cols_label(temp_C.trend = "temperature effect", Q10_value = html("Q<sub>10</sub> ")) %>%
-  tab_header(title = "Seasonal Variation in Temperature Effects on Periphyton GPP")
+  tab_header(title = "GPP")
 gtsave("plots/main_analysis/temp_seasonal_GPP_emmeans.docx", data = temp_emmeans_table)
 
+# saving again for final paper
+gtsave("plots/final_paper/Table1_GPP.docx", data = temp_emmeans_table)
 
 ############################
 # temperature-nutrient interactions overall
@@ -338,6 +350,8 @@ ER_final <- readRDS("models/ER_final_mod.rds")
 
 # if you want model results to be presented using sum contrasts then use this code
 ER_contr_sum <- update(ER_final, contrasts = list(month = contr.sum, nutrient_trt = contr.sum)) # updating contrast matrix of the final model summary
+summary(ER_contr_sum)
+
 
 
 summary(ER_final)
@@ -377,6 +391,7 @@ qqnorm(ER_final)
 ```
 
 ## estimated marginal means
+### Table 1B
 ```{r}
 # nutrient effect averaged over season
 emmeans(ER_final, pairwise ~ nutrient_trt, cov.keep = "temp_C", type = "response")
@@ -392,31 +407,47 @@ nut_seasonal_ER <- nut_seasonal_ER$contrasts %>%
   as.data.frame() %>%
   mutate(across(c(ratio:p.value), ~signif(.,4))) # rounding numbers in all numeric columns to 4 sig figs
 
+
+
+
 ####################
 # shows effect of month on ER averaged across all levels of temperature and nutrients, with direct pairwise comparisions between months.
 emmeans(ER_final, pairwise ~ month, cov.keep = "temp_C", type = "response")
 
 
 
+
+
 ######################
+# overall effect of temperature averaged over nutrient_trt and months
+temp_ER <- emtrends(ER_final, ~ temp_C, var = "temp_C", type = "response") %>% 
+  data.frame() %>% 
+  mutate_at(c("temp_C.trend", "lower.CL", "upper.CL"), exp)
+
+
+
 # shows the interaction between month and temperature, with the difference slopes of temperature shown for each month
 temp_seasonal_ER <- emtrends(ER_final, pairwise ~ month , var = "temp_C" )
+
+
 
 temp_seasonal_ER_emm <- temp_seasonal_ER$emtrends %>%
   as.data.frame() # saving emtrends contrasts as a dataframe so I can export results in a table
 
 # printing table of data with associated Q10 values
 temp_emmeans_table_ER <- temp_seasonal_ER_emm %>%
-  mutate(temp_C.trend = exp(temp_C.trend)) %>% # putting the estimated temp trends in the response scale by undoing the log-transformation
+   mutate_at(c("temp_C.trend", "lower.CL", "upper.CL"), exp) %>% # putting the estimated temp trends in the response scale by undoing the log-transformation
    mutate(Q10_value = temp_C.trend^10) %>% # calculating Q10 values
-   mutate(across(c(temp_C.trend:Q10_value), ~round(.,4))) %>% # rounding all numeric columns to 4 sig figs
+   mutate(across(c(temp_C.trend:Q10_value), ~round(.,2))) %>% # rounding all numeric columns to 4 sig figs
     gt() %>%
   cols_move(columns = Q10_value, after = temp_C.trend) %>%
   cols_label(temp_C.trend = "temperature effect", Q10_value = html("Q<sub>10</sub> ")) %>%
-  tab_header(title = "Seasonal Variation in Temperature Effects on Periphyton ER")
+  tab_header(title = "ER")
 gtsave("plots/main_analysis/temp_seasonal_ER_emmeans.docx", data = temp_emmeans_table_ER)
 
 
+# saving table for final paper
+gtsave("plots/final_paper/Table1_ER.docx", data = temp_emmeans_table_ER)
 
 ##################
 # temperature-nutrient interactions overall
@@ -529,6 +560,9 @@ NEP_final <- readRDS("models/NEP_final_mod.rds")
 NEP_contr_sum <- update(NEP_final, contrasts = list(month = contr.sum, nutrient_trt = contr.sum)) # updating contrast matrix of the final model summary
 
 
+summary(NEP_contr_sum)
+
+
 summary(NEP_final)
 
 tab_model(m0, m1, m2, m3, m4, m5, dv.labels = c("Intercept only", "GLS", "LMM1", "LMM2", "LMM3", "LMM4"),
@@ -563,6 +597,7 @@ qqnorm(NEP_final)
 ```
 
 ## estimated marginal means
+### Table 1C
 ```{r}
 # nutrient effect averaged over season
 emmeans(NEP_final, pairwise ~ nutrient_trt, cov.keep = "temp_C", type = "response")
@@ -586,6 +621,12 @@ emmeans(NEP_final, pairwise ~ month, cov.keep = "temp_C", type = "response")
 
 
 ###################
+# overall effect of temperature averaged over nutrient_trt and months
+temp_NEP <- emtrends(NEP_final, ~ temp_C, var = "temp_C", type = "response") %>% 
+  data.frame() %>% 
+  mutate_at(c("temp_C.trend", "lower.CL", "upper.CL"), exp)
+
+
 # shows the interaction between month and temperature, with the difference slopes of temperature shown for each month
 temp_seasonal_NEP <- emtrends(NEP_final, pairwise ~ month , var = "temp_C" )
 
@@ -598,15 +639,18 @@ temp_seasonal_NEP_emm <- temp_seasonal_NEP_emm$emtrends %>%
 
 # printing table of data with associated Q10 values
 temp_emmeans_table_NEP <- temp_seasonal_NEP_emm %>%
-  mutate(temp_C.trend = exp(temp_C.trend)) %>% # putting the estimated temp trends in the response scale by undoing the log-transformation
+   mutate_at(c("temp_C.trend", "lower.CL", "upper.CL"), exp) %>% # putting the estimated temp trends in the response scale by undoing the log-transformation
    mutate(Q10_value = temp_C.trend^10) %>% # calculating Q10 values
-   mutate(across(c(temp_C.trend:Q10_value), ~round(.,4))) %>% # rounding all numeric columns to 4 sig figs
+   mutate(across(c(temp_C.trend:Q10_value), ~round(.,2))) %>% # rounding all numeric columns to 4 sig figs
     gt() %>%
   cols_move(columns = Q10_value, after = temp_C.trend) %>%
   cols_label(temp_C.trend = "temperature effect", Q10_value = html("Q<sub>10</sub> ")) %>%
-  tab_header(title = "Seasonal Variation in Temperature Effects on Periphyton NEP")
+  tab_header(title = "NEP")
 gtsave("plots/main_analysis/temp_seasonal_NEP_emmeans.docx", data = temp_emmeans_table_NEP)
 
+
+# saving table for final paper
+gtsave("plots/final_paper/Table1_NEP.docx", data = temp_emmeans_table_NEP)
 
 #####################
 # temperature-nutrient interactions overall
@@ -618,6 +662,7 @@ temp_nut_NEP$contrasts %>%
   mutate(estimate = round(estimate, 4)) %>% 
   gt() %>% 
   cols_label(estimate = "reduction in temperature effect with enrichment")
+
 
 
 # checking out temperature-nutrient interactions for each month
@@ -666,7 +711,7 @@ tab_model(GPP_final, ER_final, NEP_final, dv.labels = c("GPP", "ER", "NEP"),
   show.ci = FALSE, 
   p.style = "stars", 
   transform = "exp",
-  file = "plots/final_paper/Table1.doc")
+  file = "plots/final_paper/Table2.doc")
 
 
 
@@ -679,7 +724,7 @@ tab_model(GPP_contr_sum, ER_contr_sum, NEP_contr_sum, dv.labels = c("GPP", "ER",
   show.ci = FALSE, 
   p.style = "stars", 
   transform = "exp",
-  file = "plots/final_paper/Table1_sum_contr.doc")
+  file = "plots/final_paper/Table2_sum_contr.doc")
 ```
 
 
@@ -687,15 +732,36 @@ tab_model(GPP_contr_sum, ER_contr_sum, NEP_contr_sum, dv.labels = c("GPP", "ER",
 ##### factor levels of contrast sums model summary
 ```{r}
 grand_means <- dat_lme %>% 
-  summarise(grand_mean_GPP = mean(GPP_mgO2_d_gAFDW_2), grand_mean_ER = mean(ER_mgO2_d_gAFDW_2), grand_mean_NEP = mean(NEP_mgO2_d_gAFDW_2))
+  summarise(grand_mean_GPP = mean(log(GPP_mgO2_d_gAFDW_2)), grand_mean_ER = mean(log(ER_mgO2_d_gAFDW_2)), grand_mean_NEP = mean(log(NEP_mgO2_d_gAFDW_2)))
 
 dat_lme %>% 
   group_by(month) %>% 
-  summarise(avg_GPP = mean(GPP_mgO2_d_gAFDW_2), sd_GPP = sd(GPP_mgO2_d_gAFDW_2)) %>% 
+  summarise(avg_GPP = mean(log(GPP_mgO2_d_gAFDW_2)), sd_GPP = sd(log(GPP_mgO2_d_gAFDW_2))) %>% 
   ggplot(aes(x = month, y = avg_GPP))+
   geom_point()+
   geom_errorbar(aes(ymin=avg_GPP-sd_GPP, ymax=avg_GPP+sd_GPP), width=.2, position=position_dodge(.9)) +  
   geom_hline(yintercept = grand_means$grand_mean_GPP)
+
+dat_lme %>% 
+  group_by(month) %>% 
+  summarise(avg_GPP = mean(log(GPP_mgO2_d_gAFDW_2)), sd_GPP = sd(log(GPP_mgO2_d_gAFDW_2))) %>% 
+  summarise(grand_mean_GPP = mean(avg_GPP))
+
+
+# calculating unweighted mean of GPP and seeing if this equals the grand mean in the intercept value
+u_mean_GPP <- dat_lme %>% 
+  group_by(month, nutrient_trt) %>% 
+  summarise(group_avg_GPP = mean(log(GPP_mgO2_d_gAFDW_2)), n = n())
+u_mean_GPP
+
+# sample size matches up
+sum(u_mean_GPP$n)
+
+u_mean_GPP %>% 
+  ungroup() %>% 
+  summarise(grand_unweighted_mean_GPP = mean(group_avg_GPP), n = n())
+  
+  
 ```
 
 
