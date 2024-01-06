@@ -440,5 +440,6 @@ temp
 
 ggsave("plots/nearshore_temp_analysis/HW_RB_combo_temp_plot.jpg", plot = temp, height = 4, width = 6, dpi = 300)
 
+ggsave("plots/final_paper/Figure1_temp_inset.jpg", plot = temp, height = 4, width = 6, dpi = 600)
 ```
 

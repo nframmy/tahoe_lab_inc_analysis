@@ -171,21 +171,30 @@ qqnorm(GPP_final)
 
 ## estimated marginal means
 ### Table 1A
+### Table 2A
 ```{r}
 # nutrient effect averaged over season
-emmeans(GPP_final, pairwise ~ nutrient_trt, cov.keep = "temp_C", type = "response")
+nuts_GPP <- emmeans(GPP_final, pairwise ~ nutrient_trt, cov.keep = "temp_C", type = "response")
+nuts_GPP <- nuts_GPP$contrasts %>% 
+  data.frame() %>% 
+  mutate(month = "Overall") %>% 
+  mutate(across(c(ratio:p.value), ~round(.,2)))
 
 
-
+####################
 # nutrient effect by season
-nut_seasonal <- emmeans(GPP_final, pairwise ~ nutrient_trt|month, cov.keep = "temp_C", type = "response")
+nut_seasonal_GPP <- emmeans(GPP_final, pairwise ~ nutrient_trt|month, cov.keep = "temp_C", type = "response")
 
-
-
-# saving emmeans contrasts as a dataframe so I can export results in a table
-nut_seasonal <- nut_seasonal$contrasts %>%
-  as.data.frame() %>% 
-  mutate(across(c(ratio:p.value), ~signif(.,4))) # rounding numbers in all numeric columns to 4 sig figs
+# saving contrasts from emmeans as dataframe so I can export a table of the results
+nut_seasonal_GPP <- nut_seasonal_GPP$contrasts %>%
+  as.data.frame() %>%
+  mutate(across(c(ratio:p.value), ~round(.,2))) %>% # rounding numbers in all numeric columns to 2 sig figs
+  bind_rows(nuts_GPP,.) %>% # joining overall nutrient effect results
+  gt() %>%
+  cols_move(columns = month, after = contrast) %>%
+  cols_label(ratio = "Effect Size") %>%
+  tab_header(title = "GPP")
+gtsave("plots/final_paper/Table2A.docx", data = nut_seasonal_GPP)
 
 #######################################
 
@@ -392,10 +401,14 @@ qqnorm(ER_final)
 
 ## estimated marginal means
 ### Table 1B
+### Table 2B
 ```{r}
 # nutrient effect averaged over season
-emmeans(ER_final, pairwise ~ nutrient_trt, cov.keep = "temp_C", type = "response")
-
+nuts_ER <- emmeans(ER_final, pairwise ~ nutrient_trt, cov.keep = "temp_C", type = "response")
+nuts_ER <- nuts_ER$contrasts %>% 
+  data.frame() %>% 
+  mutate(month = "Overall") %>% 
+  mutate(across(c(ratio:p.value), ~round(.,2)))
 
 
 ####################
@@ -405,7 +418,13 @@ nut_seasonal_ER <- emmeans(ER_final, pairwise ~ nutrient_trt|month, cov.keep = "
 # saving contrasts from emmeans as dataframe so I can export a table of the results
 nut_seasonal_ER <- nut_seasonal_ER$contrasts %>%
   as.data.frame() %>%
-  mutate(across(c(ratio:p.value), ~signif(.,4))) # rounding numbers in all numeric columns to 4 sig figs
+  mutate(across(c(ratio:p.value), ~round(.,2))) %>% # rounding numbers in all numeric columns to 2 sig figs
+  bind_rows(nuts_ER,.) %>% # joining overall nutrient effect results
+  gt() %>%
+  cols_move(columns = month, after = contrast) %>%
+  cols_label(ratio = "Effect Size") %>%
+  tab_header(title = "ER")
+gtsave("plots/final_paper/Table2B.docx", data = nut_seasonal_ER)
 
 
 
@@ -598,23 +617,33 @@ qqnorm(NEP_final)
 
 ## estimated marginal means
 ### Table 1C
+### Table 2C
 ```{r}
 # nutrient effect averaged over season
-emmeans(NEP_final, pairwise ~ nutrient_trt, cov.keep = "temp_C", type = "response")
-
+nuts_NEP <- emmeans(NEP_final, pairwise ~ nutrient_trt, cov.keep = "temp_C", type = "response")
+nuts_NEP <- nuts_NEP$contrasts %>% 
+  data.frame() %>% 
+  mutate(month = "Overall") %>% 
+  mutate(across(c(ratio:p.value), ~round(.,2)))
 
 
 ####################
 # nutrient effect by season
 nut_seasonal_NEP <- emmeans(NEP_final, pairwise ~ nutrient_trt|month, cov.keep = "temp_C", type = "response")
 
-
+# saving contrasts from emmeans as dataframe so I can export a table of the results
 nut_seasonal_NEP <- nut_seasonal_NEP$contrasts %>%
-  as.data.frame() %>% # saving contrasts from emmeans as dataframe so I can export a table of the results
-  mutate(across(c(ratio:p.value), ~signif(.,4))) # rounding numbers in all numeric columns to 4 sig figs
+  as.data.frame() %>%
+  mutate(across(c(ratio:p.value), ~round(.,2))) %>% # rounding numbers in all numeric columns to 2 sig figs
+  bind_rows(nuts_NEP,.) %>% # joining overall nutrient effect results
+  gt() %>%
+  cols_move(columns = month, after = contrast) %>%
+  cols_label(ratio = "Effect Size") %>%
+  tab_header(title = "NEP")
+gtsave("plots/final_paper/Table2C.docx", data = nut_seasonal_NEP)
 
 #######################
-# shows effect of month on NEP averaged across all levels of temperature and nutrients, with direct pairwise comparisions between months.
+# shows effect of month on NEP averaged across all levels of temperature and nutrients, with direct pairwise comparisons between months.
 emmeans(NEP_final, pairwise ~ month, cov.keep = "temp_C", type = "response")
 
 
@@ -704,14 +733,14 @@ ggsave("plots/final_paper/Figure4.jpg", plot = metab_IP, height = 8, width = 7, 
 ```
 
 ### Model Summary Table
-#### Table 2
+#### Appendix 5
 ```{r}
 ############# regular model summary table ########
 tab_model(GPP_final, ER_final, NEP_final, dv.labels = c("GPP", "ER", "NEP"),
   show.ci = FALSE, 
   p.style = "stars", 
   transform = "exp",
-  file = "plots/final_paper/Table2.doc")
+  file = "plots/final_paper/appendix5.doc")
 
 
 
@@ -724,7 +753,7 @@ tab_model(GPP_contr_sum, ER_contr_sum, NEP_contr_sum, dv.labels = c("GPP", "ER",
   show.ci = FALSE, 
   p.style = "stars", 
   transform = "exp",
-  file = "plots/final_paper/Table2_sum_contr.doc")
+  file = "plots/final_paper/appendix5_sum_contr.doc")
 ```
 
 
@@ -769,7 +798,7 @@ u_mean_GPP %>%
 
 
 
-#### Appendix 12
+#### Appendix 11
 ```{r}
 # making table of temp-nutrient interactions from GPP, ER, and NEP models
 ## GPP
@@ -783,7 +812,7 @@ GPP <- data.frame(temp_nut_GPP$contrasts) %>%
   cols_label(estimate = "reduction in temperature effect with nutrient enrichment") %>% 
   tab_header(title = "GPP")
 
-gtsave("plots/final_paper/Appendix12_GPP.docx", data = GPP)
+gtsave("plots/final_paper/Appendix11_GPP.docx", data = GPP)
 
 ## ER
 ER <- data.frame(temp_nut_ER$contrasts) %>% 
@@ -796,7 +825,7 @@ ER <- data.frame(temp_nut_ER$contrasts) %>%
   cols_label(estimate = "reduction in temperature effect with nutrient enrichment") %>% 
   tab_header(title = "ER")
 
-gtsave("plots/final_paper/Appendix12_ER.docx", data = ER)
+gtsave("plots/final_paper/Appendix11_ER.docx", data = ER)
 
 ## NEP
 NEP <- data.frame(temp_nut_NEP$contrasts) %>% 
@@ -809,7 +838,7 @@ NEP <- data.frame(temp_nut_NEP$contrasts) %>%
   cols_label(estimate = "reduction in temperature effect with nutrient enrichment") %>% 
   tab_header(title = "NEP")
 
-gtsave("plots/final_paper/Appendix12_NEP.docx", data = NEP)
+gtsave("plots/final_paper/Appendix11_NEP.docx", data = NEP)
 
 
 ```
