@@ -42,7 +42,7 @@ dat <- dat %>%
 ```
 
 # Creating dataframe containing field nutrient concentrations only
-## Appendix 6
+## Figure S3
 ```{r}
 ambient_nutrients <- dat %>%
   filter(site_treatment == "TPI_TC_NA" | site_treatment == "TPI_PNLD_0.5m") %>%
@@ -112,7 +112,7 @@ amb_plot
 
 ggsave("plots/nutrient_uptake/ambient_nutrients.jpg", plot = amb_plot, height = 4, width = 7, dpi = 300)
 
-ggsave("plots/final_paper/Appendix6.jpg", plot = amb_plot, height = 4, width = 7, dpi = 300)
+ggsave("plots/final_paper/FigureS3.jpg", plot = amb_plot, height = 4, width = 7, dpi = 300)
 ```
 
 The nutrient data for the 3/15/21 experiment at Tahoe City was taken from 0.45um-filtered water instead of raw water since all water was mistakenly filtered before nutrient analysis were completed.
@@ -296,7 +296,7 @@ uptake_rates <- uptake_rates %>%
 ```
 
 # Plotting nutrient uptake rates
-### Appendix 4
+### Figure S2
 ```{r}
 # melting dataframe to long format so that uptake rate columns are combined into one column and values are in a separate column so all can be plotted at once
 dat_long <- uptake_rates %>%
@@ -374,8 +374,8 @@ background_nut_uptake
 
 ggsave("plots/nutrient_uptake/background_nut_uptake.jpg", plot = background_nut_uptake, height = 3, width = 7, dpi = 300)
 
+ggsave("plots/final_paper/FigureS2.jpg", plot = background_nut_uptake, height = 3, width = 7, dpi = 300)
 ggsave("plots/final_paper/AppendixD.jpg", plot = background_nut_uptake, height = 3, width = 7, dpi = 300)
-ggsave("plots/final_paper/Appendix4.jpg", plot = background_nut_uptake, height = 3, width = 7, dpi = 300)
 ```
 
 Important things to keep in mind: 1) The April experiment had much lower initial nutrient concentrations than the other experiments and nutrients were virtually exhausted in these chambers. 
@@ -435,7 +435,7 @@ write_csv(main_wide, "data/nutrient_data/nutrient_data_lahontan.csv")
 
 
 # Plotting AFDW-normalized nutrient uptake rates
-## Appendix 8.1
+## Figure S5.1
 ```{r}
 
 # renaming factor levels for graphing purposes
@@ -474,7 +474,7 @@ AFDW
 ggsave("plots/nutrient_uptake/AFDW_norm_uptake_rates.jpg", plot = AFDW, width = 7, height = 4, dpi = 300)
 
 ggsave("plots/final_paper/FigureH1.jpg", plot = AFDW, width = 7, height = 4, dpi = 300)
-ggsave("plots/final_paper/Appendix8.jpg", plot = AFDW, width = 7, height = 4, dpi = 300)
+ggsave("plots/final_paper/FigureS5_1.jpg", plot = AFDW, width = 7, height = 4, dpi = 300)
 
 
 # simplified plot for plotly
@@ -541,7 +541,7 @@ ggsave("plots/final_paper/Figure5.jpg", plot = control_uptake_plot, height = 4, 
 
 
 # In-situ nutrient uptake vs. ambient nutrient concentrations
-## Appendix 7
+## Figure S4
 ```{r}
 #View(dat)
 
@@ -615,7 +615,7 @@ uptake_v_amb_nuts <- NH4_plot + NO3_plot + P_plot
 
 ggsave("plots/nutrient_uptake/nut_uptake_vs_amb_nuts.jpg", plot = uptake_v_amb_nuts, height = 4, width = 18, dpi = 300)
 
-ggsave("plots/final_paper/FigureG1.jpg", plot = uptake_v_amb_nuts, height = 4, width = 18, dpi = 300)
+ggsave("plots/final_paper/FigureS4.jpg", plot = uptake_v_amb_nuts, height = 4, width = 18, dpi = 300)
 ggsave("plots/final_paper/Appendix7.jpg", plot = uptake_v_amb_nuts, height = 4, width = 18, dpi = 300)
 
 # saving plots
@@ -629,7 +629,7 @@ ggsave("plots/nutrient_uptake/nut_uptake_vs_NH4.png", plot = NH4_plot, height = 
 
 
 # Molar nutrient uptake plot
-## Appendix 8.2
+## Figure S5.2
 ```{r}
 #View(main)
 molar <- main %>%
@@ -664,7 +664,7 @@ AFDW_molar
 
 ggsave("plots/nutrient_uptake/molar_AFDW_norm_uptake_rates.jpg", plot = AFDW_molar, width = 7, height = 4, dpi = 300)
 
-ggsave("plots/final_paper/FigureH2.jpg", plot = AFDW_molar, width = 7, height = 4, dpi = 300)
+ggsave("plots/final_paper/FigureS5_2.jpg", plot = AFDW_molar, width = 7, height = 4, dpi = 300)
 ggsave("plots/final_paper/Appendix8.2.jpg", plot = AFDW_molar, width = 7, height = 4, dpi = 300)
 
 # log-transformed plot of molar uptake rates per gAFDW of periphyton
@@ -720,7 +720,7 @@ SRP_molar
 ```
 
 # Molar ratio of nutrient uptake plot
-## Appendix 9
+## Figure S6
 ```{r}
 #View(uptake_rates)
 molar_ratio <- uptake_rates %>%
@@ -753,7 +753,7 @@ mol_ratio_plot
 
 ggsave("plots/nutrient_uptake/uptake_molar_ratio.jpg", plot = mol_ratio_plot, width = 7, height = 4, dpi = 300)
 
-ggsave("plots/final_paper/FigureI1.jpg", plot = mol_ratio_plot, width = 7, height = 4, dpi = 300)
+ggsave("plots/final_paper/FigureS6.jpg", plot = mol_ratio_plot, width = 7, height = 4, dpi = 300)
 ggsave("plots/final_paper/Appendix9.jpg", plot = mol_ratio_plot, width = 7, height = 4, dpi = 300)
 ```
 
@@ -805,7 +805,7 @@ levels(UE_long$parameter)
 #View(UE_long)
 
 # facet labels for the plot below
-facet_label <- c("A", "B")
+facet_label <- c("a", "b")
 names(facet_label) <- c("Nitrogen Use Efficiency", "Phosphorus Use Efficiency")
 
 # regression parsed out by experiment

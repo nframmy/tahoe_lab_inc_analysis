@@ -37,7 +37,7 @@ dat_clean <- read_csv("data/main_analysis/cleaned_rate_data.csv")
 # Models using new AFDW-normalized metab rates and only for repeated-measured experiments
 # GPP
 ## model building
-### Table E1
+### Table S4
 ```{r}
 # making new dataset for lme models to remove NAs and data from april 2021 experiments
 dat_lme <- dat_clean %>%
@@ -137,7 +137,7 @@ tab_model(m0, m1, m2, m3, m5, dv.labels = c("Intercept only", "GLS", "LMM1", "LM
   show.aic = T,
   p.style = "stars",
   transform = "exp",
-  file = "plots/final_paper/TableE1.doc")
+  file = "plots/final_paper/TableS4.doc")
 # reference levels for interpreting intercept term: nutrient_trt = ambient, month = february
 
 
@@ -173,6 +173,11 @@ qqnorm(GPP_final)
 ### Table 1A
 ### Table 2A
 ```{r}
+# releveling nutrient treatment factor to make comparisons show the enriched effect
+# this will make results more understandable since they will show the nutrient effect relative to the ambient reference level
+
+
+
 # nutrient effect averaged over season
 nuts_GPP <- emmeans(GPP_final, pairwise ~ nutrient_trt, cov.keep = "temp_C", type = "response")
 nuts_GPP <- nuts_GPP$contrasts %>% 
@@ -287,7 +292,7 @@ GPP_IP <- emmip(GPP_final, nutrient_trt ~ temp_C|month, CIs = FALSE, cov.keep = 
 
 # ER
 ## model building
-### Table E2
+### Table S5
 ```{r}
 # making new dataset for lme models to remove NAs and data from april 2021 experiments
 dat_lme <- dat_clean %>%
@@ -370,7 +375,7 @@ tab_model(m0, m1, m2, m3, dv.labels = c("Intercept only", "GLS", "LMM1", "LMM2")
   show.aic = T,
   p.style = "stars",
   transform = "exp",
-  file = "plots/final_paper/TableE2.doc")
+  file = "plots/final_paper/TableS5.doc")
 # reference levels for interpreting intercept term: nutrient_trt = enriched, month = february
 
 
@@ -508,7 +513,7 @@ ggsave("plots/main_analysis/ER_IP.png", plot = ER_IP, width = 7, height = 3, dpi
 
 # NEP
 ## model building
-### Table E3
+### Table S6
 ```{r}
 # making new dataset for lme models to remove NAs and data from april 2021 experiments
 dat_lme <- dat_clean %>%
@@ -589,7 +594,7 @@ tab_model(m0, m1, m2, m3, m4, m5, dv.labels = c("Intercept only", "GLS", "LMM1",
   show.aic = T,
   p.style = "stars",
   transform = "exp",
-  file = "plots/final_paper/TableE3.doc")
+  file = "plots/final_paper/TableS6.doc")
 
 
 # updating NEP model to add contrast sums using update()
@@ -733,14 +738,14 @@ ggsave("plots/final_paper/Figure4.jpg", plot = metab_IP, height = 8, width = 7, 
 ```
 
 ### Model Summary Table
-#### Appendix 5
+#### Table S3
 ```{r}
 ############# regular model summary table ########
 tab_model(GPP_final, ER_final, NEP_final, dv.labels = c("GPP", "ER", "NEP"),
   show.ci = FALSE, 
   p.style = "stars", 
   transform = "exp",
-  file = "plots/final_paper/appendix5.doc")
+  file = "plots/final_paper/tableS3.doc")
 
 
 
@@ -798,7 +803,7 @@ u_mean_GPP %>%
 
 
 
-#### Appendix 11
+#### Table S8
 ```{r}
 # making table of temp-nutrient interactions from GPP, ER, and NEP models
 ## GPP
@@ -812,7 +817,7 @@ GPP <- data.frame(temp_nut_GPP$contrasts) %>%
   cols_label(estimate = "reduction in temperature effect with nutrient enrichment") %>% 
   tab_header(title = "GPP")
 
-gtsave("plots/final_paper/Appendix11_GPP.docx", data = GPP)
+gtsave("plots/final_paper/TableS8_GPP.docx", data = GPP)
 
 ## ER
 ER <- data.frame(temp_nut_ER$contrasts) %>% 
@@ -825,7 +830,7 @@ ER <- data.frame(temp_nut_ER$contrasts) %>%
   cols_label(estimate = "reduction in temperature effect with nutrient enrichment") %>% 
   tab_header(title = "ER")
 
-gtsave("plots/final_paper/Appendix11_ER.docx", data = ER)
+gtsave("plots/final_paper/TableS8_ER.docx", data = ER)
 
 ## NEP
 NEP <- data.frame(temp_nut_NEP$contrasts) %>% 
@@ -838,7 +843,7 @@ NEP <- data.frame(temp_nut_NEP$contrasts) %>%
   cols_label(estimate = "reduction in temperature effect with nutrient enrichment") %>% 
   tab_header(title = "NEP")
 
-gtsave("plots/final_paper/Appendix11_NEP.docx", data = NEP)
+gtsave("plots/final_paper/TableS8_NEP.docx", data = NEP)
 
 
 ```
