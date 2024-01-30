@@ -1,8 +1,20 @@
 # tahoe_lab_inc_analysis
-Analysis of laboratory incubations of periphyton collected from Lake Tahoe as part of a project funded by the Lahontan Regional Water Quality Board.
+## Analysis of laboratory incubations of periphyton collected from Lake Tahoe as part of a project funded by the Lahontan Regional Water Quality Board.
 
 This also contains analysis of tahoe nearshore network data provided by Sergio Valbuena.
 
+**Metabolism Data Prep and Site Descriptive Plots:**
+- "Tahoe_Peri_data_prep_exploratory.Rmd"
+
+**Statistical Modeling**
+- "Tahoe_Peri_model_building.Rmd"
+
+**Nutrient Uptake Data Analysis**
+- "210929_lahontan_nut_uptake_analysis.Rmd"
+
+
+#####################
+**Dataset README**
 "main_data_lahontan.csv" Column Meanings:
 Chamber: Chamber ID #
 
@@ -76,7 +88,7 @@ DP_rate: periphyton uptake rate of dissolved phosphorus in micrograms of P per h
 ###############
 
 
-Individual experiment datasheet column meanings:
+**Individual experiment datasheet column meanings:**
 
 drained_wt_g: weight in grams of chamber and rock with no water
 
@@ -109,7 +121,9 @@ total_AFDW_g: total ash-free dry weight (grams) of periphyton scaled up to the w
 rock_SA_m2: rock surface area covered by periphyton in sq. meters approximated as an ellipsoid and assuming an average periphyton coverage of 67% 
 
 
-########## Important Incubation Details:####################
+##############################
+
+**Important Incubation Details:**
 
   210301 Tahoe City incubation:
     -used average surface areas for all rocks since rocks were separated from their associated chamber numbers before these measurements were taken thus surface area measurements may not be as accurate as other incubations
