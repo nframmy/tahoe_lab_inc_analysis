@@ -41,6 +41,17 @@ combine <- combine %>%
                         names_to = "rate_type",
                         values_to = "rate",
                         values_drop_na = T)
+combine_export <- combine %>%
+  pivot_wider(names_from = "rate_type", values_from = "rate")
+
+######## Table S2 --------
+ 
+write_csv(combine_export, "data/background_metab_rates.csv")
+
+# computing average background GPP and ER rates
+combine_export %>%
+  #group_by(month) %>%
+  summarize(avg_GPP = mean(GPP), avg_ER = mean(ER))
 
 # plotting results of background metabolic rates
 bkgrd_plot <- combine %>%

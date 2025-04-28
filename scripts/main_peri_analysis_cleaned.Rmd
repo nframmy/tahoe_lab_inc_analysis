@@ -30,7 +30,7 @@ library(patchwork)
 library(gt)
 
 # changing working directory from /scripts to /tahoe_lab_inc_analysis
-knitr::opts_knit$set(root.dir = '..')
+knitr::opts_chunk$set(root.dir = '..')
 ```
 
 # Loading and formatting dataframe
@@ -722,6 +722,29 @@ dat_cor <- scale(dat_cor)
 # plotting correlation matrix of the data
 cor(dat_cor, use = "complete.obs")
 
+
+
+# looking at GPP grouped by month
+# making new dataset for lme models to remove NAs and data from april 2021 experiments
+dat_clean %>%
+  filter(!is.na(GPP_mgO2_d_gAFDW_2) & exp_ID > 4) %>% 
+  mutate(grand_mean = mean(GPP_mgO2_d_gAFDW_2)) %>% 
+  group_by(month) %>% 
+  mutate(month_mean = mean(GPP_mgO2_d_gAFDW_2)) %>% 
+  ggplot(aes(x = month, y = GPP_mgO2_d_gAFDW_2)) +
+  geom_boxplot() +
+  geom_label(aes(x = month, y = month_mean + 50, label = paste(month_mean))) +
+  geom_label(aes(x = "october", y = grand_mean + 50, label = paste(grand_mean)))
+
+# converting experiment ID, nutrient_trt, and month from numeric to a factor so that they are coded as such in the model instead of as a character
+dat_lme$exp_ID <- as.factor(dat_lme$exp_ID)
+dat_lme$nutrient_trt <- as.factor(dat_lme$nutrient_trt)
+dat_lme$month <- as.factor(dat_lme$month)
+
+# reordering month variable so it graphs months in order
+dat_lme$month <- factor(dat_lme$month, levels = c("february", "june", "august", "october", "november"))
+levels(dat_lme$month)
+
 ```
 
 
@@ -730,13 +753,21 @@ cor(dat_cor, use = "complete.obs")
 ```{r}
 ### chlorophyll-a trends across time
 
+# making bounds for x axis in plot below
+min <- as.Date("2021-04-01")
+max <- as.Date("2022-04-01")
+
+
 chla_trends <- dat %>%
-  filter(exp_ID != 1) %>% # filtering out march 1st data due to different chla sampling protocols used for this experiment
-  mutate(chla_g_m2 = total_chla_ug/rock_SA_m2/1e6) %>% # calculating areal chlorophyll-a concentrations (per m2)
-  ggplot(aes(x = date, y = chla_g_m2, group = date)) +
+  filter(exp_ID != 1 & exp_ID != 2) %>% # filtering out march 1st and 15th data since they were performed at a different site
+  mutate(chla_mg_m2 = total_chla_ug/rock_SA_m2/1e3) %>% # calculating areal chlorophyll-a concentrations (per m2)
+  ggplot(aes(x = date, y = chla_mg_m2, group = date)) +
   geom_boxplot() +
-  labs(x = "", y = expression(Periphyton~Chl-a~(g~m^{-2}))) +
-  theme_classic()
+  labs(x = "", y = expression(Periphyton~Chl-a~(mg~m^{-2}))) +
+  scale_x_date(limits = c(min, max)) +
+  theme_classic() +
+  theme(axis.text.x=element_blank(),
+        axis.ticks.x=element_blank())
 
 chla_trends
 
@@ -744,10 +775,12 @@ chla_trends
 
 chla_plotly <- dat %>%
   filter(exp_ID != 1) %>% # filtering out march 1st data due to different chla sampling protocols used for this experiment
-  mutate(chla_g_m2 = total_chla_ug/rock_SA_m2/1e6) %>% # calculating areal chlorophyll-a concentrations (per m2)
-  ggplot(aes(x = date, y = chla_g_m2, group = date)) +
+  mutate(chla_mg_m2 = total_chla_ug/rock_SA_m2/1e3) %>% # calculating areal chlorophyll-a concentrations (per m2)
+  ggplot(aes(x = date, y = chla_mg_m2, group = date)) +
   geom_boxplot() +
-  theme_classic()
+  theme_classic() +
+  theme(axis.text.x=element_blank(),
+        axis.ticks.x=element_blank())
 
 p <- plotly::ggplotly(chla_plotly)
 p
@@ -759,30 +792,38 @@ p
 # plotting changes in AI over the year
 
 AI_trends <- dat %>%
-  filter(exp_ID != 1) %>% # filtering out march 1st data due to different chla sampling protocols used for this experiment
+  filter(exp_ID != 1 & exp_ID != 2) %>% # filtering out march 1st and 15th data since they were performed at a different site
   filter(AI < 5000) %>% # filtering out 2 outliers from october and march
   ggplot(aes(x = date, y = AI, group = date)) +
   geom_boxplot() +
-  labs(x = "Date", y = "Periphyton Autotrophic Index (gAFDW:gChla)") +
-  theme_classic()
+  labs(x = "", y = "Autotrophic Index (gAFDW:gChla)") +
+  scale_x_date(limits = c(min, max)) +
+  theme_classic() +
+  theme(axis.text.x=element_blank(),
+        axis.ticks.x=element_blank())
 
 AI_trends
 
 ggsave("plots/main_analysis/AI_timeseries.png", plot = AI_trends, height = 4, width = 8, dpi = 300)
 ```
 
+
+
 ### AFDW
 ```{r}
 # plotting changes in areal AFDW over the year
 
 AFDW_trends <- dat %>%
-  filter(exp_ID != 1) %>% # filtering out march 1st data due to different chla sampling protocols used for this experiment
+  filter(exp_ID != 1 & exp_ID != 2) %>% # filtering out march 1st and 15th data since they were performed at a different site
   mutate(AFDW_g_m2 = total_AFDW_g_2/rock_SA_m2) %>%
   filter(AFDW_g_m2 <= 200) %>% # filtering out outlier from exp_ID 2
   ggplot(aes(x = date, y = AFDW_g_m2, group = date)) +
   geom_boxplot() +
   labs(x = "", y = expression(Periphyton~AFDW~(g~m^{-2}))) +
-  theme_classic()
+  scale_x_date(limits = c(min, max)) +
+  theme_classic() +
+  theme(axis.text.x=element_blank(),
+        axis.ticks.x=element_blank())
 
 AFDW_trends
 
@@ -801,13 +842,119 @@ AFDW_plotly <- dat %>%
 p <- plotly::ggplotly(AFDW_plotly)
 p
 
-# patching together AI and AFDW timeseries plots so that they share the same x-axis
+```
+
+
+### Temp
+#### Figure 2
+```{r}
+# making bounds for x axis in plot below
+min <- as.Date("2021-04-01")
+max <- as.Date("2022-04-01")
+
+# plotting in-situ temps for each experiment
+insitu_temp <- dat %>%
+ filter(exp_ID != 1 & exp_ID != 2) %>% # filtering out march 1st and 15th data since they were performed at a different site
+  filter(exp_ID == 2 & temp_C == 7 | exp_ID == 3 & temp_C == 7 | exp_ID == 4 & temp_C == 7 | exp_ID == 5 & temp_C == 14.5 | exp_ID == 6 & temp_C == 19.5 | exp_ID == 7 & temp_C == 15 | exp_ID == 8 & temp_C == 9.5 | exp_ID == 9 & temp_C == 6) %>% # filtering only data from in-situ temperatures in the field
+  ggplot(aes( x = date, y = temp_C)) +
+  geom_point(size = 3) +
+  geom_line() +
+  labs(y = expression('Temperature (\u00B0C)'), x = "Date") +
+  scale_x_date(date_labels = "%b %Y", limits = c(min, max)) +
+  theme_classic()
+insitu_temp
+
+# patching together AI, AFDW, chl-a, and in situ temp timeseries plots so that they share the same x-axis
 library(patchwork)
 
-AI_AFDW <- (chla_trends/AFDW_trends/AI_trends)
+AI_AFDW <- (chla_trends/AFDW_trends/AI_trends/insitu_temp)
 
-ggsave("plots/main_analysis/AI_AFDW_trends.png", plot = AI_AFDW, height = 8, width = 8, dpi = 300)
+ggsave("plots/main_analysis/AI_AFDW_trends.jpg", plot = AI_AFDW, height = 11, width = 11, dpi = 300)
+
+ggsave("plots/final_paper/Figure2.jpg", plot = AI_AFDW, height = 10, width = 10, dpi = 600)
 ```
+
+
+### P deficiency index (Lean & Pick 1981)
+```{r}
+#View(main_dat)
+
+# plotting NEP rates vs. SRP uptake rates to get an idea of the dispersion pattern
+main_dat %>%
+  filter(!is.na(SRP_rate) & SRP_rate <= 200) %>% # filtering out rows with no SRP uptake rate and a few outlier rows
+  ggplot(aes(x = SRP_rate, y = NEP_mgO2_d_gAFDW_2, color = month)) +
+  geom_point() +
+  labs(x = expression(PO[4]~Uptake~(ugP~hr^{-1}~gAFDW^{-1})), y = expression(NEP~(mgO[2]~day^{-1}~gAFDW^{-1})))
+
+# making same plot, but averaging replicates by temperature and month
+
+Pdef_plot <- main_dat %>%
+  filter(!is.na(SRP_rate) & SRP_rate <= 200 & exp_ID >= 4) %>% # filtering out rows with no SRP uptake rate, a few outlier rows, and rows from march 2021 and April 7 2021 experiments
+  group_by(temp_C, date) %>% # grouping dataframe by temperature value and month
+  summarise(month, avgSRP = mean(SRP_rate), lowSRP = mean(SRP_rate) - sd(SRP_rate), upperSRP = mean(SRP_rate) + sd(SRP_rate), avgNEP = mean(NEP_mgO2_d_gAFDW_2), lowNEP = mean(NEP_mgO2_d_gAFDW_2) - sd(NEP_mgO2_d_gAFDW_2), upperNEP = mean(NEP_mgO2_d_gAFDW_2) + sd(NEP_mgO2_d_gAFDW_2)) %>% # calculating average and upper and lower bounds (+- SD) for NEP and SRP uptake rates for each temp treatment and each month
+  ggplot(aes(x = avgSRP, y = avgNEP, color = month)) +
+  geom_point() +
+  geom_errorbarh(aes(xmin = lowSRP, xmax = upperSRP)) +
+  geom_errorbar(aes(ymin = lowNEP, ymax = upperNEP)) +
+  labs(x = expression(PO[4]~Uptake~(ugP~hr^{-1}~gAFDW^{-1})), y = expression(NEP~(mgO[2]~day^{-1}~gAFDW^{-1})))
+
+ggsave("plots/main_analysis/pdef_plot.png", plot = Pdef_plot, height = 5, width = 7, dpi = 300)
+
+
+# calculating p deficiency index (optimum photosynthetic rate:maximum phosphate uptake velocity) -- units should cancel
+# using biomass specific rates
+dat_pnld_pdef <- main_dat %>%
+  filter(!is.na(SRP_rate)) %>% # filtering out rows with no SRP uptake rate
+  filter(exp_ID != 1 & exp_ID != 2) %>% # filtering out march 1st and 15th data since they were performed at a different site
+  filter(exp_ID == 2 & temp_C == 7 | exp_ID == 3 & temp_C == 7 | exp_ID == 4 & temp_C == 7 | exp_ID == 5 & temp_C == 14.5 | exp_ID == 6 & temp_C == 19.5 | exp_ID == 7 & temp_C == 15 | exp_ID == 8 & temp_C == 9.5 | exp_ID == 9 & temp_C == 6) %>% # filtering only data from in-situ temperatures in the field
+  mutate(P_def_AFDW = NEP_mgO2_d_gAFDW_2/24 * 1000/SRP_rate) %>% # converting NEP to ug O2 per hour per gram AFDW of periphyton and then dividing by the phosphate uptake rate
+  group_by(date) %>% # grouping the data by date
+  summarise(avg_P_def = mean(P_def_AFDW), lower = mean(P_def_AFDW) - 2 * sd(P_def_AFDW), upper = mean(P_def_AFDW) + 2 * sd(P_def_AFDW))
+#View(dat_pnld_pdef)
+
+
+#################### plotting results
+dat_pnld_pdef %>%
+  filter(!is.na(lower)) %>% # filtering out rows from 3/15 and 4/21 experiments
+  ggplot(aes( x = date, y = avg_P_def)) +
+  geom_point() +
+  geom_line() +
+  geom_errorbar(aes(ymin = lower, ymax = upper)) +
+  labs(x = "Date", y = expression(NEP:P~uptake~(mgO[2]/ugP)))
+
+
+############## plotting p deficiency index vs. temperature
+  main_dat %>%
+  filter(!is.na(SRP_rate)) %>% # filtering out rows with no SRP uptake rate
+  mutate(P_def_AFDW = NEP_mgO2_d_gAFDW_2/24 * 1000/SRP_rate) %>%
+    ggplot(aes(x = temp_C, y = P_def_AFDW)) +
+    geom_point() +
+    labs(x = "Temp (C)", y = expression(NEP:P~uptake~(mgO[2]/ugP)))
+
+
+############## now doing same with areal rates
+dat_pnld_pdef <- main_dat %>%
+  filter(!is.na(SRP_rate)) %>% # filtering out rows with no SRP uptake rate
+  filter(exp_ID != 1 & exp_ID != 2) %>% # filtering out march 1st and 15th data since they were performed at a different site
+  filter(exp_ID == 2 & temp_C == 7 | exp_ID == 3 & temp_C == 7 | exp_ID == 4 & temp_C == 7 | exp_ID == 5 & temp_C == 14.5 | exp_ID == 6 & temp_C == 19.5 | exp_ID == 7 & temp_C == 15 | exp_ID == 8 & temp_C == 9.5 | exp_ID == 9 & temp_C == 6) %>% # filtering only data from in-situ temperatures in the field
+  mutate(P_def_m2 = NEP_mgO2_d_m2/24/SRP_rate) %>% # converting NEP to mg O2 per hour per gram AFDW of periphyton and then dividing by the phosphate uptake rate
+  group_by(date) %>% # grouping the data by date
+  summarise(avg_P_def = mean(P_def_m2), lower = mean(P_def_m2) - 2 * sd(P_def_m2), upper = mean(P_def_m2) + 2 * sd(P_def_m2))
+#View(dat_pnld_pdef)
+
+################ plotting results
+dat_pnld_pdef %>%
+  filter(!is.na(lower)) %>% # filtering out rows from 3/15 and 4/21 experiments
+  ggplot(aes( x = date, y = avg_P_def)) +
+  geom_point() +
+  geom_line() +
+  geom_errorbar(aes(ymin = lower, ymax = upper))
+# units of SRP uptake are per g AFDW of periphyton, not per m2. Thus the P deficiency indices based off areal rates are not comparable to those based off of biomass specific rates and are much higher.
+
+```
+
+
+All values fall within the extreme P deficiency group as put forth by Pick & Lean 1981.
 
 
 ## Control rates across seasons
@@ -815,13 +962,12 @@ ggsave("plots/main_analysis/AI_AFDW_trends.png", plot = AI_AFDW, height = 8, wid
 ```{r}
 metab_trend_AFDW <- dat_long %>%
   filter(exp_ID == 3 & temp_C ==7 | exp_ID == 5 & temp_C == 14.5 | exp_ID == 6 & temp_C == 19.5 | exp_ID == 7 & temp_C == 15 | exp_ID == 8 & temp_C == 9.5 | exp_ID == 9 & temp_C == 6) %>% # filtering only ambient and in-situ temperature data from all experiments except march one due to different biomass methods giving consistently higher data values
-  ggplot(aes(x = date, y = rates_AFDW, group = date, fill = rate_name_AFDW)) +
+  ggplot(aes(x = date, y = rates_AFDW, group = date)) +
   facet_grid(rows = vars(rate_name_AFDW)) +
   geom_boxplot() +
-  scale_fill_viridis_d() +
   labs(x = "", y = expression(Metabolic~Rate~(mgO[2]~day^{-1}~gAFDW^{-1}))) +
   theme_bw() +
-  theme(legend.position = "None")
+  theme(legend.position = "None", strip.text.y = element_text(angle = 0)) # removing legend and making facet labels horizontal
 
 
 metab_trend_AFDW
@@ -848,12 +994,12 @@ p
 ```{r}
 metab_trend_sa <- dat_long_m2 %>%
   filter(exp_ID == 3 & temp_C ==7 | exp_ID == 5 & temp_C == 14.5 | exp_ID == 6 & temp_C == 19.5 | exp_ID == 7 & temp_C == 15 | exp_ID == 8 & temp_C == 9.5 | exp_ID == 9 & temp_C == 6) %>% # filtering only ambient and in-situ temperature data from all experiments except march one due to different biomass methods giving consistenly higher data values
-  ggplot(aes(x = date, y = rates_m2, group = date, fill = rate_name_m2)) +
+  ggplot(aes(x = date, y = rates_m2, group = date)) +
   facet_grid(rows = vars(rate_name_m2)) +
   geom_boxplot() +
-  scale_fill_viridis_d() +
   labs(x = "", y = expression(Metabolic~Rate~(mgO[2]~day^{-1}~m^{-2})), fill = "Metabolic Rate") +
-  theme_bw()
+  theme_bw() +
+  theme(strip.text.y = element_text(angle = 0))
 
 
 metab_trend_sa
@@ -871,13 +1017,24 @@ metab_trend_sa_plotly <- dat_long_m2 %>%
  
 p <- plotly::ggplotly(metab_trend_sa_plotly)
 p
+
+# calculating average areal metabolic rates
+
+control_rates <- dat_long_m2 %>%
+  filter(exp_ID == 3 & temp_C ==7 | exp_ID == 5 & temp_C == 14.5 | exp_ID == 6 & temp_C == 19.5 | exp_ID == 7 & temp_C == 15 | exp_ID == 8 & temp_C == 9.5 | exp_ID == 9 & temp_C == 6) %>% # filtering only ambient and in-situ temperature data from all experiments except march one due to different biomass methods giving consistently higher data values
+  group_by(rate_name_m2) %>%
+  summarise(avg_rate_m2 = mean(rates_m2))
+#View(control_rates)
 ```
 
 ### combining AFDW and SA metabolic trend plots
+#### Figure 3
 ```{r}
 metab_trend <- (metab_trend_AFDW + metab_trend_sa)
 
-ggsave("plots/main_analysis/metab_trends.png", plot = metab_trend, height = 6, width = 12, dpi = 300)
+ggsave("plots/main_analysis/metab_trends.jpg", plot = metab_trend, height = 6, width = 12, dpi = 300)
+
+ggsave("plots/final_paper/Figure3.jpg", plot = metab_trend, height = 6, width = 12, dpi = 300)
 
 ```
 
@@ -1030,6 +1187,12 @@ AIC(m0, m1, m2, m3, m5)
 GPP_final <- m5
 summary(GPP_final)
 
+# saving model results
+saveRDS(GPP_final, "models/GPP_final_mod.rds")
+
+# reading in model
+GPP_final <- readRDS("models/GPP_final_mod.rds")
+
 # summary table for model comparison
 tab_model(m0, m1, m2, m3, m5, dv.labels = c("Intercept only", "GLS", "LMM1", "LMM2", "LMM3"),
   show.ci = FALSE,
@@ -1037,6 +1200,13 @@ tab_model(m0, m1, m2, m3, m5, dv.labels = c("Intercept only", "GLS", "LMM1", "LM
   p.style = "stars",
   transform = NULL,
   file = "plots/main_analysis/GPP_mod_sum.doc")
+
+tab_model(m0, m1, m2, m3, m5, dv.labels = c("Intercept only", "GLS", "LMM1", "LMM2", "LMM3"),
+  show.ci = FALSE,
+  show.aic = T,
+  p.style = "stars",
+  transform = NULL,
+  file = "plots/final_paper/TableE1.doc")
 ```
 
 
@@ -1047,16 +1217,28 @@ tab_model(m0, m1, m2, m3, m5, dv.labels = c("Intercept only", "GLS", "LMM1", "LM
 # diagnostic plots for model with month included as fixed effect for comparison of residuals
 # checking ordinary residuals of the final model (these are allowed to show heteroscedasticity). Using code from Zuur et al.
 E3 <- resid(GPP_final)
-coplot(E3 ∼ rock_ID|month,
-ylab = "Ordinary residuals", data = dat_lme)
+#coplot(E3 ∼ rock_ID|month,
+#ylab = "Ordinary residuals", data = dat_lme)
 
 # now checking standardized residuals of each of the experiments (random effect in the model). These should not show any patterns and should exhibit homogeneous variance.
 E4 <- resid(GPP_final, type = "normalized")
-coplot(E4 ∼ rock_ID|month,
-ylab = "Normalized residuals", data = dat_lme)
+#coplot(E4 ∼ rock_ID|month,
+#ylab = "Normalized residuals", data = dat_lme)
 
+# plot of standardized residuals
 plot(GPP_final)
 
+# plot of standardized residuals by month
+plot(GPP_final, resid(.,type="p") ~ fitted(.) | month, abline=0)
+
+# plot of standardized residuals by temperature trt
+plot(GPP_final, resid(.,type="p") ~ fitted(.) | temp_C, abline=0)
+
+# plot of standardized residuals by nutrient trt
+plot(GPP_final, resid(.,type="p") ~ fitted(.) | nutrient_trt, abline=0)
+
+# qq plot to assess normality of residuals
+qqnorm(GPP_final)
 
 ```
 
@@ -1088,7 +1270,7 @@ table <- nut_seasonal %>%
     gt() %>%
   cols_label(contrast = "comparison", ratio = "effect size") %>%
   tab_header(title = "Seasonal Variation in Nutrient Effects on Periphyton GPP")
-gtsave("plots/main_analysis/nut_seasonal_GPP.png", data = table)
+gt::gtsave("plots/main_analysis/nut_seasonal_GPP.png", data = table)
 
 
 
@@ -1149,18 +1331,18 @@ gtsave("plots/main_analysis/temp_nut_seasonal_GPP.png", data = temp_nut_table)
 
 
 # interaction plot of temp, nutrients, and month in log scale
-GPP_IP <- emmip(GPP_final, nutrient_trt ~ temp_C|month, CIs = T, cov.keep = c("temp_C", "nutrient_trt")) +
-  geom_point(aes(x = temp_C, y = log(GPP_mgO2_d_gAFDW_2), color = nutrient_trt), data = dat_lme) +
+GPP_IP <- emmip(GPP_final, nutrient_trt ~ temp_C|month, CIs = TRUE, cov.keep = c("temp_C", "nutrient_trt")) +
+  geom_point(aes(x = temp_C, y = log(GPP_mgO2_d_gAFDW_2), color = nutrient_trt), data = dat_lme, inherit.aes = FALSE) +
   facet_grid(cols = vars(month)) +
   labs(y = expression(log(GPP~(mgO[2]~day^{-1}~gAFDW^{-1}))), x = "") +
-  theme_minimal() +
+  theme_bw() +
   theme(legend.position = "none")
 
 ggsave("plots/main_analysis/GPP_IP.png", plot = GPP_IP, width = 7, height = 3, dpi = 300)
 
 # interaction plot of temp, nutrients, and month in response scale
 emmip(GPP_final, nutrient_trt ~ temp_C|month, CIs = T, cov.keep = c("temp_C", "nutrient_trt"), type = "response") +
-  geom_point(aes(x = temp_C, y = GPP_mgO2_d_gAFDW_2, color = nutrient_trt), data = dat_lme) +
+  geom_point(aes(x = temp_C, y = GPP_mgO2_d_gAFDW_2, color = nutrient_trt), data = dat_lme, inherit.aes = FALSE) +
   theme_minimal()
 
 ```
@@ -1315,6 +1497,13 @@ summary(m3)
 AIC(m0, m1, m2, m3)
 
 ER_final <- m3
+
+# saving model object
+saveRDS(ER_final, "models/ER_final_mod.rds")
+
+# reading in model object
+ER_final <- readRDS("models/ER_final_mod.rds")
+
 summary(ER_final)
 
 # summary table for model comparison
@@ -1324,6 +1513,13 @@ tab_model(m0, m1, m2, m3, dv.labels = c("Intercept only", "GLS", "LMM1", "LMM2")
   p.style = "stars",
   transform = NULL,
   file = "plots/main_analysis/ER_mod_sum.doc")
+
+tab_model(m0, m1, m2, m3, dv.labels = c("Intercept only", "GLS", "LMM1", "LMM2"),
+  show.ci = FALSE,
+  show.aic = T,
+  p.style = "stars",
+  transform = NULL,
+  file = "plots/final_paper/TableE2.doc")
 ```
 
 
@@ -1331,21 +1527,29 @@ tab_model(m0, m1, m2, m3, dv.labels = c("Intercept only", "GLS", "LMM1", "LMM2")
 ```{r}
 # checking ordinary residuals of the final model (these are allowed to show heteroscedasticity). Using code from Zuur et al.
 E1 <- resid(ER_final)
-coplot(E1 ∼ rock_ID|month,
-ylab = "Ordinary residuals", data = dat_lme)
+#coplot(E1 ∼ rock_ID|month,
+#ylab = "Ordinary residuals", data = dat_lme)
 
 # now checking standardized residuals of each of the experiments (random effect in the model). These should not show any patterns and should exhibit homogeneous variance.
 E2 <- resid(ER_final, type = "normalized")
-coplot(E2 ∼ rock_ID|month,
-ylab = "Normalized residuals", data = dat_lme)
+#coplot(E2 ∼ rock_ID|month,
+#ylab = "Normalized residuals", data = dat_lme)
 
 #coplot(resid(m10) ~ fitted(m10) | dat_lme$exp_ID)
 
 plot(ER_final)
 
+# plot of standardized residuals by month
+plot(ER_final, resid(.,type="p") ~ fitted(.) | month, abline=0)
 
+# plot of standardized residuals by temperature trt
+plot(ER_final, resid(.,type="p") ~ fitted(.) | temp_C, abline=0)
 
+# plot of standardized residuals by nutrient trt
+plot(ER_final, resid(.,type="p") ~ fitted(.) | nutrient_trt, abline=0)
 
+# qq plot to assess normality of residuals
+qqnorm(ER_final)
 
 ```
 
@@ -1419,6 +1623,7 @@ temp_nut_seasonal_ER <- temp_nut_seasonal_ER$contrasts %>%
   as.data.frame()# saving contrasts from emmeans as dataframe so I can export a table of the results
 
 temp_nut_table_ER <- temp_nut_seasonal_ER %>%
+  mutate(estimate = exp(estimate), SE = exp(SE)) %>% # converting temp:nut interaction estimate to the response scale due to the log-transformation
   gt() %>%
   tab_header(title = "Seasonal Variation in Temperature-Nutrient Interactions on Periphyton ER")
 gtsave("plots/main_analysis/temp_nut_seasonal_ER.png", data = temp_nut_table_ER)
@@ -1428,17 +1633,17 @@ gtsave("plots/main_analysis/temp_nut_seasonal_ER.png", data = temp_nut_table_ER)
 
 # interaction plot of temp, nutrients, and month in log scale
 ER_IP <- emmip(ER_final, nutrient_trt ~ temp_C|month, CIs = T, cov.keep = c("temp_C", "nutrient_trt")) +
-  geom_point(aes(x = temp_C, y = log(ER_mgO2_d_gAFDW_2), color = nutrient_trt), data = dat_lme) +
+  geom_point(aes(x = temp_C, y = log(ER_mgO2_d_gAFDW_2), color = nutrient_trt), data = dat_lme, inherit.aes = FALSE) +
   facet_grid(cols = vars(month)) +
   labs(y = expression(log(ER~(mgO[2]~day^{-1}~gAFDW^{-1}))), x = "") +
-  theme_minimal() +
+  theme_bw() +
   theme(legend.position = "none")
 
 ggsave("plots/main_analysis/ER_IP.png", plot = ER_IP, width = 7, height = 3, dpi = 300)
 
 # interaction plot of temp, nutrients, and month in response scale
 emmip(ER_final, nutrient_trt ~ temp_C|month, CIs = T, cov.keep = c("temp_C", "nutrient_trt"), type = "response") +
-  geom_point(aes(x = temp_C, y = ER_mgO2_d_gAFDW_2, color = nutrient_trt), data = dat_lme) +
+  geom_point(aes(x = temp_C, y = ER_mgO2_d_gAFDW_2, color = nutrient_trt), data = dat_lme, inherit.aes = FALSE) +
   theme_minimal()
 ```
 
@@ -1589,6 +1794,12 @@ AIC(m0, m1, m2, m3, m4, m5)
 summary(m5)
 NEP_final <- m5
 
+# saving model object
+saveRDS(NEP_final, "models/NEP_final_mod.rds")
+
+# reading in final model 
+NEP_final <- readRDS("models/NEP_final_mod.rds")
+
 summary(NEP_final)
 
 # summary table for model comparison
@@ -1598,6 +1809,13 @@ tab_model(m0, m1, m2, m3, m4, m5, dv.labels = c("Intercept only", "GLS", "LMM1",
   p.style = "stars",
   transform = NULL,
   file = "plots/main_analysis/NEP_mod_sum.doc")
+
+tab_model(m0, m1, m2, m3, m4, m5, dv.labels = c("Intercept only", "GLS", "LMM1", "LMM2", "LMM3", "LMM4"),
+  show.ci = FALSE,
+  show.aic = T,
+  p.style = "stars",
+  transform = NULL,
+  file = "plots/final_paper/TableE3.doc")
 ```
 
 
@@ -1605,19 +1823,29 @@ tab_model(m0, m1, m2, m3, m4, m5, dv.labels = c("Intercept only", "GLS", "LMM1",
 ```{r}
 # checking ordinary residuals of the final model (these are allowed to show heteroscedasticity). Using code from Zuur et al.
 E1 <- resid(NEP_final)
-coplot(E1 ∼ rock_ID|month,
-ylab = "Ordinary residuals", data = dat_lme)
+#coplot(E1 ∼ rock_ID|month,
+#ylab = "Ordinary residuals", data = dat_lme)
 
 # now checking standardized residuals of each of the experiments (random effect in the model). These should not show any patterns and should exhibit homogeneous variance.
 E2 <- resid(NEP_final, type = "normalized")
-coplot(E2 ∼ rock_ID|month,
-ylab = "Normalized residuals", data = dat_lme)
+#coplot(E2 ∼ rock_ID|month,
+#ylab = "Normalized residuals", data = dat_lme)
 
 #coplot(resid(m10) ~ fitted(m10) | dat_lme$exp_ID)
 
 plot(NEP_final)
 
+# plot of standardized residuals by month
+plot(NEP_final, resid(.,type="p") ~ fitted(.) | month, abline=0)
 
+# plot of standardized residuals by temperature trt
+plot(NEP_final, resid(.,type="p") ~ fitted(.) | temp_C, abline=0)
+
+# plot of standardized residuals by nutrient trt
+plot(NEP_final, resid(.,type="p") ~ fitted(.) | nutrient_trt, abline=0)
+
+# qq plot to assess normality of residuals
+qqnorm(NEP_final)
 
 ```
 
@@ -1706,31 +1934,34 @@ gtsave("plots/main_analysis/temp_nut_seasonal_NEP.png", data = temp_nut_table_NE
 
 # interaction plot of temp, nutrients, and month in log scale
 NEP_IP <- emmip(NEP_final, nutrient_trt ~ temp_C|month, CIs = T, cov.keep = c("temp_C", "nutrient_trt")) +
-  geom_point(aes(x = temp_C, y = log(NEP_mgO2_d_gAFDW_2), color = nutrient_trt), data = dat_lme) +
+  geom_point(aes(x = temp_C, y = log(NEP_mgO2_d_gAFDW_2), color = nutrient_trt), data = dat_lme, inherit.aes = FALSE) +
   facet_grid(cols = vars(month)) +
   scale_color_discrete("Nutrient Treatment") +
   labs(y = expression(log(NEP~(mgO[2]~day^{-1}~gAFDW^{-1}))), x = expression('Temperature (\u00B0C)')) +
-  theme_minimal() +
+  theme_bw() +
    theme(legend.position = "bottom")
 
 ggsave("plots/main_analysis/NEP_IP.png", plot = NEP_IP, width = 7, height = 3, dpi = 300)
 
 # interaction plot of temp, nutrients, and month in response scale
 emmip(NEP_final, nutrient_trt ~ temp_C|month, CIs = T, cov.keep = c("temp_C", "nutrient_trt"), type = "response") +
-  geom_point(aes(x = temp_C, y = NEP_mgO2_d_gAFDW_2, color = nutrient_trt), data = dat_lme) +
+  geom_point(aes(x = temp_C, y = NEP_mgO2_d_gAFDW_2, color = nutrient_trt), data = dat_lme, inherit.aes = FALSE) +
   facet_grid(cols = vars(month)) +
   theme_minimal()
 ```
 
 
 ### Stacking plots
+#### Figure 4
 ```{r}
 # combining emmip plots for GPP, ER, and NEP
 library(patchwork)
 
 metab_IP <- (GPP_IP/ER_IP/ NEP_IP)
 
-ggsave("plots/main_analysis/metab_IP.png", plot = metab_IP, height = 8, width = 7, dpi = 300)
+ggsave("plots/main_analysis/metab_IP.jpg", plot = metab_IP, height = 8, width = 7, dpi = 300)
+
+ggsave("plots/final_paper/Figure4.jpg", plot = metab_IP, height = 8, width = 7, dpi = 300)
 ```
 
 
@@ -1742,6 +1973,11 @@ tab_model(GPP_final, ER_final, NEP_final, dv.labels = c("GPP", "ER", "NEP"),
   transform = "exp",
   file = "plots/main_analysis/mod_sum.doc") # saving model tabel as a doc file, looks great!
 
+tab_model(GPP_final, ER_final, NEP_final, dv.labels = c("GPP", "ER", "NEP"),
+  show.ci = FALSE, 
+  p.style = "stars", 
+  transform = "exp",
+  file = "plots/final_paper/Table2.doc")
 ```
 
 

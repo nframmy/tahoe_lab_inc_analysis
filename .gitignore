@@ -8,3 +8,6 @@ data/Tahoe_nearshore_network_data/*.txt
 
 #ignore pdf files in same folder
 data/Tahoe_nearshore_network_data/*.pdf
+
+# ignore plots folder
+plots/*
