@@ -58,7 +58,7 @@ ggsave("plots/main_analysis/AFDW_comparison.png", plot = AFDW_plot, width = 3, h
 ```
 
 ## New AFDW-adjusted Metab. rate plot
-### Figure S3
+### Figure S4
 ```{r}
 # remelting dataframe to long format so that metabolic rate columns are combined into one column and values are in a separate column so all can be plotted at once
 dat_long <- dat_clean %>%
@@ -96,7 +96,7 @@ AFDW_2_rates
 # high quality dpi plot
 ggsave("plots/main_analysis/correct_AFDW_norm_rates.png", plot = AFDW_2_rates, width = 5, height = 5, dpi = 300)
 
-ggsave("plots/final_paper/Figure_S3.png", plot = AFDW_2_rates, width = 5, height = 5, dpi = 300)
+ggsave("plots/final_paper/FigureS4.jpg", plot = AFDW_2_rates, width = 5, height = 5, dpi = 300)
 
 
 
