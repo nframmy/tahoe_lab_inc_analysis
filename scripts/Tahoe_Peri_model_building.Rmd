@@ -180,6 +180,12 @@ View(summary(GPP_final))
 GPP_final_hr <- lme(log(GPP_mgO2_hr_gAFDW_2) ~ temp_C * nutrient_trt * month, random = ~ 1 + temp_C | rock_ID, weights = varIdent(form = ~1|exp_ID), data = dat_lme, control=(msMaxIter=1000))
 
 summary(GPP_final_hr)
+
+# saving model results
+saveRDS(GPP_final_hr, "models/GPP_final_mod_hr.rds")
+
+# reading in model
+GPP_final_hr <- readRDS("models/GPP_final_mod_hr.rds")
 ```
 
 ## model diagnostics
@@ -319,7 +325,7 @@ temp_nut_seasonal_GPP$contrasts %>%
 #######################
 # interaction plot of temp, nutrients, and month in log scale
 # daily rates
-GPP_IP <- emmip(GPP_final, nutrient_trt ~ temp_C|month, CIs = FALSE, cov.keep = c("temp_C", "nutrient_trt")) +
+GPP_IP <- emmip(GPP_final, nutrient_trt ~ temp_C|month, CIs = FALSE, cov.keep = c("temp_C", "nutrient_trt"), type = "response") +
   geom_point(aes(x = temp_C, y = log(GPP_mgO2_d_gAFDW_2), color = nutrient_trt), data = dat_lme, inherit.aes = FALSE) +
   facet_grid(cols = vars(month)) +
   labs(y = expression(log(GPP~(mgO[2]~day^{-1}~gAFDW^{-1}))), x = "") +
@@ -328,10 +334,11 @@ GPP_IP <- emmip(GPP_final, nutrient_trt ~ temp_C|month, CIs = FALSE, cov.keep = 
   theme(legend.position = "none")
 
 # hourly rates
-GPP_IP_hr <- emmip(GPP_final_hr, nutrient_trt ~ temp_C|month, CIs = FALSE, cov.keep = c("temp_C", "nutrient_trt")) +
-  geom_point(aes(x = temp_C, y = log(GPP_mgO2_hr_gAFDW_2), color = nutrient_trt), data = dat_lme, inherit.aes = FALSE) +
+GPP_IP_hr <- emmip(GPP_final_hr, nutrient_trt ~ temp_C|month, CIs = FALSE, cov.keep = c("temp_C", "nutrient_trt"), type = "response") +
+  geom_point(aes(x = temp_C, y = GPP_mgO2_hr_gAFDW_2, color = nutrient_trt), data = dat_lme, inherit.aes = FALSE) +
+  scale_y_log10()+
   facet_grid(cols = vars(month)) +
-  labs(y = expression(log(GPP~(mgO[2]~hr^{-1}~gAFDW^{-1}))), x = "") +
+  labs(y = expression(GPP~(mgO[2]~hr^{-1}~gAFDW^{-1})), x = "") +
   scale_color_manual(values = c("#F8766D", "#00BFC4")) +
   theme_bw() +
   theme(legend.position = "none")
@@ -465,6 +472,12 @@ summary(ER_new)
 ER_final_hr <- lme(log(ER_mgO2_hr_gAFDW_2) ~ temp_C * nutrient_trt * month, random = ~ 1 | rock_ID, weights = varIdent(form = ~1|exp_ID), data = dat_lme)
 
 summary(ER_final_hr)
+
+# saving model object
+saveRDS(ER_final_hr, "models/ER_final_mod_hr.rds")
+
+# reading in model object
+ER_final_hr <- readRDS("models/ER_final_mod_hr.rds")
 ```
 
 ## model diagnostics
@@ -599,10 +612,11 @@ ER_IP <- emmip(ER_final, nutrient_trt ~ temp_C|month, CIs = FALSE, cov.keep = c(
 ggsave("plots/main_analysis/ER_IP.png", plot = ER_IP, width = 7, height = 3, dpi = 300)
 
 # hourly rates
-ER_IP_hr <- emmip(ER_final_hr, nutrient_trt ~ temp_C|month, CIs = FALSE, cov.keep = c("temp_C", "nutrient_trt")) +
-  geom_point(aes(x = temp_C, y = log(ER_mgO2_hr_gAFDW_2), color = nutrient_trt), data = dat_lme, inherit.aes = FALSE) +
+ER_IP_hr <- emmip(ER_final_hr, nutrient_trt ~ temp_C|month, CIs = FALSE, cov.keep = c("temp_C", "nutrient_trt"), type = "response") +
+  geom_point(aes(x = temp_C, y = ER_mgO2_hr_gAFDW_2, color = nutrient_trt), data = dat_lme, inherit.aes = FALSE) +
+  scale_y_log10()+
   facet_grid(cols = vars(month)) +
-  labs(y = expression(log(ER~(mgO[2]~hr^{-1}~gAFDW^{-1}))), x = "") +
+  labs(y = expression(ER~(mgO[2]~hr^{-1}~gAFDW^{-1})), x = "") +
   scale_color_manual(values = c("#F8766D", "#00BFC4")) +
   theme_bw() +
   theme(legend.position = "none")
@@ -730,6 +744,12 @@ summary(NEP_new)
 NEP_final_hr <- lme(log(NEP_mgO2_hr_gAFDW_2) ~ temp_C * nutrient_trt * month, random = ~ 1 + temp_C | rock_ID, weights = varIdent(form = ~1|exp_ID), data = dat_lme, control=(msMaxIter=1000))
 
 summary(NEP_final_hr)
+
+# saving model object
+saveRDS(NEP_final_hr, "models/NEP_final_mod_hr.rds")
+
+# reading in final model 
+NEP_final_hr <- readRDS("models/NEP_final_mod_hr.rds")
 ```
 
 ## model diagnostics
@@ -859,11 +879,17 @@ NEP_IP <- emmip(NEP_final, nutrient_trt ~ temp_C|month, CIs = FALSE, cov.keep = 
 
 ggsave("plots/main_analysis/NEP_IP.png", plot = NEP_IP, width = 7, height = 3, dpi = 300)
 
+# range of temps in the data
+range_temp <- range(dat_lme$temp_C, na.rm = TRUE)
+
 # hourly rates
-NEP_IP_hr <- emmip(NEP_final_hr, nutrient_trt ~ temp_C|month, CIs = FALSE, cov.keep = c("temp_C", "nutrient_trt")) +
-  geom_point(aes(x = temp_C, y = log(NEP_mgO2_hr_gAFDW_2), color = nutrient_trt), data = dat_lme, inherit.aes = FALSE) +
+NEP_IP_hr <- emmip(NEP_final_hr, nutrient_trt ~ temp_C|month, CIs = FALSE, cov.keep = c("temp_C", "nutrient_trt"), type = "response") +
+  geom_point(aes(x = temp_C, y = NEP_mgO2_hr_gAFDW_2, color = nutrient_trt), data = dat_lme, inherit.aes = FALSE) +
+  scale_y_log10(
+    #limits = c(2, 10)
+    )+
   facet_grid(cols = vars(month)) +
-  labs(y = expression(log(NEP~(mgO[2]~hr^{-1}~gAFDW^{-1}))), x = expression('Temperature (\u00B0C)')) +
+  labs(y = expression(NEP~(mgO[2]~hr^{-1}~gAFDW^{-1})), x = expression('Temperature (\u00B0C)')) +
   scale_color_manual("Nutrient Treatment", values = c("#F8766D", "#00BFC4")) +
   theme_bw() +
   theme(legend.position = "bottom")
