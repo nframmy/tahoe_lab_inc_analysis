@@ -99,7 +99,8 @@ dat_full <- full_join(dat_subset, dat_chambers, by = "chamber")
 
 # converting oxygen concentration (mg/L) to oxygen mass (mg) by multipying by water volumes in chambers
 dat_full <- dat_full %>%
-  mutate(oxygen_mass_mg = oxygen * water_volume_L) %>%
+  mutate(oxygen_mass_mg = oxygen * water_volume_L,
+         delta_T_min = as.numeric(delta_T_min)) %>%
   slice(1:45243) #removing last row since channel 9 was not in DO dataset due to errors and got added on at the end in the data joining in line 93
 #View(dat_full)
 ```
@@ -113,14 +114,18 @@ dat_full$chamber <- as.factor(dat_full$chamber)
 
 # plotting Do concentrations in each chamber
 DO_conc_plot <- dat_full %>%
+  ungroup() %>%
   ggplot(aes(x = delta_T_min, y = oxygen, color = chamber)) +
-  geom_line(size = 1.5) +
+  geom_path(size = 1.5) +
   scale_color_viridis_d() +
   facet_wrap(~treatment) +
   labs(y = expression(Oxygen~Concentration~(mg~L^{-1})), x = "Elapsed Time (min)", title = "Pineland Ambient Incubation DO") +
   theme_bw(base_size = 20)
 
 DO_conc_plot
+
+plotly_DO <- plotly::ggplotly(DO_conc_plot)
+plotly_DO
 
 ggsave("plots/210613_pineland_ambient_enriched/210613_pineland_ambient_DO_conc_plot.png", plot = DO_conc_plot, width = 10, height = 7)
 
