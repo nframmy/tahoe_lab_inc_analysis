@@ -411,6 +411,7 @@ RB_temp
 ```
 
 # Combining Homewood and Rubicon temp data
+## Figure 1 Inset
 ```{r}
 # combining HW and RB dataframes, creating column of abbreviated months
 temp_dat <- union(dat_HW, dat_RB) %>%
@@ -433,6 +434,7 @@ temp <- temp_dat %>%
   ggplot(aes(x = TimeLocal, y = T)) +
   geom_point() +
   geom_smooth() +
+  scale_y_continuous(limits = c(0,24))+
   scale_x_date(date_breaks = "1 month", date_labels = "%b") +
   labs(x = "Month", y = expression('Water Temperature (\u00B0C)')) +
   theme_classic()
