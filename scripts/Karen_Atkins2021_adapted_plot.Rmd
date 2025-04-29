@@ -65,6 +65,7 @@ Month = factor(Month, levels = c("Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul"
 AFDW_plot <- AFDW %>%
   ggplot(aes(x = Month, y = AFDW_g_m2, group = 1)) +
   geom_point(size = 3) +
+  scale_y_continuous(limits = c(0,30))+
   geom_line(linetype = 2, linewidth = 1) +
   labs(y = expression(AFDW~(g/m^{2})), x = "") +
   theme_classic()
@@ -73,6 +74,7 @@ AFDW_plot
 Chla_plot <- Chla %>%
   ggplot(aes(x = Month, y = Chla_mg_m2, group = 1)) +
   geom_point(size = 3) +
+  scale_y_continuous(limits = c(0,33))+
   geom_line(linetype = 2, linewidth = 1) +
   labs(y = expression(Chl-a~(mg/m^{2}))) +
   theme_classic()
