@@ -7,7 +7,6 @@ output: html_document
 
 ```{r setup, include=FALSE}
 library(ggplot2)
-library(tidyverse)
 library(lubridate)
 library(ggpubr)
 library(plotly)
@@ -16,6 +15,7 @@ library(DescTools)
 library(arm)
 library(lme4)
 library(lattice)
+library(tidyverse)
 
 # changing working directory from /scripts to /tahoe_lab_inc_analysis
 knitr::opts_chunk$set(root.dir = '..')
@@ -883,8 +883,10 @@ names(facet_label) <- c("Nitrogen Use Efficiency", "Phosphorus Use Efficiency")
 UE_plot <- UE_long %>%
   filter(month != "March" & month != "April") %>% # filtering out april and march experiment data due to issues with nutrient enrichment levels or maintaining temperature
   ggplot(aes(x = temp_C, y = value, color = month, group = interaction(month, parameter))) +
-  facet_grid(cols = vars(parameter), labeller = labeller(parameter = facet_label)) +
+  facet_grid(cols = vars(parameter), #labeller = labeller(parameter = facet_label)
+             ) +
   geom_point() +
+  scale_y_log10()+
   geom_smooth(aes(color = month), method = "lm", se = FALSE) +
   labs(x = expression('Temperature (\u00B0C)'),
        y = expression(mol~O[2]:mol~N/P)) +
