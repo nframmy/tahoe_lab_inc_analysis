@@ -230,7 +230,7 @@ nut_seasonal_GPP <- emmeans(GPP_final, pairwise ~ nutrient_trt|month, cov.keep =
 # saving contrasts from emmeans as dataframe so I can export a table of the results
 nut_seasonal_GPP <- nut_seasonal_GPP$contrasts %>%
   as.data.frame() %>%
-  mutate(across(c(ratio:p.value), ~round(.,2))) %>% # rounding numbers in all numeric columns to 2 sig figs
+  #mutate(across(c(ratio:p.value), ~round(.,2))) %>% # rounding numbers in all numeric columns to 2 sig figs
   bind_rows(nuts_GPP,.) %>% # joining overall nutrient effect results
   gt() %>%
   cols_move(columns = month, after = contrast) %>%
@@ -288,7 +288,7 @@ temp_emmeans_table <- temp_seasonal_emm %>%
               ), exp) %>% # putting the estimated temp trends and CIs in the response scale by undoing the log-transformation
   bind_rows(temp_GPP,.) %>% # joining overall nutrient effect results
   mutate(Q10_value = temp_C.trend^10) %>% # calculating Q10 values
-  mutate(across(c(temp_C.trend:Q10_value), ~round(.,2))) %>% # rounding all numeric columns to 4 sig figs
+  #mutate(across(c(temp_C.trend:Q10_value), ~round(.,2))) %>% # rounding all numeric columns to 4 sig figs
     gt() %>%
   cols_move(columns = Q10_value, after = temp_C.trend) %>%
   cols_label(temp_C.trend = "temperature effect", Q10_value = html("Q<sub>10</sub> ")) %>%
@@ -333,6 +333,8 @@ GPP_IP <- emmip(GPP_final, nutrient_trt ~ temp_C|month, CIs = FALSE, cov.keep = 
   theme_bw() +
   theme(legend.position = "none")
 
+
+
 # hourly rates
 GPP_IP_hr <- emmip(GPP_final_hr, nutrient_trt ~ temp_C|month, CIs = FALSE, cov.keep = c("temp_C", "nutrient_trt"), type = "response") +
   geom_point(aes(x = temp_C, y = GPP_mgO2_hr_gAFDW_2, color = nutrient_trt), data = dat_lme, inherit.aes = FALSE) +
@@ -342,6 +344,52 @@ GPP_IP_hr <- emmip(GPP_final_hr, nutrient_trt ~ temp_C|month, CIs = FALSE, cov.k
   scale_color_manual(values = c("#F8766D", "#00BFC4")) +
   theme_bw() +
   theme(legend.position = "none")
+
+
+
+
+# Get all combinations of month, nutrient_trt, and temp_C within each month's observed range
+# pred_grid <- dat_lme %>%
+#   group_by(month, nutrient_trt) %>%
+#   summarise(
+#     min_temp = min(temp_C, na.rm = TRUE),
+#     max_temp = max(temp_C, na.rm = TRUE),
+#     .groups = "drop"
+#   ) %>%
+#   rowwise() %>%
+#   mutate(temp_seq = list(seq(min_temp, max_temp, length.out = 50))) %>%
+#   unnest(temp_seq) %>%
+#   rename(temp_C = temp_seq)
+# 
+# # Create prediction dataset
+# newdat <- pred_grid %>%
+#   dplyr::select(temp_C, nutrient_trt, month)
+# 
+# # Predict using emmeans/ref_grid
+# ref <- ref_grid(GPP_final_hr, data = dat_lme, 
+#                 cov.reduce = FALSE)  # don't reduce covariate range
+# # Force the prediction vector into a data frame with a proper column name
+# preds_df <- data.frame(fit = predict(ref, newdata = newdat, type = "response"))
+# 
+# # Now combine safely
+# pred_plot_data <- cbind(newdat, preds_df$fit)
+# 
+# # Plot manually
+# ggplot() +
+#   geom_line(
+#     data = pred_plot_data,
+#     aes(x = temp_C, y = fit, color = nutrient_trt)
+#   ) +
+#   geom_point(
+#     data = dat_lme,
+#     aes(x = temp_C, y = GPP_mgO2_hr_gAFDW_2, color = nutrient_trt)
+#   ) +
+#   scale_y_log10() +
+#   facet_grid(cols = vars(month)) +
+#   labs(y = expression(GPP~(mgO[2]~hr^{-1}~gAFDW^{-1})), x = "") +
+#   scale_color_manual(values = c("#F8766D", "#00BFC4")) +
+#   theme_bw() +
+#   theme(legend.position = "none")
 ```
 
 # ER
@@ -516,7 +564,7 @@ nut_seasonal_ER <- emmeans(ER_final, pairwise ~ nutrient_trt|month, cov.keep = "
 # saving contrasts from emmeans as dataframe so I can export a table of the results
 nut_seasonal_ER <- nut_seasonal_ER$contrasts %>%
   as.data.frame() %>%
-  mutate(across(c(ratio:p.value), ~round(.,2))) %>% # rounding numbers in all numeric columns to 2 sig figs
+  #mutate(across(c(ratio:p.value), ~round(.,2))) %>% # rounding numbers in all numeric columns to 2 sig figs
   bind_rows(nuts_ER,.) %>% # joining overall nutrient effect results
   gt() %>%
   cols_move(columns = month, after = contrast) %>%
@@ -562,7 +610,7 @@ temp_emmeans_table_ER <- temp_seasonal_ER_emm %>%
               ), exp) %>% # putting the estimated temp trends and CIs in the response scale by undoing the log-transformation
   bind_rows(temp_ER,.) %>% # joining overall nutrient effect results
   mutate(Q10_value = temp_C.trend^10) %>% # calculating Q10 values
-  mutate_if(is.numeric, ~round(.,2)) %>% 
+  #mutate_if(is.numeric, ~round(.,2)) %>% 
  # mutate(across(c(temp_C.trend:Q10_value), ~round(.,2))) %>% # rounding all numeric columns to 4 sig figs
     gt() %>%
   cols_move(columns = Q10_value, after = temp_C.trend) %>%
@@ -777,8 +825,8 @@ qqnorm(NEP_final)
 nuts_NEP <- emmeans(NEP_final, pairwise ~ nutrient_trt, cov.keep = "temp_C", type = "response")
 nuts_NEP <- nuts_NEP$contrasts %>% 
   data.frame() %>% 
-  mutate(month = "Overall") %>% 
-  mutate(across(c(ratio:p.value), ~round(.,2)))
+  mutate(month = "Overall") #%>% 
+  #mutate(across(c(ratio:p.value), ~round(.,2)))
 
 
 ####################
@@ -788,7 +836,7 @@ nut_seasonal_NEP <- emmeans(NEP_final, pairwise ~ nutrient_trt|month, cov.keep =
 # saving contrasts from emmeans as dataframe so I can export a table of the results
 nut_seasonal_NEP <- nut_seasonal_NEP$contrasts %>%
   as.data.frame() %>%
-  mutate(across(c(ratio:p.value), ~round(.,2))) %>% # rounding numbers in all numeric columns to 2 sig figs
+  #mutate(across(c(ratio:p.value), ~round(.,2))) %>% # rounding numbers in all numeric columns to 2 sig figs
   bind_rows(nuts_NEP,.) %>% # joining overall nutrient effect results
   gt() %>%
   cols_move(columns = month, after = contrast) %>%
@@ -830,7 +878,7 @@ temp_emmeans_table_NEP <- temp_seasonal_NEP_emm %>%
               ), exp) %>% # putting the estimated temp trends and CIs in the response scale by undoing the log-transformation
   bind_rows(temp_NEP,.) %>% # joining overall nutrient effect results
   mutate(Q10_value = temp_C.trend^10) %>% # calculating Q10 values
-  mutate_if(is.numeric, ~round(.,2)) %>%
+  #mutate_if(is.numeric, ~round(.,2)) %>%
     gt() %>%
   cols_move(columns = Q10_value, after = temp_C.trend) %>%
   cols_label(temp_C.trend = "temperature effect", Q10_value = html("Q<sub>10</sub> ")) %>%
