@@ -473,11 +473,11 @@ insitu_temp
 # patching together AI, AFDW, chl-a, and in situ temp timeseries plots so that they share the same x-axis
 library(patchwork)
 
-AI_AFDW <- (chla_trends/AFDW_trends/AI_trends/insitu_temp)
+AI_AFDW <- (chla_trends/AFDW_trends/AI_trends/insitu_temp) + plot_annotation(tag_levels = 'a')
 
 ggsave("plots/main_analysis/AI_AFDW_trends.jpg", plot = AI_AFDW, height = 11, width = 11, dpi = 300)
 
-ggsave("plots/final_paper/Figure2.jpg", plot = AI_AFDW, height = 11, width = 11, dpi = 300)
+ggsave("plots/final_paper/Figure2.jpg", plot = AI_AFDW, height = 10, width = 8, dpi = 300)
 ```
 
 
