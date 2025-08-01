@@ -406,7 +406,7 @@ metab_dat <- metab_dat %>%
   mutate(date = c(rep("2021-03-01", 16), rep("2021-03-15", 16), rep("2021-04-07", 16), rep("2021-04-21", 16), rep("2021-06-13", 32), rep("2021-08-08", 32), rep("2021-10-10", 32), rep("2021-11-28", 32), rep("2022-02-27", 32))) %>% # creating date column
   unite(chamber_ID, date, chamber, sep = "_", remove = "FALSE") %>% # combining date and chamber columns
   filter(nutrient_trt == "enriched") %>% # selecting only enriched samples to bind to dataframe since ambient samples did not produce the following nutrient uptake rates
-  dplyr::select(chamber_ID, total_AFDW_g, rock_SA_m2, GPP_mgO2_d_gAFDW_2, ER_mgO2_d_gAFDW_2, NEP_mgO2_d_gAFDW_2, GPP_mg_d, ER_mg_d, NEP_mg_d) # selecting only the columns I need to declutter dataframe a bit
+  dplyr::select(chamber_ID, total_AFDW_g_2, rock_SA_m2, GPP_mgO2_d_gAFDW_2, ER_mgO2_d_gAFDW_2, NEP_mgO2_d_gAFDW_2, GPP_mg_d, ER_mg_d, NEP_mg_d) # selecting only the columns I need to declutter dataframe a bit
 
 #View(metab_dat)
 
@@ -419,7 +419,7 @@ main <- left_join(dat_long, metab_dat, by = "chamber_ID")
 
 # calculating AFDW-normalized rates
 main <- main %>%
-  mutate(AFDW_rates = rates/total_AFDW_g)
+  mutate(AFDW_rates = rates/total_AFDW_g_2)
 ```
 
 
@@ -701,16 +701,31 @@ ggsave("plots/nutrient_uptake/nut_uptake_vs_NH4.png", plot = NH4_plot, height = 
 
 # Molar nutrient uptake plot
 ## Figure S6.2
+## Supplemental: Nutrients and Oxygen Mass Balance 
 ```{r}
 #View(main)
 molar <- main %>%
   filter(uptake_rate_name != "DP_rate" & AFDW_rates <600) %>% # filtering out DP uptake rates since chemical there is no single chemical formula for this P species to calculate molar uptake rate with, also filtering out outlier from nov 2021 experiment
+  mutate(AFDW_rates_2 = ifelse(AFDW_rates < 0, 0, AFDW_rates)) %>% # making negative uptake rate values for NO3 be zeros
   mutate(molar_rate = case_when(
-    uptake_rate_name == "Ammonium" ~ AFDW_rates/14.0067e6,
-    uptake_rate_name == "Soluble Reactive Phosphorus" ~ AFDW_rates/30.9738e6,
-    uptake_rate_name == "Nitrate" ~ AFDW_rates/14.0067e6
+    uptake_rate_name == "Ammonium" ~ AFDW_rates_2/14.0067e6,
+    uptake_rate_name == "Soluble Reactive Phosphorus" ~ AFDW_rates_2/30.9738e6,
+    uptake_rate_name == "Nitrate" ~ AFDW_rates_2/14.0067e6
   )) %>%
   mutate(molar_rate_d = molar_rate*1e6) # converting from moles to micro-moles
+
+
+# Supplemental Oxygen Balance Exercise
+# investigating maxuptake rates
+max_hourly_rates <- molar %>% 
+  select(uptake_rate_name, molar_rate_d, hrs, date_chamber, total_AFDW_g_2, ER_mgO2_d_gAFDW_2, GPP_mgO2_d_gAFDW_2, NEP_mgO2_d_gAFDW_2) %>% 
+  mutate(molar_rate_hr_chamber = molar_rate_d * total_AFDW_g_2) %>% # converting from biomass specific molar nutrient uptake rate to total nutrient uptake rate per chamber
+  select(-molar_rate_d) %>% 
+  pivot_wider(names_from = uptake_rate_name, values_from = molar_rate_hr_chamber) %>% 
+  mutate(ER_mg_O2_hr_chamber = ER_mgO2_d_gAFDW_2/24*total_AFDW_g_2,
+         GPP_mg_O2_hr_chamber = GPP_mgO2_d_gAFDW_2/24*total_AFDW_g_2,
+         NEP_mg_O2_hr_chamber = NEP_mgO2_d_gAFDW_2/24*total_AFDW_g_2) %>% 
+  filter(Ammonium == max(Ammonium) | Ammonium == min(Ammonium) | Nitrate == max(Nitrate) | Nitrate == min(Nitrate))
 
 
 #View(molar)
@@ -722,6 +737,7 @@ names(facet_label) <- c("Ammonium", "Nitrate", "Soluble Reactive Phosphorus")
 # plotting molar uptake rates per gAFDW of periphyton
 AFDW_molar <- molar %>%
   filter(date != "2021-04-21" & date != "2021-03-15") %>% # removing april 2021 experiment data since nutrient enrichment conc. was too low and march 2021 data since treatment temperatures were not applied to the samples during the entire nutrient pre-incubation period
+   filter(date_chamber != "2021-11-28_F_15" & date_chamber != "2021-11-28_F_2" & date_chamber != "2021-06-13_F_1") %>% # removing outlier datapoints for november and june rates
   ggplot(aes(x = temp_C, y = molar_rate_d)) +
   facet_grid(cols = vars(uptake_rate_name), labeller = labeller(uptake_rate_name = facet_label)) +
   geom_point(aes(group = date_chamber, color = month)) +
@@ -889,7 +905,7 @@ UE_plot <- UE_long %>%
   scale_y_log10()+
   geom_smooth(aes(color = month), method = "lm", se = FALSE) +
   labs(x = expression('Temperature (\u00B0C)'),
-       y = expression(mol~O[2]:mol~N/P)) +
+       y = expression(mol~O[2]:mol~N~o*r~P)) +
   scale_color_manual(values = c("#0D0887FF","#B12A90FF", "#FCA636FF", "#E16462FF", "#6A00A8FF")) +
   theme_bw() +
   theme(legend.position = "bottom")
