@@ -3,6 +3,26 @@
 
 This also contains analysis of tahoe nearshore network data provided by Sergio Valbuena.
 
+*R Session Info:*
+R version 4.2.2 (2022-10-31 ucrt)
+Platform: x86_64-w64-mingw32/x64 (64-bit)
+Running under: Windows 10 x64 (build 26100)
+
+Matrix products: default
+
+locale:
+[1] LC_COLLATE=English_United States.utf8 
+[2] LC_CTYPE=English_United States.utf8   
+[3] LC_MONETARY=English_United States.utf8
+[4] LC_NUMERIC=C                          
+[5] LC_TIME=English_United States.utf8    
+
+attached base packages:
+[1] stats     graphics  grDevices utils     datasets  methods   base     
+
+loaded via a namespace (and not attached):
+[1] compiler_4.2.2 tools_4.2.2  
+
 **Exporting QAQC'd Metabolism Data:**
 - "Tahoe_Peri_data_joining.Rmd"
 
