@@ -146,7 +146,7 @@ total_AFDW_g: total ash-free dry weight (grams) of periphyton scaled up to the w
 rock_SA_m2: rock surface area covered by periphyton in sq. meters approximated as an ellipsoid and assuming an average periphyton coverage of 67% 
 
 
-##############################
+
 
 **Important Incubation Details:**
 
