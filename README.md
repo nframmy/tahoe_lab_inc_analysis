@@ -23,6 +23,8 @@ attached base packages:
 loaded via a namespace (and not attached):
 [1] compiler_4.2.2 tools_4.2.2  
 
+### Important Scripts
+
 **Exporting QAQC'd Metabolism Data:**
 - "Tahoe_Peri_data_joining.Rmd"
 
@@ -37,7 +39,7 @@ loaded via a namespace (and not attached):
 
 
 #####################
-**Dataset README**
+### Metadata
 "main_data_lahontan.csv" Column Meanings:
 Chamber: Chamber ID #
 
