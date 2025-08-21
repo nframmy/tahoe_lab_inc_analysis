@@ -143,21 +143,6 @@ saveRDS(GPP_final, "models/GPP_final_mod.rds")
 GPP_final <- readRDS("models/GPP_final_mod.rds")
 
 
-# if you want model results to be presented using sum contrasts then use this code
-GPP_contr_sum <- update(m5, contrasts = list(month = contr.sum, nutrient_trt = contr.sum)) # updating contrast matrix of the final model summary
-summary(GPP_contr_sum)
-
-
-
-# makng a comparison of model summaries for m5 with and without contrast sums
-tab_model(GPP_contr_sum, dv.labels = "Sum Contrasts",
-  show.ci = FALSE,
-  show.aic = T,
-  p.style = "stars",
-  transform = "exp",
-  file = "plots/main_analysis/GPP_mod_sum_contrasts.doc")
-
-
 tab_model(m0, m1, m2, m3, m5, dv.labels = c("Intercept only", "GLS", "LMM1", "LMM2", "LMM3"),
   show.ci = FALSE,
   show.aic = T,
@@ -168,12 +153,6 @@ tab_model(m0, m1, m2, m3, m5, dv.labels = c("Intercept only", "GLS", "LMM1", "LM
 
 
 
-# trying remove intercept from final GPP model using update()
-# this will make fixed effects output of model easier to interpret in the manuscript
-GPP_new <- update(GPP_final, ~ . - 1)
-
-# comparing coefficient estimates of the fixed effects to make sure that they're the same
-View(summary(GPP_new))
 View(summary(GPP_final))
 
 # hourly model
@@ -344,52 +323,6 @@ GPP_IP_hr <- emmip(GPP_final_hr, nutrient_trt ~ temp_C|month, CIs = FALSE, cov.k
   scale_color_manual(values = c("#F8766D", "#00BFC4")) +
   theme_bw() +
   theme(legend.position = "none")
-
-
-
-
-# Get all combinations of month, nutrient_trt, and temp_C within each month's observed range
-# pred_grid <- dat_lme %>%
-#   group_by(month, nutrient_trt) %>%
-#   summarise(
-#     min_temp = min(temp_C, na.rm = TRUE),
-#     max_temp = max(temp_C, na.rm = TRUE),
-#     .groups = "drop"
-#   ) %>%
-#   rowwise() %>%
-#   mutate(temp_seq = list(seq(min_temp, max_temp, length.out = 50))) %>%
-#   unnest(temp_seq) %>%
-#   rename(temp_C = temp_seq)
-# 
-# # Create prediction dataset
-# newdat <- pred_grid %>%
-#   dplyr::select(temp_C, nutrient_trt, month)
-# 
-# # Predict using emmeans/ref_grid
-# ref <- ref_grid(GPP_final_hr, data = dat_lme, 
-#                 cov.reduce = FALSE)  # don't reduce covariate range
-# # Force the prediction vector into a data frame with a proper column name
-# preds_df <- data.frame(fit = predict(ref, newdata = newdat, type = "response"))
-# 
-# # Now combine safely
-# pred_plot_data <- cbind(newdat, preds_df$fit)
-# 
-# # Plot manually
-# ggplot() +
-#   geom_line(
-#     data = pred_plot_data,
-#     aes(x = temp_C, y = fit, color = nutrient_trt)
-#   ) +
-#   geom_point(
-#     data = dat_lme,
-#     aes(x = temp_C, y = GPP_mgO2_hr_gAFDW_2, color = nutrient_trt)
-#   ) +
-#   scale_y_log10() +
-#   facet_grid(cols = vars(month)) +
-#   labs(y = expression(GPP~(mgO[2]~hr^{-1}~gAFDW^{-1})), x = "") +
-#   scale_color_manual(values = c("#F8766D", "#00BFC4")) +
-#   theme_bw() +
-#   theme(legend.position = "none")
 ```
 
 # ER
@@ -492,10 +425,6 @@ saveRDS(ER_final, "models/ER_final_mod.rds")
 ER_final <- readRDS("models/ER_final_mod.rds")
 
 
-# if you want model results to be presented using sum contrasts then use this code
-ER_contr_sum <- update(ER_final, contrasts = list(month = contr.sum, nutrient_trt = contr.sum)) # updating contrast matrix of the final model summary
-summary(ER_contr_sum)
-
 
 
 summary(ER_final)
@@ -508,13 +437,6 @@ tab_model(m0, m1, m2, m3, dv.labels = c("Intercept only", "GLS", "LMM1", "LMM2")
   file = "plots/final_paper/TableS5.doc")
 # reference levels for interpreting intercept term: nutrient_trt = enriched, month = february
 
-
-
-
-# updating ER model to add contrast sums using update()
-# this will make the fixed effect estimates be relative to the grand mean which can aid in interpretation
-ER_new <- update(ER_final, ~ contrasts = list(month = contr.sum, nutrient_trt = contr.sum))
-summary(ER_new)
 
 # hourly model
 ER_final_hr <- lme(log(ER_mgO2_hr_gAFDW_2) ~ temp_C * nutrient_trt * month, random = ~ 1 | rock_ID, weights = varIdent(form = ~1|exp_ID), data = dat_lme)
@@ -634,7 +556,7 @@ temp_nut_ER$contrasts %>%
   cols_label(estimate = "reduction in temperature effect with enrichment")
 
 
-# checking out temperature-nutrient interactions for each month
+# temperature-nutrient interactions for each month
 temp_nut_seasonal_ER <- emtrends(ER_final, pairwise ~ nutrient_trt | month, var = "temp_C")
 
 temp_nut_seasonal_ER$contrasts %>% 
@@ -765,12 +687,6 @@ saveRDS(NEP_final, "models/NEP_final_mod.rds")
 NEP_final <- readRDS("models/NEP_final_mod.rds")
 
 
-# if you want model results to be presented using sum contrasts then use this code
-NEP_contr_sum <- update(NEP_final, contrasts = list(month = contr.sum, nutrient_trt = contr.sum)) # updating contrast matrix of the final model summary
-
-
-summary(NEP_contr_sum)
-
 
 summary(NEP_final)
 
@@ -780,12 +696,6 @@ tab_model(m0, m1, m2, m3, m4, m5, dv.labels = c("Intercept only", "GLS", "LMM1",
   p.style = "stars",
   transform = "exp",
   file = "plots/final_paper/TableS6.doc")
-
-
-# updating NEP model to add contrast sums using update()
-# this will make the fixed effect estimates be relative to the grand mean which can aid in interpretation
-NEP_new <- update(NEP_final, ~ contrasts = list(month = contr.sum, nutrient_trt = contr.sum))
-summary(NEP_new)
 
 
 # hourly model
@@ -970,60 +880,7 @@ tab_model(GPP_final, ER_final, NEP_final, dv.labels = c("GPP", "ER", "NEP"),
   p.style = "stars", 
   transform = "exp",
   file = "plots/final_paper/tableS3.doc")
-
-
-
-
-############ sum contrast table ##########
-# updating models to add contrast sums using update()
-# this will make the fixed effect estimates be relative to the grand mean which can aid in interpretation
-# need to run code in model building chunks to generate the dataframe used to create these models
-tab_model(GPP_contr_sum, ER_contr_sum, NEP_contr_sum, dv.labels = c("GPP", "ER", "NEP"),
-  show.ci = FALSE, 
-  p.style = "stars", 
-  transform = "exp",
-  file = "plots/final_paper/appendix5_sum_contr.doc")
 ```
-
-
-
-##### factor levels of contrast sums model summary
-```{r}
-grand_means <- dat_lme %>% 
-  summarise(grand_mean_GPP = mean(log(GPP_mgO2_d_gAFDW_2)), grand_mean_ER = mean(log(ER_mgO2_d_gAFDW_2)), grand_mean_NEP = mean(log(NEP_mgO2_d_gAFDW_2)))
-
-dat_lme %>% 
-  group_by(month) %>% 
-  summarise(avg_GPP = mean(log(GPP_mgO2_d_gAFDW_2)), sd_GPP = sd(log(GPP_mgO2_d_gAFDW_2))) %>% 
-  ggplot(aes(x = month, y = avg_GPP))+
-  geom_point()+
-  geom_errorbar(aes(ymin=avg_GPP-sd_GPP, ymax=avg_GPP+sd_GPP), width=.2, position=position_dodge(.9)) +  
-  geom_hline(yintercept = grand_means$grand_mean_GPP)
-
-dat_lme %>% 
-  group_by(month) %>% 
-  summarise(avg_GPP = mean(log(GPP_mgO2_d_gAFDW_2)), sd_GPP = sd(log(GPP_mgO2_d_gAFDW_2))) %>% 
-  summarise(grand_mean_GPP = mean(avg_GPP))
-
-
-# calculating unweighted mean of GPP and seeing if this equals the grand mean in the intercept value
-u_mean_GPP <- dat_lme %>% 
-  group_by(month, nutrient_trt) %>% 
-  summarise(group_avg_GPP = mean(log(GPP_mgO2_d_gAFDW_2)), n = n())
-u_mean_GPP
-
-# sample size matches up
-sum(u_mean_GPP$n)
-
-u_mean_GPP %>% 
-  ungroup() %>% 
-  summarise(grand_unweighted_mean_GPP = mean(group_avg_GPP), n = n())
-  
-  
-```
-
-
-
 
 
 
