@@ -1,3 +1,6 @@
+# Script to investigate whether background metabolism (due to either phytoplankton or bacterioplankton remaining in the filtered water) would affect the oxygen mass balance and thus the metabolic rate calculations of the periphyton. We confirmed that background metabolic rates were low and this was not a significant source of error.
+
+
 library(ggplot2)
 library(tidyverse)
 library(lubridate)
