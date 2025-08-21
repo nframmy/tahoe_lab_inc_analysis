@@ -29,13 +29,16 @@ loaded via a namespace (and not attached):
 - "Tahoe_Peri_data_joining.Rmd"
 
 **Metabolism Data Prep and Site Descriptive Plots:**
-- "Tahoe_Peri_data_prep_exploratory.Rmd"
+*Contains Figs 2 & 3*
+- "Tahoe_Peri_in_situ_conditions.Rmd"
 
 **Statistical Modeling**
+*Contains Fig 4, and data contained in Table 1*
 - "Tahoe_Peri_model_building.Rmd"
 
 **Nutrient Uptake Data Analysis**
-- "210929_lahontan_nut_uptake_analysis.Rmd"
+*Contains Figs 5-7*
+- "Tahoe_Peri_nut_uptake_analysis.Rmd"
 
 
 #####################
