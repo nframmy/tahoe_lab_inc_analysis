@@ -28,6 +28,11 @@ loaded via a namespace (and not attached):
 **Exporting QAQC'd Metabolism Data:**
 - "Tahoe_Peri_data_joining.Rmd"
 
+**Figure 1 Code**
+*Contains Code for Fig 1 e-f*
+- "Fig1d.Rmd"
+- "Fig1e_f.Rmd"
+
 **Metabolism Data Prep and Site Descriptive Plots:**
 *Contains Figs 2 & 3*
 - "Tahoe_Peri_in_situ_conditions.Rmd"
@@ -40,10 +45,21 @@ loaded via a namespace (and not attached):
 *Contains Figs 5-7*
 - "Tahoe_Peri_nut_uptake_analysis.Rmd"
 
+**All other scripts**
+- "main_background_metab_analysis.R" is an analysis of background nutrient uptake rates from phytoplankton and bacterioplankton in experiments.
+
+- "temp_randomization_analysis" is an analysis of if randomization of warming treatments on periphyton samples could have resulted in thermal shock.
+
+- "waterbath_temp_tests.Rmd" is an analysis of how long it took waterbaths to heat up for experimental planning purposes.
+
+
+All other scripts with filenames that begin with a date are individual files to parse and wrangle individual experiment data files before being joined together in "Tahoe_Peri_data_joining.Rmd".
+
+
 
 #####################
-### Metadata
-"main_data_lahontan.csv" Column Meanings:
+### Metadata for "main_data_lahontan.csv"
+#### Column Meanings:
 Chamber: Chamber ID #
 
 temp_C: temperature treatment in degrees C
