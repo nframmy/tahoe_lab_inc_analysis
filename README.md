@@ -50,8 +50,6 @@ loaded via a namespace (and not attached):
 
 - "temp_randomization_analysis" is an analysis of if randomization of warming treatments on periphyton samples could have resulted in thermal shock.
 
-- "waterbath_temp_tests.Rmd" is an analysis of how long it took waterbaths to heat up for experimental planning purposes.
-
 
 All other scripts with filenames that begin with a date are individual files to parse and wrangle individual experiment data files before being joined together in "Tahoe_Peri_data_joining.Rmd".
 
